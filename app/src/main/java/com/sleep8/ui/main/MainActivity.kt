@@ -96,7 +96,7 @@ private fun MainScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Image(
-                    painter = painterResource(id = com.sleep8.R.mipmap.ic_launcher),
+                    painter = painterResource(id = com.sleep8.R.mipmap.ic_launcher_foreground),
                     contentDescription = "Sleep8",
                     modifier = Modifier
                         .clip(MaterialTheme.shapes.large)
