@@ -104,16 +104,14 @@ class ArmManager(
     }
 
     fun onScheduledEvent(type: String) {
-        val wasManualOverride = manualOverride
-        if (wasManualOverride) {
-            manualOverride = false // reset override at the scheduled boundary
-        }
-        if (!wasManualOverride || !manualOverride) {
+        if (!manualOverride) {
             if (type == "start") {
                 scope.launch { arm(ArmSource.SCHEDULED) }
             } else if (type == "end") {
                 scope.launch { disarm(ArmSource.SCHEDULED) }
             }
+        } else {
+            manualOverride = false // reset override after scheduled event
         }
     }
 
