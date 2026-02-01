@@ -1,0 +1,85 @@
+package com.sleep8.ui.settings
+
+import android.content.Context
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.sleep8.data.preferences.AppPreferences
+import com.sleep8.data.repository.SettingsRepository
+import com.sleep8.domain.model.AppState
+import com.sleep8.domain.state.StateHolder
+import com.sleep8.domain.model.Settings
+import com.sleep8.util.PermissionUtils
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+@HiltViewModel
+class SettingsViewModel @Inject constructor(
+    private val settingsRepository: SettingsRepository,
+    private val appPreferences: AppPreferences,
+    private val stateHolder: StateHolder
+) : ViewModel() {
+
+    private val _uiState = MutableStateFlow(SettingsUiState())
+    val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            val settings = settingsRepository.getSettings()
+            _uiState.value = _uiState.value.copy(
+                nightStart = settings.nightStart,
+                nightEnd = settings.nightEnd,
+                snoozeEnabled = settings.snoozeMinutes != null,
+                snoozeMinutes = settings.snoozeMinutes?.toString().orEmpty()
+            )
+        }
+    }
+
+    fun refreshReliability(context: Context) {
+        val exactAllowed = PermissionUtils.canScheduleExactAlarms(context)
+        val batteryIgnored = PermissionUtils.isIgnoringBatteryOptimizations(context)
+        _uiState.value = _uiState.value.copy(
+            exactAlarmAllowed = exactAllowed,
+            batteryOptimizationsIgnored = batteryIgnored,
+            foregroundServiceActive = stateHolder.state.value != AppState.DISARMED
+        )
+    }
+
+    fun updateNightStart(value: String) {
+        _uiState.value = _uiState.value.copy(nightStart = value)
+        persist()
+    }
+
+    fun updateNightEnd(value: String) {
+        _uiState.value = _uiState.value.copy(nightEnd = value)
+        persist()
+    }
+
+    fun updateSnooze(enabled: Boolean, minutes: String) {
+        _uiState.value = _uiState.value.copy(snoozeEnabled = enabled, snoozeMinutes = minutes)
+        persist()
+    }
+
+    private fun persist() {
+        viewModelScope.launch {
+            val state = _uiState.value
+            val snooze = state.snoozeMinutes.toIntOrNull()
+            val settings = Settings(
+                nightStart = state.nightStart,
+                nightEnd = state.nightEnd,
+                confirmOffMinutes = 10,
+                snoozeMinutes = if (state.snoozeEnabled) snooze else null,
+                armedDefault = false,
+                offlineOnly = true
+            )
+            settingsRepository.updateSettings(settings)
+        }
+    }
+
+    fun setBatteryOptAck(ack: Boolean) {
+        appPreferences.batteryOptOutAck = ack
+    }
+}
