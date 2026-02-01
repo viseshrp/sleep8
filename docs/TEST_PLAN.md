@@ -1308,3 +1308,10 @@ adb shell date MMDDhhmmYYYY
     - restores armed state per Auto-Arm schedule
     - starts monitoring only when `armed && inNightWindow`
     - pending confirmation restoration respects the same gate
+
+### Regression Tests — Must Never Break
+- Manual disarm does NOT cancel upcoming auto-arm boundary.
+- Manual arm does NOT cancel upcoming auto-disarm boundary.
+- Night Window start does NOT arm the app.
+- Night Window start does NOT start monitoring if disarmed.
+- Disabling Auto-Arm is the only way to stop scheduled state changes.

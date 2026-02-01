@@ -46,6 +46,7 @@ class ArmManager(
             source = source
         )
         stateHolder.setActiveSession(session)
+        // Ring-style: manual actions are immediate but temporary; schedules remain authoritative.
         stateHolder.setArmed(true)
         refreshNightWindowBoundariesIfArmed()
         return Result.success(session)
@@ -57,6 +58,7 @@ class ArmManager(
             sessionRepository.endSession(session.id, System.currentTimeMillis())
         }
         stateHolder.setActiveSession(null)
+        // Ring-style: manual disarm never cancels Auto-Arm scheduling.
         stateHolder.setArmed(false)
         if (source != ArmSource.SCHEDULED) {
             stateHolder.clearPendingCandidate()
@@ -95,6 +97,7 @@ class ArmManager(
     }
 
     fun onScheduledEvent(type: String) {
+        // Ring-style: Auto-Arm boundaries are authoritative while enabled.
         if (type == "start") {
             scope.launch { arm(ArmSource.SCHEDULED) }
         } else if (type == "end") {

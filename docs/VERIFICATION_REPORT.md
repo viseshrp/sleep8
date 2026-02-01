@@ -76,3 +76,10 @@ None found.
 ---
 
 End of report.
+
+## Ring-Style Semantics Verification Checklist
+- [ ] No override flags exist
+- [ ] No manual action cancels auto-arm schedules
+- [ ] No Night Window logic writes to `armed`
+- [ ] All changes to `armed` trace back to manual action or auto-arm boundary
+- [ ] Monitoring always obeys `armed && inNightWindow`

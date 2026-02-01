@@ -20,6 +20,7 @@ class WindowStartReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val pending = goAsync()
         scope.launch {
+            // Ring-style: Auto-Arm boundaries are authoritative while enabled.
             armManager.onScheduledEvent("start")
             pending.finish()
         }

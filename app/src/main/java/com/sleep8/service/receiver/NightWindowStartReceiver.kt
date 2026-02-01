@@ -41,6 +41,7 @@ class NightWindowStartReceiver : BroadcastReceiver() {
             val now = LocalDateTime.now()
             val inWindow = TimeUtils.isInWindow(now.toLocalTime(), start, end)
             if (inWindow) {
+                // Ring-style: Night Window only gates monitoring, never changes armed state.
                 serviceController.startNightMonitorService()
                 val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
                 val screenStillOff = !powerManager.isInteractive

@@ -648,3 +648,9 @@ alarmManager.setExactAndAllowWhileIdle(
 - **Armed state**: `ArmManager` owns transitions for manual arm/disarm and auto-arm; `StateHolder` persists runtime state.
 - **Monitoring AND-gate**: `armed && inNightWindow` decides if monitoring (foreground service + screen receiver + confirmation) is active.
 - **Night Window start is not an arming trigger**: it only enables monitoring if already armed.
+
+### Schedule Responsibility Boundaries
+- **Auto-Arm scheduler**: owns all future changes to `armed`.
+- **Manual actions**: change `armed` immediately only.
+- **Night Window**: cannot change `armed`; it only gates monitoring on/off.
+- Any component that toggles `armed` must be traceable to either manual action or an auto-arm boundary.

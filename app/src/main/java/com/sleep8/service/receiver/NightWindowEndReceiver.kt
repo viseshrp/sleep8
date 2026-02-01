@@ -27,6 +27,7 @@ class NightWindowEndReceiver : BroadcastReceiver() {
         val pending = goAsync()
         scope.launch {
             if (stateHolder.state.value != AppState.DISARMED) {
+                // Ring-style: Night Window only gates monitoring, never changes armed state.
                 serviceController.stopNightMonitorService()
                 stateMachineManager.onNightWindowEnd()
             }

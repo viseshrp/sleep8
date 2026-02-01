@@ -311,6 +311,14 @@ Transitions:
 - Manual disarm immediately turns off monitoring and cancels any pending confirmation.
 - Disable Auto-Arm to prevent scheduled changes to `armed`.
 
+### Invariants (Must Always Hold)
+- Auto-Arm schedules are authoritative while enabled.
+- Manual arm/disarm never cancels, pauses, or suppresses Auto-Arm schedules.
+- Night Window never changes `armed`.
+- Monitoring must never run unless `armed && inNightWindow`.
+- Night Window start alone must never cause monitoring to start.
+- The only way to stop scheduled arming/disarming is to disable Auto-Arm.
+
 ### Mode B rule (monitoring gate)
 - Monitoring runs only when `armed && inNightWindow`.
 - Night Window beginning does **not** start monitoring unless `armed` is already true.
