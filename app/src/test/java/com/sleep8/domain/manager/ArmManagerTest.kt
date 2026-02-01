@@ -16,7 +16,6 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class ArmManagerTest {
@@ -38,8 +37,7 @@ class ArmManagerTest {
         windowScheduler = windowScheduler,
         settingsRepository = settingsRepository,
         nightWindowScheduler = nightWindowScheduler,
-        confirmOffScheduler = confirmOffScheduler,
-        appPreferences = prefs
+        confirmOffScheduler = confirmOffScheduler
     )
 
     @Test
@@ -112,7 +110,7 @@ class ArmManagerTest {
     }
 
     @Test
-    fun `manual disarm overrides scheduled arming until next event`() = runTest {
+    fun `manual disarm does not block auto-arm start`() = runTest {
         val settings = Settings("22:00", "08:00", 10, null, 8, false, true)
         coEvery { settingsRepository.getSettings() } returns settings.copy(autoArmEnabled = true)
         coEvery { sessionRepository.createSession(any(), any(), any(), any()) } returns ArmSession(5L, 0L, null, 0L, 0L, ArmSource.APP_BUTTON)
@@ -122,19 +120,18 @@ class ArmManagerTest {
         clearMocks(sessionRepository)
         armManager.onScheduledEvent("start")
         coVerify { sessionRepository.createSession(any(), any(), any(), ArmSource.SCHEDULED) }
-        // manualOverride resets after scheduled event and auto-arm resumes.
     }
 
     @Test
-    fun `manual disarm persists override until next scheduled boundary`() = runTest {
+    fun `manual arm does not block auto-disarm end`() = runTest {
         val settings = Settings("22:00", "08:00", 10, null, 8, false, true)
         coEvery { settingsRepository.getSettings() } returns settings.copy(autoArmEnabled = true)
+        val session = ArmSession(7L, 0L, null, 0L, 0L, ArmSource.APP_BUTTON)
+        stateHolder.setActiveSession(session)
+        stateHolder.setArmed(true)
 
-        armManager.disarm(ArmSource.APP_BUTTON)
-        assertTrue(prefs.manualOverrideActive)
-
-        armManager.onScheduledEvent("start")
-        assertTrue(!prefs.manualOverrideActive)
+        armManager.onScheduledEvent("end")
+        coVerify { sessionRepository.endSession(7L, any()) }
     }
 
     @Test
