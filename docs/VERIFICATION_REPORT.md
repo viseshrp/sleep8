@@ -13,7 +13,7 @@ Scope: Re-audit against updated docs/SPEC.md (authoritative), docs/ARCHITECTURE.
 | 3. Screen remains OFF 10 min → create OS alarm at screen_off + 8h | `ConfirmationAlarmReceiver` → `StateMachineManager.onConfirmationTimerExpired()` → `OsAlarmCreator.createAlarm()` | PASS |
 | 4. Multiple SCREEN_OFF before confirm → latest wins | `StateMachineManager.onScreenOff()` overwrites pending and reschedules | PASS |
 | 5. Multiple OS alarms allowed | `OsAlarmCreator.createAlarm()` inserts new record; no deletion | PASS |
-| 6. After reboot: restore armed state/session, pending confirmation timer, schedule alarm if deadline passed & screen OFF | `app/src/main/java/com/sleep8/service/receiver/BootReceiver.kt` restores auto-arm boundaries, armed state, and resumes/creates alarm when in Night Window | PARTIAL (see P0) |
+| 6. After reboot: restore armed state/session, pending confirmation timer, schedule alarm if deadline passed & screen OFF | `app/src/main/java/com/sleep8/service/receiver/BootReceiver.kt` restores auto-arm boundaries, armed state, and resumes/creates alarm when in Night Window | PASS |
 | 7. Persist all events and alarm records in DB | `SessionRepository.insertScreenEvent()`, `AlarmRepository.insertRecord()` | PASS |
 | 8. No network traffic | No INTERNET permission in `app/src/main/AndroidManifest.xml`; no networking code | PASS |
 
@@ -21,7 +21,7 @@ Scope: Re-audit against updated docs/SPEC.md (authoritative), docs/ARCHITECTURE.
 
 | Rule | Evidence | Status |
 |---|---|---|
-| Auto-Arm toggles `armed`; Night Window never toggles `armed` | Auto-Arm uses `WindowScheduler` + `WindowStart/EndReceiver`; Night Window uses `NightWindowScheduler` + `NightWindowStart/EndReceiver` | PARTIAL (see P0) |
+| Auto-Arm toggles `armed`; Night Window never toggles `armed` | Auto-Arm uses `WindowScheduler` + `WindowStart/EndReceiver`; Night Window uses `NightWindowScheduler` + `NightWindowStart/EndReceiver` | PASS |
 | Monitoring runs only when `armed && inNightWindow` | `NightWindowStartReceiver` starts service only when armed; `NightWindowEndReceiver` stops service; `StateMachineManager` filters screen events by Night Window | PASS |
 | Night Window beginning does not arm | No code in Night Window receivers that changes armed state | PASS |
 | Manual disarm cancels pending confirmation | `ArmManager.disarm()` clears pending + cancels confirmation (manual source) | PASS |
@@ -31,7 +31,7 @@ Scope: Re-audit against updated docs/SPEC.md (authoritative), docs/ARCHITECTURE.
 
 | Doc Expectation | Code Evidence | Status |
 |---|---|---|
-| Auto-Arm boundary scheduling separate from Night Window filtering | `WindowScheduler` vs `NightWindowScheduler` | PARTIAL (see P0) |
+| Auto-Arm boundary scheduling separate from Night Window filtering | `WindowScheduler` vs `NightWindowScheduler` | PASS |
 | Armed state owned by ArmManager; persisted in StateHolder | `ArmManager`, `StateHolder` | PASS |
 | Monitoring AND-gate (`armed && inNightWindow`) | Night Window receivers + `StateMachineManager` | PASS |
 
@@ -51,16 +51,15 @@ Scope: Re-audit against updated docs/SPEC.md (authoritative), docs/ARCHITECTURE.
 ## Resolved Findings (due to clarified docs)
 
 - Any prior finding that required “Night Window start scheduling restore” is resolved; Auto-Arm boundaries are the only arming triggers.
+- Manual disarm no longer cancels Auto-Arm scheduling; auto-arm resumes at the next scheduled boundary.
 
 ## Punch List (Prioritized)
 
 ### P0 — Spec Violations
-1. **Manual disarm cancels Auto-Arm schedule.**
-   - `ArmManager.disarm()` cancels `windowScheduler` regardless of source, preventing auto-arm from resuming at the next scheduled boundary (spec says manual override lasts until next scheduled event).
-   - Minimal fix: in `ArmManager.disarm()`, only cancel `WindowScheduler` when auto-arm is disabled; otherwise keep auto-arm boundaries intact.
+None found.
 
 ### P1 — Reliability Gaps
-None beyond P0 issues tied to Auto-Arm scheduling.
+None found.
 
 ### P2 — Test Coverage Gaps
 1. Add explicit tests for the two-schedule model:
