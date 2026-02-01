@@ -1,0 +1,93 @@
+package com.sleep8.data.repository
+
+import android.content.Context
+import androidx.room.Room
+import androidx.test.core.app.ApplicationProvider
+import com.sleep8.data.db.Sleep8Database
+import com.sleep8.domain.model.AlarmRecord
+import com.sleep8.domain.model.ArmSource
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNotEquals
+import org.junit.Before
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+
+@RunWith(RobolectricTestRunner::class)
+class RepositoryTest {
+
+    private lateinit var db: Sleep8Database
+    private lateinit var settingsRepository: SettingsRepository
+    private lateinit var sessionRepository: SessionRepository
+    private lateinit var alarmRepository: AlarmRepository
+
+    @Before
+    fun setup() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        db = Room.inMemoryDatabaseBuilder(context, Sleep8Database::class.java).build()
+        settingsRepository = SettingsRepository(db.settingsDao())
+        sessionRepository = SessionRepository(db.armSessionDao(), db.screenEventDao())
+        alarmRepository = AlarmRepository(db.alarmRecordDao())
+    }
+
+    @After
+    fun teardown() {
+        db.close()
+    }
+
+    @Test
+    fun `get settings returns default when empty`() {
+        val settings = kotlinx.coroutines.runBlocking { settingsRepository.getSettings() }
+        assertEquals("22:00", settings.nightStart)
+        assertEquals("08:00", settings.nightEnd)
+    }
+
+    @Test
+    fun `update settings persists changes`() {
+        kotlinx.coroutines.runBlocking { settingsRepository.updateNightWindow("23:00", "07:00") }
+        val settings = kotlinx.coroutines.runBlocking { settingsRepository.getSettings() }
+        assertEquals("23:00", settings.nightStart)
+    }
+
+    @Test
+    fun `create session generates unique id`() {
+        val session1 = kotlinx.coroutines.runBlocking { sessionRepository.createSession(ArmSource.APP_BUTTON) }
+        val session2 = kotlinx.coroutines.runBlocking { sessionRepository.createSession(ArmSource.QUICK_TILE) }
+        assertNotEquals(session1.id, session2.id)
+    }
+
+    @Test
+    fun `get active session returns non-ended session`() {
+        val session = kotlinx.coroutines.runBlocking { sessionRepository.createSession(ArmSource.APP_BUTTON) }
+        val active = kotlinx.coroutines.runBlocking { sessionRepository.getActiveSession() }
+        assertEquals(session.id, active?.id)
+    }
+
+    @Test
+    fun `end session sets disarmed timestamp`() {
+        val session = kotlinx.coroutines.runBlocking { sessionRepository.createSession(ArmSource.APP_BUTTON) }
+        kotlinx.coroutines.runBlocking { sessionRepository.endSession(session.id, System.currentTimeMillis()) }
+        val ended = kotlinx.coroutines.runBlocking { sessionRepository.getSession(session.id) }
+        assertNotNull(ended?.disarmedAt)
+    }
+
+    @Test
+    fun `insert alarm record persists all fields`() {
+        val session = kotlinx.coroutines.runBlocking { sessionRepository.createSession(ArmSource.APP_BUTTON) }
+        val record = AlarmRecord(
+            id = 0,
+            sessionId = session.id,
+            screenOffTs = 1000L,
+            confirmedAt = 2000L,
+            scheduledAlarmTs = 3000L,
+            osAlarmIntentResolved = true,
+            osAlarmUiRequired = null,
+            internalBackstopScheduled = true
+        )
+        val id = kotlinx.coroutines.runBlocking { alarmRepository.insertRecord(record) }
+        val retrieved = kotlinx.coroutines.runBlocking { alarmRepository.getRecord(id) }
+        assertEquals(record.screenOffTs, retrieved?.screenOffTs)
+    }
+}
