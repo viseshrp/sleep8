@@ -93,7 +93,8 @@ class FullFlowIntegrationTest {
             windowScheduler,
             settingsRepository,
             nightWindowScheduler,
-            confirmScheduler
+            confirmScheduler,
+            appPreferences
         )
         stateMachineManager = StateMachineManager(stateHolder, settingsRepository, sessionRepository, alarmRepository, confirmScheduler, osAlarmCreator)
     }

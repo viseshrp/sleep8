@@ -32,4 +32,5 @@ object Constants {
     const val PREF_CLOCK_UI_WARNING_SHOWN = "pref_clock_ui_warning_shown"
     const val PREF_BATTERY_OPT_ACK = "pref_battery_opt_ack"
     const val PREF_ALARM_OFFSET_HOURS = "pref_alarm_offset_hours"
+    const val PREF_MANUAL_OVERRIDE_ACTIVE = "pref_manual_override_active"
 }

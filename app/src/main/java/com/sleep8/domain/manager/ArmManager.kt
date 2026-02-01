@@ -4,6 +4,7 @@ import com.sleep8.data.repository.SettingsRepository
 import com.sleep8.data.repository.SessionRepository
 import com.sleep8.domain.model.ArmSession
 import com.sleep8.domain.model.ArmSource
+import com.sleep8.data.preferences.AppPreferences
 import com.sleep8.domain.scheduler.ConfirmOffScheduler
 import com.sleep8.domain.state.StateHolder
 import com.sleep8.domain.scheduler.NightWindowScheduler
@@ -27,9 +28,10 @@ class ArmManager(
     private val windowScheduler: WindowScheduler,
     private val settingsRepository: SettingsRepository,
     private val nightWindowScheduler: NightWindowScheduler,
-    private val confirmOffScheduler: ConfirmOffScheduler
+    private val confirmOffScheduler: ConfirmOffScheduler,
+    private val appPreferences: AppPreferences
 ) {
-    private var manualOverride: Boolean = false
+    private var manualOverride: Boolean = appPreferences.manualOverrideActive
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     suspend fun arm(source: ArmSource): Result<ArmSession> {
@@ -63,15 +65,20 @@ class ArmManager(
         if (source != ArmSource.SCHEDULED) {
             stateHolder.clearPendingCandidate()
             confirmOffScheduler.cancelConfirmation()
+            val settings = settingsRepository.getSettings()
+            if (settings.autoArmEnabled) {
+                manualOverride = true
+                appPreferences.manualOverrideActive = true
+            } else {
+                manualOverride = false
+                appPreferences.manualOverrideActive = false
+            }
         } else {
             confirmOffScheduler.cancelConfirmationTimerOnly()
         }
         serviceController.stopNightMonitorService()
         nightWindowScheduler.cancelWindowStart()
         nightWindowScheduler.cancelWindowEnd()
-        windowScheduler.cancelWindowEnd()
-        windowScheduler.cancelWindowStart()
-        if (source != ArmSource.SCHEDULED) manualOverride = true
         return Result.success(Unit)
     }
 
@@ -98,18 +105,20 @@ class ArmManager(
             windowScheduler.cancelWindowStart()
             windowScheduler.cancelWindowEnd()
             manualOverride = false
+            appPreferences.manualOverrideActive = false
         }
     }
 
     fun onScheduledEvent(type: String) {
-        if (!manualOverride) {
-            if (type == "start") {
-                scope.launch { arm(ArmSource.SCHEDULED) }
-            } else if (type == "end") {
-                scope.launch { disarm(ArmSource.SCHEDULED) }
-            }
-        } else {
-            manualOverride = false // reset override after scheduled event
+        val clearOverride = manualOverride
+        if (clearOverride) {
+            manualOverride = false
+            appPreferences.manualOverrideActive = false
+        }
+        if (type == "start") {
+            scope.launch { arm(ArmSource.SCHEDULED) }
+        } else if (type == "end") {
+            scope.launch { disarm(ArmSource.SCHEDULED) }
         }
     }
 

@@ -6,6 +6,7 @@ import android.content.Intent
 import android.os.PowerManager
 import com.sleep8.data.repository.SettingsRepository
 import com.sleep8.data.repository.SessionRepository
+import com.sleep8.data.preferences.AppPreferences
 import com.sleep8.domain.manager.ArmManager
 import com.sleep8.domain.manager.StateMachineManager
 import com.sleep8.domain.model.AppState
@@ -30,6 +31,7 @@ class BootReceiver : BroadcastReceiver() {
     @Inject lateinit var settingsRepository: SettingsRepository
     @Inject lateinit var stateHolder: StateHolder
     @Inject lateinit var serviceController: ServiceController
+    @Inject lateinit var appPreferences: AppPreferences
     @Inject lateinit var confirmOffScheduler: ConfirmOffScheduler
     @Inject lateinit var osAlarmCreator: OsAlarmCreator
     @Inject lateinit var windowScheduler: WindowScheduler
@@ -48,7 +50,9 @@ class BootReceiver : BroadcastReceiver() {
             val now = LocalDateTime.now()
             val autoStart = TimeUtils.parseLocalTime(settings.autoArmStart)
             val autoEnd = TimeUtils.parseLocalTime(settings.autoArmEnd)
+            val manualOverrideActive = appPreferences.manualOverrideActive
             val shouldBeArmedNow = settings.autoArmEnabled &&
+                !manualOverrideActive &&
                 TimeUtils.isInWindow(now.toLocalTime(), autoStart, autoEnd)
 
             if (settings.autoArmEnabled) {
@@ -71,11 +75,10 @@ class BootReceiver : BroadcastReceiver() {
                     return@launch
                 }
 
-                if (session != null) {
-                    sessionRepository.endSession(session.id, System.currentTimeMillis())
+                if (stateHolder.state.value != AppState.DISARMED || session != null) {
+                    session?.let { sessionRepository.endSession(it.id, System.currentTimeMillis()) }
+                    stateHolder.setActiveSession(null)
                 }
-                stateHolder.setActiveSession(null)
-                stateHolder.setArmed(false)
                 armManager.arm(com.sleep8.domain.model.ArmSource.SCHEDULED)
             }
 
