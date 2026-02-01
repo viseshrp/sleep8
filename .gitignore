@@ -1,4 +1,22 @@
-# Compiled class file
+.gradle/
+/build/
+**/build/
+.idea/
+*.iml
+local.properties
+/.DS_Store
+.DS_Store
+captures/
+.cxx/
+/gradle/
+/.gradle
+/.idea/
+/.classpath
+/.project
+/.settings/
+/.externalNativeBuild/
+*.keystore
+*.jks# Compiled class file
 *.class
 
 # Log file
