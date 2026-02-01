@@ -21,7 +21,7 @@ class WindowEndReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val pending = goAsync()
         scope.launch {
-            armManager.onScheduledEvent("end")
+            armManager.disarm()
             pending.finish()
         }
     }

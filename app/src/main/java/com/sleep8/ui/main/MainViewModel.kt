@@ -23,23 +23,14 @@ class MainViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(MainUiState())
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
-    private var lastAutoArmSyncMs: Long = 0L
 
     init {
         viewModelScope.launch {
             while (true) {
-                syncAutoArmIfNeeded()
                 updateState()
                 delay(1000)
             }
         }
-    }
-
-    private suspend fun syncAutoArmIfNeeded() {
-        val now = System.currentTimeMillis()
-        if (now - lastAutoArmSyncMs < 60_000L) return
-        lastAutoArmSyncMs = now
-        armManager.syncAutoArmStateNow()
     }
 
     private fun updateState() {
