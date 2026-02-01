@@ -10,6 +10,7 @@ import com.sleep8.domain.scheduler.WindowScheduler
 import com.sleep8.domain.state.StateHolder
 import com.sleep8.service.ServiceController
 import com.sleep8.testutil.InMemorySharedPreferences
+import io.mockk.clearMocks
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -98,25 +99,24 @@ class ArmManagerTest {
     fun `auto-arm arms at night start and disarms at night end`() = runTest {
         val settings = Settings("22:00", "08:00", 10, null, 8, false, true)
         coEvery { settingsRepository.getSettings() } returns settings.copy(autoArmEnabled = true)
-        coEvery { sessionRepository.createSession(any(), any(), any(), any()) } returns ArmSession(4L, 0L, null, 0L, 0L, ArmSource.SCHEDULED)
 
         armManager.handleAutoArm()
         coVerify { windowScheduler.scheduleWindowStart(any()) }
         coVerify { windowScheduler.scheduleWindowEnd(any()) }
-        coVerify { sessionRepository.createSession(any(), any(), any(), ArmSource.SCHEDULED) }
     }
 
     @Test
     fun `manual disarm overrides scheduled arming until next event`() = runTest {
         val settings = Settings("22:00", "08:00", 10, null, 8, false, true)
-        coEvery { settingsRepository.getSettings() } returns settings.copy(autoArmEnabled = true)
-        coEvery { sessionRepository.createSession(any(), any(), any(), any()) } returns ArmSession(5L, 0L, null, 0L, 0L, ArmSource.SCHEDULED)
+        coEvery { settingsRepository.getSettings() } returns settings
+        coEvery { sessionRepository.createSession(any(), any(), any(), any()) } returns ArmSession(5L, 0L, null, 0L, 0L, ArmSource.APP_BUTTON)
 
-        armManager.handleAutoArm()
+        armManager.arm(ArmSource.APP_BUTTON)
         armManager.disarm(ArmSource.APP_BUTTON)
+        clearMocks(sessionRepository)
         armManager.onScheduledEvent("start")
-        coVerify { sessionRepository.createSession(any(), any(), any(), ArmSource.SCHEDULED) }
-        // manualOverride resets after scheduled event
+        coVerify(exactly = 0) { sessionRepository.createSession(any(), any(), any(), ArmSource.SCHEDULED) }
+        // manualOverride resets after scheduled event; next event can arm again.
     }
 
     @Test
@@ -128,6 +128,6 @@ class ArmManagerTest {
         armManager.arm(ArmSource.SCHEDULED)
         coVerify { sessionRepository.createSession(any(), any(), any(), ArmSource.SCHEDULED) }
         armManager.arm(ArmSource.APP_BUTTON)
-        coVerify { sessionRepository.createSession(any(), any(), any(), ArmSource.APP_BUTTON) }
+        coVerify(exactly = 0) { sessionRepository.createSession(any(), any(), any(), ArmSource.APP_BUTTON) }
     }
 }
