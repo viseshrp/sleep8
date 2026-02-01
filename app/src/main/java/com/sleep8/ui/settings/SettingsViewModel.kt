@@ -8,6 +8,7 @@ import com.sleep8.data.repository.SettingsRepository
 import com.sleep8.domain.model.AppState
 import com.sleep8.domain.state.StateHolder
 import com.sleep8.domain.model.Settings
+import com.sleep8.service.NightMonitorService
 import com.sleep8.util.PermissionUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -33,8 +34,10 @@ class SettingsViewModel @Inject constructor(
                 nightStart = settings.nightStart,
                 nightEnd = settings.nightEnd,
                 alarmOffsetHours = settings.alarmOffsetHours.toString(),
+                confirmOffMinutes = settings.confirmOffMinutes.toString(),
                 snoozeEnabled = settings.snoozeMinutes != null,
-                snoozeMinutes = settings.snoozeMinutes?.toString().orEmpty()
+                snoozeMinutes = settings.snoozeMinutes?.toString() ?: "5",
+                armedDefault = settings.armedDefault
             )
         }
     }
@@ -42,10 +45,12 @@ class SettingsViewModel @Inject constructor(
     fun refreshReliability(context: Context) {
         val exactAllowed = PermissionUtils.canScheduleExactAlarms(context)
         val batteryIgnored = PermissionUtils.isIgnoringBatteryOptimizations(context)
+        val isServiceRunning = PermissionUtils.isServiceRunning(context, NightMonitorService::class.java)
+        
         _uiState.value = _uiState.value.copy(
             exactAlarmAllowed = exactAllowed,
             batteryOptimizationsIgnored = batteryIgnored,
-            foregroundServiceActive = stateHolder.state.value != AppState.DISARMED
+            foregroundServiceActive = isServiceRunning
         )
     }
 
@@ -64,8 +69,18 @@ class SettingsViewModel @Inject constructor(
         persist()
     }
 
+    fun updateConfirmOffMinutes(value: String) {
+        _uiState.value = _uiState.value.copy(confirmOffMinutes = value)
+        persist()
+    }
+
     fun updateSnooze(enabled: Boolean, minutes: String) {
         _uiState.value = _uiState.value.copy(snoozeEnabled = enabled, snoozeMinutes = minutes)
+        persist()
+    }
+
+    fun updateArmedDefault(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(armedDefault = enabled)
         persist()
     }
 
@@ -74,14 +89,14 @@ class SettingsViewModel @Inject constructor(
             val state = _uiState.value
             val snooze = state.snoozeMinutes.toIntOrNull()
             val offset = state.alarmOffsetHours.toIntOrNull() ?: 8
+            val confirmOff = state.confirmOffMinutes.toIntOrNull() ?: 10
             val settings = Settings(
                 nightStart = state.nightStart,
                 nightEnd = state.nightEnd,
-                confirmOffMinutes = 10,
+                confirmOffMinutes = confirmOff,
                 snoozeMinutes = if (state.snoozeEnabled) snooze else null,
                 alarmOffsetHours = offset,
-                armedDefault = false,
-                offlineOnly = true
+                armedDefault = state.armedDefault
             )
             settingsRepository.updateSettings(settings)
         }

@@ -6,6 +6,5 @@ data class Settings(
     val confirmOffMinutes: Int,
     val snoozeMinutes: Int?,
     val alarmOffsetHours: Int,
-    val armedDefault: Boolean,
-    val offlineOnly: Boolean
+    val armedDefault: Boolean
 )

@@ -7,36 +7,40 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
-import androidx.compose.material3.Divider
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import com.sleep8.ui.main.MainActivity
 import com.sleep8.util.PermissionUtils
 import com.sleep8.util.TimeUtils
 import dagger.hilt.android.AndroidEntryPoint
@@ -59,6 +63,7 @@ class SettingsActivity : ComponentActivity() {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SettingsScreen(
     viewModel: SettingsViewModel,
@@ -66,104 +71,160 @@ private fun SettingsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    val scrollState = rememberScrollState()
 
     LaunchedEffect(Unit) {
         viewModel.refreshReliability(context)
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.Top,
-        horizontalAlignment = Alignment.Start
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(bottom = 16.dp)
-        ) {
-            IconButton(onClick = onBack) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back"
-                )
-            }
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(text = "Settings", style = MaterialTheme.typography.headlineMedium)
-        }
-
-        TimePickerRow(
-            label = "Night start",
-            value = uiState.nightStart,
-            onValueSelected = viewModel::updateNightStart
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        TimePickerRow(
-            label = "Night end",
-            value = uiState.nightEnd,
-            onValueSelected = viewModel::updateNightEnd
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-        OutlinedTextField(
-            value = uiState.alarmOffsetHours,
-            onValueChange = viewModel::updateAlarmOffset,
-            label = { Text("Alarm lead time (hours)") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(text = "Snooze")
-        RowWithSwitch(
-            label = "Enable snooze",
-            checked = uiState.snoozeEnabled,
-            onCheckedChange = { viewModel.updateSnooze(it, uiState.snoozeMinutes) }
-        )
-        if (uiState.snoozeEnabled) {
-            OutlinedTextField(
-                value = uiState.snoozeMinutes,
-                onValueChange = { viewModel.updateSnooze(true, it) },
-                label = { Text("Snooze minutes") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Settings") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back"
+                        )
+                    }
+                }
             )
         }
-
-        Spacer(modifier = Modifier.height(16.dp))
-        Divider()
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(text = "Reliability checklist", style = MaterialTheme.typography.titleMedium)
-        Spacer(modifier = Modifier.height(8.dp))
-
-        ChecklistRow(
-            label = "Exact alarms",
-            ok = uiState.exactAlarmAllowed,
-            actionText = "Grant",
-            onAction = {
-                context.startActivity(PermissionUtils.exactAlarmIntent(context))
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .verticalScroll(scrollState)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp)
+        ) {
+            // Section: Schedule
+            SettingsSection(title = "Schedule") {
+                TimePickerRow(
+                    label = "Night start",
+                    value = uiState.nightStart,
+                    onValueSelected = viewModel::updateNightStart
+                )
+                TimePickerRow(
+                    label = "Night end",
+                    value = uiState.nightEnd,
+                    onValueSelected = viewModel::updateNightEnd
+                )
             }
-        )
 
-        ChecklistRow(
-            label = "Battery optimization",
-            ok = uiState.batteryOptimizationsIgnored,
-            actionText = "Request exclusion",
-            onAction = {
-                context.startActivity(PermissionUtils.batteryOptimizationIntent(context))
-                viewModel.setBatteryOptAck(true)
+            // Section: Alarm Behavior
+            SettingsSection(title = "Alarm Behavior") {
+                OutlinedTextField(
+                    value = uiState.alarmOffsetHours,
+                    onValueChange = viewModel::updateAlarmOffset,
+                    label = { Text("Alarm lead time (hours)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    supportingText = { Text("How long before 'Night end' to start checking screen status") }
+                )
+
+                OutlinedTextField(
+                    value = uiState.confirmOffMinutes,
+                    onValueChange = viewModel::updateConfirmOffMinutes,
+                    label = { Text("Confirm off window (minutes)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    supportingText = { Text("Time allowed to confirm you're awake") }
+                )
+
+                Column {
+                    RowWithSwitch(
+                        label = "Enable snooze",
+                        checked = uiState.snoozeEnabled,
+                        onCheckedChange = { viewModel.updateSnooze(it, uiState.snoozeMinutes) }
+                    )
+                    if (uiState.snoozeEnabled) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = uiState.snoozeMinutes,
+                            onValueChange = { viewModel.updateSnooze(true, it) },
+                            label = { Text("Snooze duration (minutes)") },
+                            modifier = Modifier.fillMaxWidth(),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                        )
+                    }
+                }
             }
-        )
 
-        ChecklistRow(
-            label = "Foreground service",
-            ok = uiState.foregroundServiceActive,
-            actionText = "Open app",
-            onAction = { context.startActivity(android.content.Intent(context, MainActivity::class.java)) }
-        )
+            // Section: Defaults
+            SettingsSection(title = "App Behavior") {
+                RowWithSwitch(
+                    label = "Armed by default",
+                    checked = uiState.armedDefault,
+                    onCheckedChange = viewModel::updateArmedDefault
+                )
+                InfoRow(
+                    label = "Offline only mode",
+                    value = "Enabled",
+                    description = "Privacy-first: All processing happens locally. No data ever leaves your device."
+                )
+            }
 
-        Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = { viewModel.refreshReliability(context) }) {
-            Text(text = "Refresh Status")
+            // Section: Reliability
+            SettingsSection(title = "System Reliability") {
+                ChecklistRow(
+                    label = "Exact alarms",
+                    ok = uiState.exactAlarmAllowed,
+                    actionText = "Grant",
+                    description = "Required to trigger alarms precisely at the scheduled time.",
+                    onAction = {
+                        context.startActivity(PermissionUtils.exactAlarmIntent(context))
+                    }
+                )
+
+                ChecklistRow(
+                    label = "Battery optimization",
+                    ok = uiState.batteryOptimizationsIgnored,
+                    actionText = "Request exclusion",
+                    description = "Prevents the system from killing the app during the night.",
+                    onAction = {
+                        context.startActivity(PermissionUtils.batteryOptimizationIntent(context))
+                        viewModel.setBatteryOptAck(true)
+                    }
+                )
+
+                ChecklistRow(
+                    label = "Foreground service",
+                    ok = uiState.foregroundServiceActive,
+                    actionText = "Arm now",
+                    description = "Active when the app is monitoring your sleep. You must 'Arm' the app from the home screen to start the service.",
+                    onAction = onBack
+                )
+
+                Button(
+                    onClick = { viewModel.refreshReliability(context) },
+                    modifier = Modifier.align(Alignment.End)
+                ) {
+                    Text(text = "Refresh Status")
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(32.dp))
         }
+    }
+}
+
+@Composable
+private fun SettingsSection(
+    title: String,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.Bold
+        )
+        HorizontalDivider()
+        content()
     }
 }
 
@@ -175,23 +236,28 @@ private fun TimePickerRow(
 ) {
     val context = LocalContext.current
     val time = remember(value) { TimeUtils.parseLocalTime(value) }
-    var display by remember(value) { mutableStateOf(value) }
 
-    Button(onClick = {
-        val dialog = TimePickerDialog(
-            context,
-            { _, hour, minute ->
-                val formatted = String.format("%02d:%02d", hour, minute)
-                display = formatted
-                onValueSelected(formatted)
-            },
-            time.hour,
-            time.minute,
-            true
-        )
-        dialog.show()
-    }) {
-        Text(text = "$label: $display")
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(text = label, style = MaterialTheme.typography.bodyLarge)
+        Button(onClick = {
+            val dialog = TimePickerDialog(
+                context,
+                { _, hour, minute ->
+                    val formatted = String.format("%02d:%02d", hour, minute)
+                    onValueSelected(formatted)
+                },
+                time.hour,
+                time.minute,
+                true
+            )
+            dialog.show()
+        }) {
+            Text(text = value)
+        }
     }
 }
 
@@ -201,12 +267,41 @@ private fun RowWithSwitch(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit
 ) {
-    androidx.compose.foundation.layout.Row(
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = label)
-        Spacer(modifier = Modifier.width(12.dp))
+        Text(text = label, style = MaterialTheme.typography.bodyLarge)
         Switch(checked = checked, onCheckedChange = onCheckedChange)
+    }
+}
+
+@Composable
+private fun InfoRow(
+    label: String,
+    value: String,
+    description: String
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = label, style = MaterialTheme.typography.bodyLarge)
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.Bold
+        )
     }
 }
 
@@ -215,13 +310,28 @@ private fun ChecklistRow(
     label: String,
     ok: Boolean,
     actionText: String,
+    description: String,
     onAction: () -> Unit
 ) {
-    androidx.compose.foundation.layout.Row(
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = "$label: ${if (ok) "OK" else "Needs attention"}")
-        Spacer(modifier = Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = label, style = MaterialTheme.typography.bodyLarge)
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                text = if (ok) "Status: OK" else "Status: Inactive",
+                style = MaterialTheme.typography.labelSmall,
+                color = if (ok) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.Bold
+            )
+        }
         if (!ok) {
             Button(onClick = onAction) {
                 Text(text = actionText)
