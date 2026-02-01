@@ -120,8 +120,8 @@ class ArmManagerTest {
         armManager.disarm(ArmSource.APP_BUTTON)
         clearMocks(sessionRepository)
         armManager.onScheduledEvent("start")
-        coVerify(exactly = 0) { sessionRepository.createSession(any(), any(), any(), ArmSource.SCHEDULED) }
-        // manualOverride resets after scheduled event; next event can arm again.
+        coVerify { sessionRepository.createSession(any(), any(), any(), ArmSource.SCHEDULED) }
+        // manualOverride resets at the scheduled event and auto-arm resumes.
     }
 
     @Test
