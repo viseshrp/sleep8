@@ -38,16 +38,18 @@ class OsAlarmCreator(
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
 
-        val resolves = intent.resolveActivity(context.packageManager) != null
+        var resolves = intent.resolveActivity(context.packageManager) != null
         val uiRequired: Boolean? = null
 
         if (resolves) {
             try {
                 context.startActivity(intent)
             } catch (_: Exception) {
-                // If startActivity fails, treat as unresolved
+                resolves = false
             }
-        } else if (!appPreferences.clockUiWarningShown) {
+        }
+
+        if (!resolves && !appPreferences.clockUiWarningShown) {
             appPreferences.clockUiWarningShown = true
             notificationHelper.showWarning(context.getString(R.string.clock_unavailable))
         }
