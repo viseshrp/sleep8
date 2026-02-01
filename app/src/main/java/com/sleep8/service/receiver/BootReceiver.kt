@@ -14,7 +14,6 @@ import com.sleep8.domain.scheduler.OsAlarmCreator
 import com.sleep8.domain.scheduler.WindowScheduler
 import com.sleep8.domain.state.StateHolder
 import com.sleep8.service.ServiceController
-import com.sleep8.util.TimeUtils
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -44,20 +43,17 @@ class BootReceiver : BroadcastReceiver() {
 
         val pendingResult = goAsync()
         scope.launch {
+            armManager.handleAutoArm()
             val session = sessionRepository.getActiveSession()
             if (session == null) {
-                armManager.handleAutoArm()
                 pendingResult.finish()
                 return@launch
             }
 
             val settings = settingsRepository.getSettings()
             val now = LocalDateTime.now()
-            val start = TimeUtils.parseLocalTime(settings.nightStart)
-            val end = TimeUtils.parseLocalTime(settings.nightEnd)
-            val inWindow = TimeUtils.isInWindow(now.toLocalTime(), start, end)
 
-            if (!inWindow || now.atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli() > session.windowEndTs) {
+            if (now.atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli() > session.windowEndTs) {
                 sessionRepository.endSession(session.id, System.currentTimeMillis())
                 stateHolder.setActiveSession(null)
                 stateHolder.setState(AppState.DISARMED)

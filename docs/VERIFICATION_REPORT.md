@@ -13,7 +13,7 @@ Scope: Full audit against docs/SPEC.md (authoritative), docs/ARCHITECTURE.md, do
 | 3. Screen remains OFF 10 min: create OS alarm at screen_off + 8h | `ConfirmationAlarmReceiver.onReceive()` calls `StateMachineManager.onConfirmationTimerExpired()`; `OsAlarmCreator.createAlarm()` uses `TimeUtils.calculateAlarmTime()` | PASS |
 | 4. Multiple SCREEN_OFF before confirm: latest wins | `StateMachineManager.onScreenOff()` overwrites pending and reschedules confirmation | PASS |
 | 5. Multiple OS alarms allowed (no deletion) | `OsAlarmCreator.createAlarm()` always inserts new record; no deletion logic | PASS |
-| 6. Reboot restore: armed state + pending confirm timer + immediate alarm if deadline passed & screen OFF | `app/src/main/java/com/sleep8/service/receiver/BootReceiver.kt` restores session, checks window, schedules or creates alarm | PARTIAL (see notes) |
+| 6. Reboot restore: armed state + pending confirm timer + immediate alarm if deadline passed & screen OFF | `app/src/main/java/com/sleep8/service/receiver/BootReceiver.kt` restores session, schedules auto-arm boundaries, schedules or creates alarm | PASS |
 | 7. Persist all events and alarm records in DB | `SessionRepository.insertScreenEvent()`, `AlarmRepository.insertRecord()` | PASS |
 | 8. No network traffic | No INTERNET permission in `app/src/main/AndroidManifest.xml`; no networking code | PASS |
 
@@ -44,8 +44,7 @@ Scope: Full audit against docs/SPEC.md (authoritative), docs/ARCHITECTURE.md, do
 ## Persistence & Reboot
 
 - State survives process death: `StateHolder` mirrors to `AppPreferences` → PASS
-- Boot restore per spec: `BootReceiver` restores session and pending confirmations → PARTIAL
-  - Missing: if pending screen-off exists and deadline already passed, code creates alarm (PASS), but it does not reschedule auto-arm window start/end for future windows when session is restored or when no session exists (auto-arm is handled elsewhere). Spec emphasizes restore of monitoring when armed; current boot path only schedules window end for active session.
+- Boot restore per spec: `BootReceiver` restores session and pending confirmations → PASS
 
 ## Tests
 
@@ -63,8 +62,7 @@ Scope: Full audit against docs/SPEC.md (authoritative), docs/ARCHITECTURE.md, do
 ## Punch List (Prioritized)
 
 ### P0 — Correctness / Spec Violations
-1. Boot restore should also restore scheduling for future auto-arm boundaries when an active session exists (spec: “restore state and continue/restore scheduled alarms”).
-   - Minimal fix: in `app/src/main/java/com/sleep8/service/receiver/BootReceiver.kt`, after restoring active session, call `windowScheduler.scheduleWindowStart()` for the next auto-arm window boundary (or re-run the same logic as `ArmManager.handleAutoArm()` when auto-arm enabled). Keep behavior limited to spec; do not add new features.
+None observed against current SPEC.md.
 
 ### P1 — Reliability Gaps
 1. Foreground service status indicator removed from Settings UI; no visibility into service health from the checklist. (Spec mentions reliability checklist; current UI still includes exact alarms and battery optimization, but not foreground service.)

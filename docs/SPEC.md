@@ -295,3 +295,20 @@ Transitions:
 - Manual arming/disarming (via button/tile) acts as an override until the next scheduled event.
 - ArmManager supports ArmSource types: SCHEDULED, APP_BUTTON, QUICK_TILE, etc.
 - WindowScheduler replaces WindowEndScheduler and handles both triggers.
+
+## Auto-Arm (new feature)
+
+### Definitions
+- Night Window: a filter. Screen-off triggers are processed only if current time is within the Night Window AND the app is armed.
+- Auto-Arm Schedule: a schedule that toggles the armed state automatically at configured start/end times.
+- Armed Session: a specific interval where `armed == true`, created either by manual arming (button/tile) or by auto-arm.
+
+### Precedence rules
+- The app processes screen-off events only when `armed == true` AND current time is within the Night Window.
+- Auto-Arm only changes `armed` state. It does not override Night Window filtering.
+- Manual disarm always wins immediately (turns off monitoring and cancels pending confirmation).
+
+### Boot restore requirements (auto-arm)
+- If auto-arm is enabled, the app must restore the next scheduled auto-arm and auto-disarm boundaries after reboot.
+- If the device reboots while the app should be armed (based on auto-arm schedule), the app must resume monitoring (foreground service + runtime receiver) if current time is also within the Night Window.
+- The app must not start monitoring solely because Night Window begins; monitoring starts only if `armed == true` via manual arming or auto-arm.
