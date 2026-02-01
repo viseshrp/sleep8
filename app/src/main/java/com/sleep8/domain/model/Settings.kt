@@ -7,5 +7,7 @@ data class Settings(
     val snoozeMinutes: Int?,
     val alarmOffsetHours: Int,
     val armedDefault: Boolean,
-    val autoArmEnabled: Boolean = false // new property for auto-arm
+    val autoArmEnabled: Boolean = false,
+    val autoArmStart: String = nightStart,
+    val autoArmEnd: String = nightEnd
 )

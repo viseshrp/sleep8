@@ -49,7 +49,15 @@ class OsAlarmCreatorTest {
 
     @Test
     fun `create alarm sets correct hour and minute`() = runTest {
-        coEvery { settingsRepository.getSettings() } returns Settings("22:00", "08:00", 10, null, false, true)
+        coEvery { settingsRepository.getSettings() } returns Settings(
+            nightStart = "22:00",
+            nightEnd = "08:00",
+            confirmOffMinutes = 10,
+            snoozeMinutes = null,
+            alarmOffsetHours = 8,
+            armedDefault = false,
+            autoArmEnabled = true
+        )
         every { packageManager.resolveActivity(any(), any()) } returns ResolveInfo()
 
         val screenOffTime = Instant.parse("2024-01-15T23:30:00Z").toEpochMilli()
@@ -65,7 +73,15 @@ class OsAlarmCreatorTest {
 
     @Test
     fun `create alarm includes snooze when configured`() = runTest {
-        coEvery { settingsRepository.getSettings() } returns Settings("22:00", "08:00", 10, 10, false, true)
+        coEvery { settingsRepository.getSettings() } returns Settings(
+            nightStart = "22:00",
+            nightEnd = "08:00",
+            confirmOffMinutes = 10,
+            snoozeMinutes = 10,
+            alarmOffsetHours = 8,
+            armedDefault = false,
+            autoArmEnabled = true
+        )
         every { packageManager.resolveActivity(any(), any()) } returns ResolveInfo()
 
         creator.createAlarm(Instant.parse("2024-01-15T23:30:00Z").toEpochMilli())
@@ -79,7 +95,15 @@ class OsAlarmCreatorTest {
 
     @Test
     fun `create alarm records success in database`() = runTest {
-        coEvery { settingsRepository.getSettings() } returns Settings("22:00", "08:00", 10, null, false, true)
+        coEvery { settingsRepository.getSettings() } returns Settings(
+            nightStart = "22:00",
+            nightEnd = "08:00",
+            confirmOffMinutes = 10,
+            snoozeMinutes = null,
+            alarmOffsetHours = 8,
+            armedDefault = false,
+            autoArmEnabled = true
+        )
         every { packageManager.resolveActivity(any(), any()) } returns ResolveInfo()
 
         val result = creator.createAlarm(Instant.parse("2024-01-15T23:30:00Z").toEpochMilli())
@@ -90,7 +114,15 @@ class OsAlarmCreatorTest {
 
     @Test
     fun `create alarm handles non-resolving intent`() = runTest {
-        coEvery { settingsRepository.getSettings() } returns Settings("22:00", "08:00", 10, null, false, true)
+        coEvery { settingsRepository.getSettings() } returns Settings(
+            nightStart = "22:00",
+            nightEnd = "08:00",
+            confirmOffMinutes = 10,
+            snoozeMinutes = null,
+            alarmOffsetHours = 8,
+            armedDefault = false,
+            autoArmEnabled = true
+        )
         every { packageManager.resolveActivity(any(), any()) } returns null
 
         val result = creator.createAlarm(Instant.parse("2024-01-15T23:30:00Z").toEpochMilli()) as AlarmCreationResult.Success
@@ -99,7 +131,15 @@ class OsAlarmCreatorTest {
 
     @Test
     fun `create alarm schedules backstop`() = runTest {
-        coEvery { settingsRepository.getSettings() } returns Settings("22:00", "08:00", 10, null, false, true)
+        coEvery { settingsRepository.getSettings() } returns Settings(
+            nightStart = "22:00",
+            nightEnd = "08:00",
+            confirmOffMinutes = 10,
+            snoozeMinutes = null,
+            alarmOffsetHours = 8,
+            armedDefault = false,
+            autoArmEnabled = true
+        )
         every { packageManager.resolveActivity(any(), any()) } returns ResolveInfo()
 
         creator.createAlarm(Instant.parse("2024-01-15T23:30:00Z").toEpochMilli())

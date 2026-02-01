@@ -45,7 +45,7 @@ Scope: Full audit against docs/SPEC.md (authoritative), docs/ARCHITECTURE.md, do
 
 - State survives process death: `StateHolder` mirrors to `AppPreferences` → PASS
 - Boot restore per spec: `BootReceiver` restores session and pending confirmations → PARTIAL
-  - Missing: if pending screen-off exists and deadline already passed, code creates alarm (PASS), but it does not reschedule window start for the current/next window when session is restored or when no session exists (auto-arm is handled elsewhere). Spec emphasizes restore of monitoring when armed; current boot path only schedules window end for active session. Window start scheduling for future windows is not restored here.
+  - Missing: if pending screen-off exists and deadline already passed, code creates alarm (PASS), but it does not reschedule auto-arm window start/end for future windows when session is restored or when no session exists (auto-arm is handled elsewhere). Spec emphasizes restore of monitoring when armed; current boot path only schedules window end for active session.
 
 ## Tests
 
@@ -63,8 +63,8 @@ Scope: Full audit against docs/SPEC.md (authoritative), docs/ARCHITECTURE.md, do
 ## Punch List (Prioritized)
 
 ### P0 — Correctness / Spec Violations
-1. Boot restore should also restore scheduling for future window boundaries when an active session exists (spec: “restore state and continue/restore scheduled alarms”).
-   - Minimal fix: in `app/src/main/java/com/sleep8/service/receiver/BootReceiver.kt`, after restoring active session, call `windowScheduler.scheduleWindowStart()` for the next window boundary (or re-run the same logic as `ArmManager.handleAutoArm()` when auto-arm enabled). Keep behavior limited to spec; do not add new features.
+1. Boot restore should also restore scheduling for future auto-arm boundaries when an active session exists (spec: “restore state and continue/restore scheduled alarms”).
+   - Minimal fix: in `app/src/main/java/com/sleep8/service/receiver/BootReceiver.kt`, after restoring active session, call `windowScheduler.scheduleWindowStart()` for the next auto-arm window boundary (or re-run the same logic as `ArmManager.handleAutoArm()` when auto-arm enabled). Keep behavior limited to spec; do not add new features.
 
 ### P1 — Reliability Gaps
 1. Foreground service status indicator removed from Settings UI; no visibility into service health from the checklist. (Spec mentions reliability checklist; current UI still includes exact alarms and battery optimization, but not foreground service.)

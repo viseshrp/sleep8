@@ -35,6 +35,7 @@ Features
 - Foreground `NightMonitorService` while armed inside the night window
 - Detect `SCREEN_OFF` events and run a confirmation timer (default 10 minutes)
 - Create an OS Clock alarm at `screen_off_time + 8 hours` when confirmation succeeds
+- Auto-arm schedule with its own start/end times (separate from the night window)
 - Internal backstop exact alarm for resilience and telemetry
 - Persistent audit log of arm sessions, screen events, and alarm records (Room DB)
 

@@ -67,13 +67,13 @@ class ArmManager(
     suspend fun handleAutoArm() {
         val settings = settingsRepository.getSettings()
         if (!settings.autoArmEnabled) return
-        val start = TimeUtils.parseLocalTime(settings.nightStart)
-        val end = TimeUtils.parseLocalTime(settings.nightEnd)
+        val start = TimeUtils.parseLocalTime(settings.autoArmStart)
+        val end = TimeUtils.parseLocalTime(settings.autoArmEnd)
         val now = LocalDateTime.now()
         val window = TimeUtils.calculateNextWindow(now, start, end)
         windowScheduler.scheduleWindowStart(window.startTs)
         windowScheduler.scheduleWindowEnd(window.endTs)
-        // If currently within the night window, arm immediately
+        // If currently within the auto-arm window, arm immediately
         if (TimeUtils.isInWindow(now.toLocalTime(), start, end)) {
             arm(ArmSource.SCHEDULED)
             manualOverride = false

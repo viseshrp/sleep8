@@ -46,6 +46,7 @@ Why:
 ### 5.1 First-run setup
 - User sets:
   - Night window start/end (e.g., 22:00–08:00).
+  - Auto-arm schedule start/end (separate from night window; defaults to night window times).
   - “Alarm lead time” is fixed: **+8 hours** (not user-editable in v1 unless explicitly desired later).
   - Snooze option (default OFF or a chosen minutes value).
 - App shows a “Reliability checklist”:
@@ -155,6 +156,9 @@ Tables:
 - `id` (singleton)
 - `night_start` (HH:MM)
 - `night_end` (HH:MM)
+- `auto_arm_start` (HH:MM)
+- `auto_arm_end` (HH:MM)
+- `auto_arm_enabled` (bool, default false)
 - `confirm_off_minutes` (default 10)
 - `snooze_minutes` (nullable / default null)
 - `armed_default` (bool, default false)
@@ -286,7 +290,8 @@ Transitions:
 - Whether +8h should ever be configurable in settings (currently fixed).
 
 ## Auto-Arming & Scheduling (2026)
-- If "Auto-arm" is enabled, the app uses WindowScheduler to arm at night start and disarm at night end.
+- If "Auto-arm" is enabled, the app uses WindowScheduler to arm at the auto-arm start time and disarm at the auto-arm end time.
+- Auto-arm schedule is configurable separately from the night window.
 - Manual arming/disarming (via button/tile) acts as an override until the next scheduled event.
 - ArmManager supports ArmSource types: SCHEDULED, APP_BUTTON, QUICK_TILE, etc.
 - WindowScheduler replaces WindowEndScheduler and handles both triggers.

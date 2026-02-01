@@ -22,7 +22,7 @@
 - Focus on P0/P1 cases first, especially screen on/off flows, reboot recovery, and OEM clock app behavior.
 
 ## New Features (2026)
-- Auto-arm schedule: Enable in settings to automatically arm/disarm at night window boundaries.
+- Auto-arm schedule: Enable in settings to automatically arm/disarm at auto-arm schedule boundaries (separate from night window).
 - WindowScheduler: Replaces WindowEndScheduler, handles both start and end triggers.
 - Manual arming/disarming acts as an override until the next scheduled event.
 - ArmManager now supports multiple ArmSource types (SCHEDULED, APP_BUTTON, QUICK_TILE).

@@ -215,18 +215,18 @@ These cases are manual because they require physical device interaction, OEM clo
 
 ## Auto-Arming & Scheduling
 
-### TC-020: Auto-arm at Night Start (P0)
-- Preconditions: Auto-arm enabled in settings, current time before night start
-- Steps: Wait until night start
+### TC-020: Auto-arm at Auto-arm Start (P0)
+- Preconditions: Auto-arm enabled in settings, current time before auto-arm start
+- Steps: Wait until auto-arm start
 - Expected: App arms automatically; notification appears; tile active
 
-### TC-021: Auto-disarm at Night End (P0)
-- Preconditions: Auto-arm enabled, currently armed, current time before night end
-- Steps: Wait until night end
+### TC-021: Auto-disarm at Auto-arm End (P0)
+- Preconditions: Auto-arm enabled, currently armed, current time before auto-arm end
+- Steps: Wait until auto-arm end
 - Expected: App disarms automatically; notification removed; tile inactive
 
-### TC-022: Enable Auto-arm During Night Window (P0)
-- Preconditions: Auto-arm disabled, current time within night window
+### TC-022: Enable Auto-arm During Auto-arm Window (P0)
+- Preconditions: Auto-arm disabled, current time within auto-arm window
 - Steps: Enable auto-arm in settings
 - Expected: App arms immediately; notification appears; tile active
 

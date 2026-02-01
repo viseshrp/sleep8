@@ -50,7 +50,15 @@ class StateMachineManagerTest {
     private suspend fun setupSession() {
         stateHolder.setActiveSession(ArmSession(1L, 0L, null, 0L, 0L, ArmSource.APP_BUTTON))
         stateHolder.setState(AppState.ARMED_IDLE)
-        coEvery { settingsRepository.getSettings() } returns Settings("22:00", "08:00", 10, null, false, true)
+        coEvery { settingsRepository.getSettings() } returns Settings(
+            nightStart = "22:00",
+            nightEnd = "08:00",
+            confirmOffMinutes = 10,
+            snoozeMinutes = null,
+            alarmOffsetHours = 8,
+            armedDefault = false,
+            autoArmEnabled = true
+        )
     }
 
     @Test

@@ -355,14 +355,14 @@ Query DB: Active session with armed_at != null, disarmed_at == null
 │ id (PK)         │       │ session_id (PK)     │◄──┐   │ event_id (PK)       │
 │ night_start     │       │ armed_at            │   │   │ session_id (FK)     │──┐
 │ night_end       │       │ disarmed_at         │   │   │ type                │  │
-│ confirm_minutes │       │ window_start_ts     │   │   │ ts                  │  │
-│ snooze_minutes  │       │ window_end_ts       │   │   └─────────────────────┘  │
-│ armed_default   │       │ source              │   │                            │
-│ offline_only    │       └─────────────────────┘   │   ┌─────────────────────┐  │
-└─────────────────┘                                 │   │   alarm_records     │  │
-                                                    │   ├─────────────────────┤  │
-                                                    └───│ session_id (FK)     │◄─┘
-                                                        │ alarm_id (PK)       │
+│ auto_arm_start  │       │ window_start_ts     │   │   │ ts                  │  │
+│ auto_arm_end    │       │ window_end_ts       │   │   └─────────────────────┘  │
+│ auto_arm_enabled│       │ source              │   │                            │
+│ confirm_minutes │       └─────────────────────┘   │   ┌─────────────────────┐  │
+│ snooze_minutes  │                                 │   │   alarm_records     │  │
+│ armed_default   │                                 │   ├─────────────────────┤  │
+│ offline_only    │                                 └───│ session_id (FK)     │◄─┘
+└─────────────────┘                                     │ alarm_id (PK)       │
                                                         │ screen_off_ts       │
                                                         │ confirmed_at        │
                                                         │ scheduled_alarm_ts  │
@@ -372,6 +372,7 @@ Query DB: Active session with armed_at != null, disarmed_at == null
                                                         └─────────────────────┘
 ```
 
+
 ### 6.2 Table Definitions
 
 ```sql
@@ -380,6 +381,9 @@ CREATE TABLE settings (
     id INTEGER PRIMARY KEY DEFAULT 1,
     night_start TEXT NOT NULL DEFAULT '22:00',      -- HH:mm
     night_end TEXT NOT NULL DEFAULT '08:00',        -- HH:mm
+    auto_arm_start TEXT NOT NULL DEFAULT '22:00',   -- HH:mm
+    auto_arm_end TEXT NOT NULL DEFAULT '08:00',     -- HH:mm
+    auto_arm_enabled INTEGER NOT NULL DEFAULT 0,    -- boolean
     confirm_off_minutes INTEGER NOT NULL DEFAULT 10,
     snooze_minutes INTEGER,                         -- nullable = disabled
     armed_default INTEGER NOT NULL DEFAULT 0,       -- boolean
@@ -626,8 +630,8 @@ alarmManager.setExactAndAllowWhileIdle(
 
 ## Auto-Arming Schedule & Manual Override
 
-- The app uses a WindowScheduler to automatically arm at "Night start" and disarm at "Night end" if the "Auto-arm" setting is enabled.
+- The app uses a WindowScheduler to automatically arm at the Auto-arm start time and disarm at the Auto-arm end time if the "Auto-arm" setting is enabled.
+- Auto-arm schedule uses its own start/end times (separate from the night window).
 - Manual arming/disarming (via app button or tile) acts as an override until the next scheduled event.
 - ArmManager now supports multiple ArmSource types (SCHEDULED, APP_BUTTON, QUICK_TILE, etc.) and tracks manual overrides.
-- WindowScheduler replaces WindowEndScheduler and handles both start and end triggers for the night window.
-
+- WindowScheduler replaces WindowEndScheduler and handles both start and end triggers for the auto-arm schedule.

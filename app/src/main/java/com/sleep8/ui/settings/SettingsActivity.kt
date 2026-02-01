@@ -100,8 +100,8 @@ private fun SettingsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            // Section: Schedule
-            SettingsSection(title = "Schedule") {
+            // Section: Night Window
+            SettingsSection(title = "Night Window") {
                 TimePickerRow(
                     label = "Night start",
                     value = uiState.nightStart,
@@ -112,10 +112,24 @@ private fun SettingsScreen(
                     value = uiState.nightEnd,
                     onValueSelected = viewModel::updateNightEnd
                 )
+            }
+
+            // Section: Auto-arm Schedule
+            SettingsSection(title = "Auto-arm Schedule") {
                 RowWithSwitch(
-                    label = "Auto-arm schedule",
+                    label = "Enable auto-arm",
                     checked = uiState.autoArmEnabled,
                     onCheckedChange = viewModel::updateAutoArmEnabled
+                )
+                TimePickerRow(
+                    label = "Auto-arm start",
+                    value = uiState.autoArmStart,
+                    onValueSelected = viewModel::updateAutoArmStart
+                )
+                TimePickerRow(
+                    label = "Auto-arm end",
+                    value = uiState.autoArmEnd,
+                    onValueSelected = viewModel::updateAutoArmEnd
                 )
             }
 

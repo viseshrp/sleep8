@@ -46,7 +46,9 @@ private fun SettingsEntity.toDomain(): Settings {
         snoozeMinutes = snoozeMinutes,
         alarmOffsetHours = alarmOffsetHours,
         armedDefault = armedDefault,
-        autoArmEnabled = autoArmEnabled
+        autoArmEnabled = autoArmEnabled,
+        autoArmStart = autoArmStart,
+        autoArmEnd = autoArmEnd
     )
 }
 
@@ -59,6 +61,8 @@ private fun Settings.toEntity(): SettingsEntity {
         snoozeMinutes = snoozeMinutes,
         alarmOffsetHours = alarmOffsetHours,
         armedDefault = armedDefault,
-        autoArmEnabled = autoArmEnabled
+        autoArmEnabled = autoArmEnabled,
+        autoArmStart = autoArmStart,
+        autoArmEnd = autoArmEnd
     )
 }

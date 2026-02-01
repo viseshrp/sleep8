@@ -1288,7 +1288,7 @@ adb shell date MMDDhhmmYYYY
 ## 2026 Update: Auto-Arming & Scheduling
 - Add unit/integration tests for WindowScheduler (start/end triggers).
 - Add tests for ArmManager handling ArmSource (SCHEDULED, APP_BUTTON, QUICK_TILE).
-- Add tests for auto-arm schedule: arms/disarms at night window boundaries if enabled.
+- Add tests for auto-arm schedule: arms/disarms at auto-arm schedule boundaries if enabled.
+- Add tests for separate auto-arm start/end settings (independent from night window).
 - Add tests for manual override logic: manual arming/disarming persists until next scheduled event.
-
 
