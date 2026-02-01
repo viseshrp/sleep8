@@ -36,6 +36,10 @@ class AppPreferences(private val prefs: SharedPreferences) {
         get() = prefs.getBoolean(Constants.PREF_BATTERY_OPT_ACK, false)
         set(value) = prefs.edit().putBoolean(Constants.PREF_BATTERY_OPT_ACK, value).apply()
 
+    var alarmOffsetHours: Int
+        get() = prefs.getInt(Constants.PREF_ALARM_OFFSET_HOURS, Constants.ALARM_OFFSET_HOURS)
+        set(value) = prefs.edit().putInt(Constants.PREF_ALARM_OFFSET_HOURS, value).apply()
+
     fun clearPendingConfirmation() {
         pendingCandidateScreenOffTs = -1L
         pendingConfirmDeadlineTs = -1L
