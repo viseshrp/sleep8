@@ -8,71 +8,73 @@ Scope: Re-audit against updated docs/SPEC.md (authoritative), docs/ARCHITECTURE.
 
 | Requirement | Evidence | Status |
 |---|---|---|
-| 1. Armed + in night window: SCREEN_OFF starts 10-min confirmation | `app/src/main/java/com/sleep8/domain/manager/StateMachineManager.kt` `onScreenOff()` checks window and schedules `ConfirmOffScheduler.scheduleConfirmation()` | PASS |
-| 2. Screen ON before 10 min: no OS alarm created | `StateMachineManager.onScreenOn()` cancels confirmation; `ConfirmationAlarmReceiver` checks screen state | PASS |
-| 3. Screen remains OFF 10 min: create OS alarm at screen_off + 8h | `ConfirmationAlarmReceiver` → `StateMachineManager.onConfirmationTimerExpired()` → `OsAlarmCreator.createAlarm()` | PASS |
-| 4. Multiple SCREEN_OFF before confirm: latest wins | `StateMachineManager.onScreenOff()` overwrites pending and reschedules confirmation | PASS |
-| 5. Multiple OS alarms allowed (no deletion) | `OsAlarmCreator.createAlarm()` inserts new record; no deletion logic | PASS |
-| 6. Reboot restore: armed state + pending confirm timer + immediate alarm if deadline passed & screen OFF | `app/src/main/java/com/sleep8/service/receiver/BootReceiver.kt` restores auto-arm boundaries, armed state, and pending confirmation gated by `armed && inNightWindow` | PARTIAL (see notes) |
+| 1. When armed and within night window, SCREEN_OFF starts 10-min confirmation | `app/src/main/java/com/sleep8/domain/manager/StateMachineManager.kt` `onScreenOff()` checks Night Window and schedules confirmation | PASS |
+| 2. Screen ON before 10 min → no OS alarm | `StateMachineManager.onScreenOn()` cancels confirmation; `ConfirmationAlarmReceiver` checks screen state | PASS |
+| 3. Screen remains OFF 10 min → create OS alarm at screen_off + 8h | `ConfirmationAlarmReceiver` → `StateMachineManager.onConfirmationTimerExpired()` → `OsAlarmCreator.createAlarm()` | PASS |
+| 4. Multiple SCREEN_OFF before confirm → latest wins | `StateMachineManager.onScreenOff()` overwrites pending and reschedules | PASS |
+| 5. Multiple OS alarms allowed | `OsAlarmCreator.createAlarm()` inserts new record; no deletion | PASS |
+| 6. After reboot: restore armed state/session, pending confirmation timer, schedule alarm if deadline passed & screen OFF | `app/src/main/java/com/sleep8/service/receiver/BootReceiver.kt` restores auto-arm boundaries, armed state, and resumes/creates alarm when in Night Window | PARTIAL (see P0) |
 | 7. Persist all events and alarm records in DB | `SessionRepository.insertScreenEvent()`, `AlarmRepository.insertRecord()` | PASS |
 | 8. No network traffic | No INTERNET permission in `app/src/main/AndroidManifest.xml`; no networking code | PASS |
 
 ## Auto-Arm + Night Window Semantics (SPEC)
 
-- Auto-Arm toggles `armed`: `app/src/main/java/com/sleep8/domain/manager/ArmManager.kt` + `WindowScheduler`/`WindowStartReceiver`/`WindowEndReceiver` → PASS
-- Night Window is a filter only: `StateMachineManager.onScreenOff()` uses `TimeUtils.isInWindow()` → PASS
-- Monitoring runs only when `armed && inNightWindow`:
-  - Start/stop monitoring on Night Window boundaries while armed: `NightWindowStartReceiver`, `NightWindowEndReceiver` → PASS
-  - Auto-Arm does not start monitoring unless in Night Window: `ArmManager.scheduleNightWindowBoundaries()` gate → PASS
+| Rule | Evidence | Status |
+|---|---|---|
+| Auto-Arm toggles `armed`; Night Window never toggles `armed` | Auto-Arm uses `WindowScheduler` + `WindowStart/EndReceiver`; Night Window uses `NightWindowScheduler` + `NightWindowStart/EndReceiver` | PARTIAL (see P0) |
+| Monitoring runs only when `armed && inNightWindow` | `NightWindowStartReceiver` starts service only when armed; `NightWindowEndReceiver` stops service; `StateMachineManager` filters screen events by Night Window | PASS |
+| Night Window beginning does not arm | No code in Night Window receivers that changes armed state | PASS |
+| Manual disarm cancels pending confirmation | `ArmManager.disarm()` clears pending + cancels confirmation (manual source) | PASS |
+| Pending confirmation restore gated by `armed && inNightWindow` | `BootReceiver` resumes only when `inNightWindow`; `NightWindowStartReceiver` resumes pending when entering window and armed | PASS |
 
 ## Architecture Alignment
 
 | Doc Expectation | Code Evidence | Status |
 |---|---|---|
-| Auto-Arm boundary scheduling separate from Night Window filtering | `WindowScheduler` (auto-arm) vs `NightWindowScheduler` + `NightWindowStart/EndReceiver` (monitoring gate) | PASS |
+| Auto-Arm boundary scheduling separate from Night Window filtering | `WindowScheduler` vs `NightWindowScheduler` | PARTIAL (see P0) |
 | Armed state owned by ArmManager; persisted in StateHolder | `ArmManager`, `StateHolder` | PASS |
-| Monitoring AND-gate (`armed && inNightWindow`) | `NightWindowStart/EndReceiver` + `StateMachineManager` window checks | PASS |
-
-## Permissions & Platform Constraints
-
-- minSdk 31 / targetSdk 35: `app/build.gradle.kts` → PASS
-- Required permissions present: `FOREGROUND_SERVICE`, `RECEIVE_BOOT_COMPLETED`, `SCHEDULE_EXACT_ALARM`, `SET_ALARM`, `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` → PASS
-- Forbidden permissions: no INTERNET permission → PASS
+| Monitoring AND-gate (`armed && inNightWindow`) | Night Window receivers + `StateMachineManager` | PASS |
 
 ## Boot Restore (Re-evaluation)
 
-- Auto-Arm boundary restore: `BootReceiver` schedules `WindowScheduler` boundaries when auto-arm enabled → PASS
-- Armed state restore from auto-arm schedule: `BootReceiver` computes `shouldBeArmedNow` and arms/disarms accordingly → PASS
-- Monitoring starts only when `armed && inNightWindow`: `BootReceiver` checks Night Window before starting service; `NightWindowStart/EndReceiver` enforce gate → PASS
-- Pending confirmation restore gated by `armed && inNightWindow`: `BootReceiver` only resumes confirmation when `inNightWindow` and screen off; otherwise preserved → PARTIAL (see notes)
+- Auto-Arm boundary restore: `BootReceiver` computes next Auto-Arm start/end and schedules `WindowScheduler` → PASS
+- Armed state restore from Auto-Arm schedule: `BootReceiver` computes `shouldBeArmedNow` and arms/disarms accordingly → PASS
+- Monitoring start only when `armed && inNightWindow`: `BootReceiver` checks Night Window before starting service; Night Window receivers enforce gate → PASS
+- Pending confirmation restore gated by `armed && inNightWindow`: `BootReceiver` resumes only when in Night Window; `NightWindowStartReceiver` resumes later → PASS
 
 ## Tests (Re-evaluation)
 
-- Unit tests exist for window logic, state machine, schedulers: `app/src/test/java/...` → PASS
-- Auto-Arm schedule tests exist but do not explicitly cover Night Window gate transitions → PARTIAL
-- Boot restore tests for auto-arm boundaries/armed state/pending confirmation gating are missing → PARTIAL
-- Manual tests include Night Window entry/exit monitoring behavior (`docs/MANUAL_TESTS.md`) → PASS
+- Unit tests exist for window logic, state machine, schedulers → PASS
+- Auto-Arm vs Night Window gate coverage is incomplete (no explicit tests for armed/outside window and disarmed/inside window) → PARTIAL
+- Boot restore tests for auto-arm boundaries and pending confirmation gating are missing → PARTIAL
 
-## Resolved Findings (from prior report)
+## Resolved Findings (due to clarified docs)
 
-- Previous concern about “Night Window start scheduling restore” is resolved by clarified semantics; no longer required.
-- Auto-Arm boundaries are now treated as the only arming triggers; Night Window is filter-only.
+- Any prior finding that required “Night Window start scheduling restore” is resolved; Auto-Arm boundaries are the only arming triggers.
 
 ## Punch List (Prioritized)
 
 ### P0 — Spec Violations
-1. Pending confirmation restore when **armed but outside Night Window**: `BootReceiver` currently ignores pending confirmation outside the window, but does not explicitly preserve/avoid advancing confirmation for later. Spec requires preservation and resumption when both conditions become true.
-   - Minimal fix: ensure pending candidate/deadline are preserved and confirmation timer is **not** scheduled when `!inNightWindow`, and resume via `NightWindowStartReceiver` (e.g., call a resume method when entering window) without clearing pending state.
+1. **Auto-Arm boundaries are overwritten by Night Window times.**
+   - `ArmManager.arm()` schedules `WindowScheduler` using **Night Window** start/end, which can toggle `armed` at Night Window boundaries. This violates the rule that Night Window never toggles `armed` and that Auto-Arm boundaries are separate.
+   - Minimal fix: in `app/src/main/java/com/sleep8/domain/manager/ArmManager.kt`, remove `windowScheduler.scheduleWindowStart/End()` from manual `arm()`; only schedule auto-arm boundaries inside `handleAutoArm()` or when auto-arm is enabled. Ensure `WindowScheduler` uses `auto_arm_start/end` only.
+
+2. **Manual disarm cancels Auto-Arm schedule.**
+   - `ArmManager.disarm()` cancels `windowScheduler` regardless of source, preventing auto-arm from resuming at the next scheduled boundary (spec says manual override lasts until next scheduled event).
+   - Minimal fix: in `ArmManager.disarm()`, only cancel `WindowScheduler` when auto-arm is disabled; otherwise keep auto-arm boundaries intact.
 
 ### P1 — Reliability Gaps
-1. Monitoring gate on Night Window transitions relies on scheduled receivers; if alarms are delayed, monitoring might start/stop late.
-   - Minimal fix: verify `NightWindowScheduler` is always scheduled when armed; consider rescheduling on app resume if needed (no new features, just ensure schedule is set).
+None beyond P0 issues tied to Auto-Arm scheduling.
 
 ### P2 — Test Coverage Gaps
-1. Add tests for two-schedule model:
-   - Auto-Arm cross-midnight independent of Night Window
-   - Monitoring gate cases (`armed && inNightWindow` vs other combinations)
-   - Boot restore gating of pending confirmation
+1. Add explicit tests for the two-schedule model:
+   - Armed + outside Night Window ⇒ monitoring off
+   - Armed + inside Night Window ⇒ monitoring on
+   - Disarmed + inside Night Window ⇒ monitoring off
+2. Add boot restore tests covering:
+   - Auto-Arm boundary restore
+   - Armed state restore from Auto-Arm schedule
+   - Pending confirmation gating by `armed && inNightWindow`
    - Suggested locations: `app/src/test/java/com/sleep8/domain/manager/ArmManagerTest.kt`, `app/src/test/java/com/sleep8/integration/FullFlowIntegrationTest.kt`
 
 ---
