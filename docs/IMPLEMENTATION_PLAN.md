@@ -214,11 +214,11 @@ Files to create:
 ```
 
 **Settings Screen Content:**
-- Night window start time picker
-- Night window end time picker
-- Auto-arm schedule start time picker
-- Auto-arm schedule end time picker
-- Auto-arm schedule enable toggle
+- Night Window start time picker
+- Night Window end time picker
+- Auto-Arm Schedule start time picker
+- Auto-Arm Schedule end time picker
+- Auto-Arm Schedule enable toggle
 - Snooze toggle + duration picker
 - Reliability checklist section
 
@@ -907,9 +907,10 @@ Files to create:
 ## 2026 Update: Auto-Arming & Scheduling
 - Add WindowScheduler to handle both night start/end triggers.
 - Refactor ArmManager to support ArmSource (SCHEDULED, APP_BUTTON, QUICK_TILE).
-- Implement auto-arm schedule: arms/disarms at auto-arm schedule boundaries if enabled.
-- Add separate auto-arm start/end settings (independent of night window).
+- Implement Auto-Arm Schedule: arms/disarms at auto-arm schedule boundaries if enabled.
+- Add separate Auto-Arm start/end settings (independent of Night Window).
 - Manual arming/disarming acts as override until next scheduled event.
+- Monitoring service starts/stops based on `armed && inNightWindow` (Night Window is a filter only).
 
 ---
 
@@ -1001,10 +1002,11 @@ class BootReceiver : BroadcastReceiver() {
 ```
 
 **Acceptance Criteria:**
-- [ ] State restored after reboot
-- [ ] Timer resumes with correct remaining time
-- [ ] Alarm created if deadline already passed
-- [ ] Service restarts if within window
+- [ ] Auto-Arm boundaries restored after reboot
+- [ ] Armed state restored per Auto-Arm schedule (manual state preserved if applicable)
+- [ ] Timer resumes with correct remaining time when `armed && inNightWindow`
+- [ ] Alarm created if deadline already passed and `armed && inNightWindow`
+- [ ] Service starts/stops based on `armed && inNightWindow`
 
 ---
 

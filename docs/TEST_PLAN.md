@@ -1293,3 +1293,15 @@ adb shell date MMDDhhmmYYYY
 - Add tests for boot restore: re-schedules auto-arm boundaries and resumes monitoring only when armed + within Night Window.
 - Add tests for manual override logic: manual arming/disarming persists until next scheduled event.
 - Add tests for night window boundaries: monitoring starts when armed and entering window, stops when exiting.
+- Add tests for two-schedule model:
+  - Cross-midnight Auto-Arm Schedule behavior.
+  - Cross-midnight Night Window behavior.
+  - Monitoring gate cases:
+    - armed + outside window => monitoring off
+    - armed + inside window => monitoring on
+    - disarmed + inside window => monitoring off
+  - Boot restore:
+    - restores Auto-Arm boundaries
+    - restores armed state per Auto-Arm schedule
+    - starts monitoring only when `armed && inNightWindow`
+    - pending confirmation restoration respects the same gate

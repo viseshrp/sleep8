@@ -641,3 +641,10 @@ alarmManager.setExactAndAllowWhileIdle(
 - Manual arming/disarming (via app button or tile) acts as an override until the next scheduled event.
 - ArmManager now supports multiple ArmSource types (SCHEDULED, APP_BUTTON, QUICK_TILE, etc.) and tracks manual overrides.
 - WindowScheduler replaces WindowEndScheduler and handles both start and end triggers for the auto-arm schedule.
+
+### Responsibility Boundaries (Auto-Arm vs Night Window)
+- **Auto-Arm boundary scheduling**: `WindowScheduler` + `WindowStartReceiver` / `WindowEndReceiver` toggle the armed state on the auto-arm schedule only.
+- **Night Window filtering**: `StateMachineManager` + `NightWindowValidator` determine if a screen event is eligible (`inNightWindow`).
+- **Armed state**: `ArmManager` owns transitions for manual arm/disarm and auto-arm; `StateHolder` persists runtime state.
+- **Monitoring AND-gate**: `armed && inNightWindow` decides if monitoring (foreground service + screen receiver + confirmation) is active.
+- **Night Window start is not an arming trigger**: it only enables monitoring if already armed.
