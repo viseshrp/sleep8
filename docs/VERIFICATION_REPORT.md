@@ -25,6 +25,7 @@ Scope: Re-audit against updated docs/SPEC.md (authoritative), docs/ARCHITECTURE.
 | Monitoring runs only when `armed && inNightWindow` | `NightWindowStartReceiver` starts service only when armed; `NightWindowEndReceiver` stops service; `StateMachineManager` filters screen events by Night Window | PASS |
 | Night Window beginning does not arm | No code in Night Window receivers that changes armed state | PASS |
 | Manual disarm cancels pending confirmation | `ArmManager.disarm()` clears pending + cancels confirmation (manual source) | PASS |
+| Auto-Arm schedules are authoritative (manual actions are temporary) | Auto-Arm boundaries always arm/disarm; manual actions do not cancel Auto-Arm scheduling | PASS |
 | Pending confirmation restore gated by `armed && inNightWindow` | `BootReceiver` resumes only when `inNightWindow`; `NightWindowStartReceiver` resumes pending when entering window and armed | PASS |
 
 ## Architecture Alignment

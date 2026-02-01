@@ -292,7 +292,7 @@ Transitions:
 ## Auto-Arming & Scheduling (2026)
 - If "Auto-arm" is enabled, the app uses WindowScheduler to arm at the auto-arm start time and disarm at the auto-arm end time.
 - Auto-arm schedule is configurable separately from the night window.
-- Manual arming/disarming (via button/tile) acts as an override until the next scheduled event.
+- Auto-Arm schedules are authoritative; manual actions are immediate but temporary.
 - ArmManager supports ArmSource types: SCHEDULED, APP_BUTTON, QUICK_TILE, etc.
 - WindowScheduler replaces WindowEndScheduler and handles both triggers.
 
@@ -307,7 +307,9 @@ Transitions:
 ### Precedence rules
 - Screen-off triggers are processed only when `armed == true` **and** current time is within the Night Window.
 - Auto-Arm only toggles `armed`. Night Window never toggles `armed`.
+- Manual actions are temporary; the next Auto-Arm boundary always applies unless Auto-Arm is disabled.
 - Manual disarm immediately turns off monitoring and cancels any pending confirmation.
+- Disable Auto-Arm to prevent scheduled changes to `armed`.
 
 ### Mode B rule (monitoring gate)
 - Monitoring runs only when `armed && inNightWindow`.

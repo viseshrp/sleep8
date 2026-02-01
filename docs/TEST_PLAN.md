@@ -1291,7 +1291,10 @@ adb shell date MMDDhhmmYYYY
 - Add tests for auto-arm schedule: arms/disarms at auto-arm schedule boundaries if enabled.
 - Add tests for separate auto-arm start/end settings (independent from night window).
 - Add tests for boot restore: re-schedules auto-arm boundaries and resumes monitoring only when armed + within Night Window.
-- Add tests for manual override logic: manual arming/disarming persists until next scheduled event.
+- Add tests for Ring-style manual actions:
+  - manual disarm followed by auto-arm boundary → armed becomes true
+  - manual arm followed by auto-disarm boundary → armed becomes false
+  - disabling auto-arm stops scheduled changes
 - Add tests for night window boundaries: monitoring starts when armed and entering window, stops when exiting.
 - Add tests for two-schedule model:
   - Cross-midnight Auto-Arm Schedule behavior.

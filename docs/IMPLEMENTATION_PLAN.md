@@ -909,7 +909,7 @@ Files to create:
 - Refactor ArmManager to support ArmSource (SCHEDULED, APP_BUTTON, QUICK_TILE).
 - Implement Auto-Arm Schedule: arms/disarms at auto-arm schedule boundaries if enabled.
 - Add separate Auto-Arm start/end settings (independent of Night Window).
-- Manual arming/disarming acts as override until next scheduled event.
+- Auto-Arm schedules are authoritative; manual actions are immediate but temporary.
 - Monitoring service starts/stops based on `armed && inNightWindow` (Night Window is a filter only).
 
 ---
@@ -1003,7 +1003,7 @@ class BootReceiver : BroadcastReceiver() {
 
 **Acceptance Criteria:**
 - [ ] Auto-Arm boundaries restored after reboot
-- [ ] Armed state restored per Auto-Arm schedule (manual state preserved if applicable)
+- [ ] Armed state restored per Auto-Arm schedule
 - [ ] Timer resumes with correct remaining time when `armed && inNightWindow`
 - [ ] Alarm created if deadline already passed and `armed && inNightWindow`
 - [ ] Service starts/stops based on `armed && inNightWindow`

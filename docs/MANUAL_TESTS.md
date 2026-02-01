@@ -240,7 +240,7 @@ These cases are manual because they require physical device interaction, OEM clo
 - Steps: Enable auto-arm in settings
 - Expected: App arms immediately; notification appears; tile active
 
-### TC-023: Manual Override (P0)
+### TC-023: Manual Disarm is Temporary (P0)
 - Preconditions: Auto-arm enabled, currently armed by schedule
 - Steps: Manually disarm via app button or tile
-- Expected: App remains disarmed until next scheduled event (night start); manual override resets after event
+- Expected: App disarms immediately; at the next auto-arm boundary, scheduled arming applies again

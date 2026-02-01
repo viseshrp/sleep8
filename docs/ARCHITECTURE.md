@@ -633,13 +633,13 @@ alarmManager.setExactAndAllowWhileIdle(
 
 ---
 
-## Auto-Arming Schedule & Manual Override
+## Auto-Arming Schedule (Authoritative)
 
 - The app uses a WindowScheduler to automatically arm at the Auto-arm start time and disarm at the Auto-arm end time if the "Auto-arm" setting is enabled.
 - Auto-arm schedule uses its own start/end times (separate from the night window).
 - Night Window remains a filter: screen-off processing occurs only when armed and within the Night Window.
-- Manual arming/disarming (via app button or tile) acts as an override until the next scheduled event.
-- ArmManager now supports multiple ArmSource types (SCHEDULED, APP_BUTTON, QUICK_TILE, etc.) and tracks manual overrides.
+- Manual arming/disarming is immediate but temporary; the next Auto-Arm boundary always applies unless Auto-Arm is disabled.
+- ArmManager supports multiple ArmSource types (SCHEDULED, APP_BUTTON, QUICK_TILE, etc.).
 - WindowScheduler replaces WindowEndScheduler and handles both start and end triggers for the auto-arm schedule.
 
 ### Responsibility Boundaries (Auto-Arm vs Night Window)
