@@ -32,6 +32,7 @@ class SettingsViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(
                 nightStart = settings.nightStart,
                 nightEnd = settings.nightEnd,
+                alarmOffsetHours = settings.alarmOffsetHours.toString(),
                 snoozeEnabled = settings.snoozeMinutes != null,
                 snoozeMinutes = settings.snoozeMinutes?.toString().orEmpty()
             )
@@ -58,6 +59,11 @@ class SettingsViewModel @Inject constructor(
         persist()
     }
 
+    fun updateAlarmOffset(value: String) {
+        _uiState.value = _uiState.value.copy(alarmOffsetHours = value)
+        persist()
+    }
+
     fun updateSnooze(enabled: Boolean, minutes: String) {
         _uiState.value = _uiState.value.copy(snoozeEnabled = enabled, snoozeMinutes = minutes)
         persist()
@@ -67,11 +73,13 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             val state = _uiState.value
             val snooze = state.snoozeMinutes.toIntOrNull()
+            val offset = state.alarmOffsetHours.toIntOrNull() ?: 8
             val settings = Settings(
                 nightStart = state.nightStart,
                 nightEnd = state.nightEnd,
                 confirmOffMinutes = 10,
                 snoozeMinutes = if (state.snoozeEnabled) snooze else null,
+                alarmOffsetHours = offset,
                 armedDefault = false,
                 offlineOnly = true
             )

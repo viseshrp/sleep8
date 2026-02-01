@@ -24,7 +24,7 @@ class OsAlarmCreator(
     suspend fun createAlarm(screenOffTs: Long): AlarmCreationResult {
         val settings = settingsRepository.getSettings()
         val screenOffInstant = Instant.ofEpochMilli(screenOffTs)
-        val alarmInstant = TimeUtils.calculateAlarmTime(screenOffInstant)
+        val alarmInstant = TimeUtils.calculateAlarmTime(screenOffInstant, settings.alarmOffsetHours)
         val alarmTime = TimeUtils.toLocalTime(alarmInstant.toEpochMilli())
 
         val intent = Intent(AlarmClock.ACTION_SET_ALARM).apply {

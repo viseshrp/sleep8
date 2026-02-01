@@ -7,13 +7,19 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.Divider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
@@ -28,6 +34,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.sleep8.ui.main.MainActivity
 import com.sleep8.util.PermissionUtils
@@ -43,14 +50,20 @@ class SettingsActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MaterialTheme {
-                SettingsScreen(viewModel = viewModel)
+                SettingsScreen(
+                    viewModel = viewModel,
+                    onBack = { finish() }
+                )
             }
         }
     }
 }
 
 @Composable
-private fun SettingsScreen(viewModel: SettingsViewModel) {
+private fun SettingsScreen(
+    viewModel: SettingsViewModel,
+    onBack: () -> Unit
+) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
 
@@ -65,8 +78,19 @@ private fun SettingsScreen(viewModel: SettingsViewModel) {
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.Start
     ) {
-        Text(text = "Settings", style = MaterialTheme.typography.headlineMedium)
-        Spacer(modifier = Modifier.height(16.dp))
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(bottom = 16.dp)
+        ) {
+            IconButton(onClick = onBack) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back"
+                )
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(text = "Settings", style = MaterialTheme.typography.headlineMedium)
+        }
 
         TimePickerRow(
             label = "Night start",
@@ -81,7 +105,12 @@ private fun SettingsScreen(viewModel: SettingsViewModel) {
         )
 
         Spacer(modifier = Modifier.height(16.dp))
-        Text(text = "Alarm lead time: +8 hours (fixed)")
+        OutlinedTextField(
+            value = uiState.alarmOffsetHours,
+            onValueChange = viewModel::updateAlarmOffset,
+            label = { Text("Alarm lead time (hours)") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
         Text(text = "Snooze")
@@ -94,7 +123,8 @@ private fun SettingsScreen(viewModel: SettingsViewModel) {
             OutlinedTextField(
                 value = uiState.snoozeMinutes,
                 onValueChange = { viewModel.updateSnooze(true, it) },
-                label = { Text("Snooze minutes") }
+                label = { Text("Snooze minutes") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
         }
 

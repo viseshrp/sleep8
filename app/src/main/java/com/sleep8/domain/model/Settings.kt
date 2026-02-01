@@ -5,6 +5,7 @@ data class Settings(
     val nightEnd: String,
     val confirmOffMinutes: Int,
     val snoozeMinutes: Int?,
+    val alarmOffsetHours: Int,
     val armedDefault: Boolean,
     val offlineOnly: Boolean
 )

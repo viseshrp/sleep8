@@ -72,8 +72,8 @@ object TimeUtils {
         }
     }
 
-    fun calculateAlarmTime(screenOff: Instant): Instant {
-        return screenOff.plus(Duration.ofHours(Constants.ALARM_OFFSET_HOURS.toLong()))
+    fun calculateAlarmTime(screenOff: Instant, offsetHours: Int): Instant {
+        return screenOff.plus(Duration.ofHours(offsetHours.toLong()))
     }
 
     fun calculateRemainingConfirmTime(screenOff: Instant, confirmMinutes: Int): Duration {

@@ -11,6 +11,7 @@ data class SettingsEntity(
     @ColumnInfo(name = "night_end") val nightEnd: String = "08:00",
     @ColumnInfo(name = "confirm_off_minutes") val confirmOffMinutes: Int = 10,
     @ColumnInfo(name = "snooze_minutes") val snoozeMinutes: Int? = null,
+    @ColumnInfo(name = "alarm_offset_hours") val alarmOffsetHours: Int = 8,
     @ColumnInfo(name = "armed_default") val armedDefault: Boolean = false,
     @ColumnInfo(name = "offline_only") val offlineOnly: Boolean = true
 )
