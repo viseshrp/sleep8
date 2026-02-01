@@ -1282,3 +1282,13 @@ adb shell date MMDDhhmmYYYY
 
 # Alternative: Use debug menu in app to override time for testing
 ```
+
+---
+
+## 2026 Update: Auto-Arming & Scheduling
+- Add unit/integration tests for WindowScheduler (start/end triggers).
+- Add tests for ArmManager handling ArmSource (SCHEDULED, APP_BUTTON, QUICK_TILE).
+- Add tests for auto-arm schedule: arms/disarms at night window boundaries if enabled.
+- Add tests for manual override logic: manual arming/disarming persists until next scheduled event.
+
+

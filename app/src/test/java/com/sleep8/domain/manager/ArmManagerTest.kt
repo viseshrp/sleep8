@@ -6,7 +6,7 @@ import com.sleep8.data.repository.SessionRepository
 import com.sleep8.domain.model.ArmSession
 import com.sleep8.domain.model.ArmSource
 import com.sleep8.domain.model.Settings
-import com.sleep8.domain.scheduler.WindowEndScheduler
+import com.sleep8.domain.scheduler.WindowScheduler
 import com.sleep8.domain.state.StateHolder
 import com.sleep8.service.ServiceController
 import com.sleep8.testutil.InMemorySharedPreferences
@@ -21,7 +21,7 @@ class ArmManagerTest {
 
     private val sessionRepository = mockk<SessionRepository>(relaxed = true)
     private val serviceController = mockk<ServiceController>(relaxed = true)
-    private val windowEndScheduler = mockk<WindowEndScheduler>(relaxed = true)
+    private val windowScheduler = mockk<WindowScheduler>(relaxed = true)
     private val settingsRepository = mockk<SettingsRepository>()
 
     private val prefs = AppPreferences(InMemorySharedPreferences())
@@ -31,13 +31,13 @@ class ArmManagerTest {
         sessionRepository = sessionRepository,
         stateHolder = stateHolder,
         serviceController = serviceController,
-        windowEndScheduler = windowEndScheduler,
+        windowScheduler = windowScheduler,
         settingsRepository = settingsRepository
     )
 
     @Test
     fun `arm creates session with correct source`() = runTest {
-        val settings = Settings("22:00", "08:00", 10, null, false, true)
+        val settings = Settings("22:00", "08:00", 10, null, 8, false, true)
         coEvery { settingsRepository.getSettings() } returns settings
         val session = ArmSession(1L, 0L, null, 0L, 0L, ArmSource.APP_BUTTON)
         coEvery { sessionRepository.createSession(any(), any(), any(), any()) } returns session
@@ -50,7 +50,7 @@ class ArmManagerTest {
 
     @Test
     fun `arm starts foreground service`() = runTest {
-        val settings = Settings("22:00", "08:00", 10, null, false, true)
+        val settings = Settings("22:00", "08:00", 10, null, 8, false, true)
         coEvery { settingsRepository.getSettings() } returns settings
         val session = ArmSession(1L, 0L, null, 0L, 0L, ArmSource.QUICK_TILE)
         coEvery { sessionRepository.createSession(any(), any(), any(), any()) } returns session
@@ -86,11 +86,48 @@ class ArmManagerTest {
     fun `arm when already armed is idempotent`() = runTest {
         stateHolder.setArmed(true)
         stateHolder.setActiveSession(ArmSession(1L, 0L, null, 0L, 0L, ArmSource.APP_BUTTON))
-        val settings = Settings("22:00", "08:00", 10, null, false, true)
+        val settings = Settings("22:00", "08:00", 10, null, 8, false, true)
         coEvery { settingsRepository.getSettings() } returns settings
 
         armManager.arm(ArmSource.APP_BUTTON)
 
         coVerify(exactly = 0) { sessionRepository.createSession(any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `auto-arm arms at night start and disarms at night end`() = runTest {
+        val settings = Settings("22:00", "08:00", 10, null, 8, false, true)
+        coEvery { settingsRepository.getSettings() } returns settings.copy(autoArmEnabled = true)
+        coEvery { sessionRepository.createSession(any(), any(), any(), any()) } returns ArmSession(4L, 0L, null, 0L, 0L, ArmSource.SCHEDULED)
+
+        armManager.handleAutoArm()
+        coVerify { windowScheduler.scheduleWindowStart(any()) }
+        coVerify { windowScheduler.scheduleWindowEnd(any()) }
+        coVerify { sessionRepository.createSession(any(), any(), any(), ArmSource.SCHEDULED) }
+    }
+
+    @Test
+    fun `manual disarm overrides scheduled arming until next event`() = runTest {
+        val settings = Settings("22:00", "08:00", 10, null, 8, false, true)
+        coEvery { settingsRepository.getSettings() } returns settings.copy(autoArmEnabled = true)
+        coEvery { sessionRepository.createSession(any(), any(), any(), any()) } returns ArmSession(5L, 0L, null, 0L, 0L, ArmSource.SCHEDULED)
+
+        armManager.handleAutoArm()
+        armManager.disarm(ArmSource.APP_BUTTON)
+        armManager.onScheduledEvent("start")
+        coVerify { sessionRepository.createSession(any(), any(), any(), ArmSource.SCHEDULED) }
+        // manualOverride resets after scheduled event
+    }
+
+    @Test
+    fun `arm uses correct ArmSource for scheduled and manual`() = runTest {
+        val settings = Settings("22:00", "08:00", 10, null, 8, false, true)
+        coEvery { settingsRepository.getSettings() } returns settings
+        coEvery { sessionRepository.createSession(any(), any(), any(), any()) } returns ArmSession(6L, 0L, null, 0L, 0L, ArmSource.SCHEDULED)
+
+        armManager.arm(ArmSource.SCHEDULED)
+        coVerify { sessionRepository.createSession(any(), any(), any(), ArmSource.SCHEDULED) }
+        armManager.arm(ArmSource.APP_BUTTON)
+        coVerify { sessionRepository.createSession(any(), any(), any(), ArmSource.APP_BUTTON) }
     }
 }

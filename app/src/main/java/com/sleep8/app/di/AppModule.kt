@@ -16,7 +16,7 @@ import com.sleep8.domain.manager.StateMachineManager
 import com.sleep8.domain.scheduler.BackstopAlarmScheduler
 import com.sleep8.domain.scheduler.ConfirmOffScheduler
 import com.sleep8.domain.scheduler.OsAlarmCreator
-import com.sleep8.domain.scheduler.WindowEndScheduler
+import com.sleep8.domain.scheduler.WindowScheduler
 import com.sleep8.domain.state.StateHolder
 import com.sleep8.service.ServiceController
 import com.sleep8.service.ServiceControllerImpl
@@ -96,10 +96,10 @@ object AppModule {
         sessionRepository: SessionRepository,
         stateHolder: StateHolder,
         serviceController: ServiceController,
-        windowEndScheduler: WindowEndScheduler,
+        windowScheduler: WindowScheduler,
         settingsRepository: SettingsRepository
     ): ArmManager {
-        return ArmManager(sessionRepository, stateHolder, serviceController, windowEndScheduler, settingsRepository)
+        return ArmManager(sessionRepository, stateHolder, serviceController, windowScheduler, settingsRepository)
     }
 
     @Provides
@@ -163,10 +163,10 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideWindowEndScheduler(
+    fun provideWindowScheduler(
         @ApplicationContext context: Context,
         alarmManager: AlarmManager
-    ): WindowEndScheduler {
-        return WindowEndScheduler(context, alarmManager)
+    ): WindowScheduler {
+        return WindowScheduler(context, alarmManager)
     }
 }

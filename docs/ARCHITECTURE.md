@@ -621,3 +621,13 @@ alarmManager.setExactAndAllowWhileIdle(
 | UI | Jetpack Compose (or XML) |
 | Architecture | MVVM + Clean Architecture |
 | Testing | JUnit 5, Mockk, Turbine |
+
+---
+
+## Auto-Arming Schedule & Manual Override
+
+- The app uses a WindowScheduler to automatically arm at "Night start" and disarm at "Night end" if the "Auto-arm" setting is enabled.
+- Manual arming/disarming (via app button or tile) acts as an override until the next scheduled event.
+- ArmManager now supports multiple ArmSource types (SCHEDULED, APP_BUTTON, QUICK_TILE, etc.) and tracks manual overrides.
+- WindowScheduler replaces WindowEndScheduler and handles both start and end triggers for the night window.
+

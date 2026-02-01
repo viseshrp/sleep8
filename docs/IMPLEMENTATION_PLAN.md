@@ -901,6 +901,14 @@ Files to create:
 
 ---
 
+## 2026 Update: Auto-Arming & Scheduling
+- Add WindowScheduler to handle both night start/end triggers.
+- Refactor ArmManager to support ArmSource (SCHEDULED, APP_BUTTON, QUICK_TILE).
+- Implement auto-arm schedule: arms/disarms at night window boundaries if enabled.
+- Manual arming/disarming acts as override until next scheduled event.
+
+---
+
 ## Milestone D — Reboot & Resilience
 
 ### Objective

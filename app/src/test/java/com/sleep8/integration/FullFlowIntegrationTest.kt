@@ -17,7 +17,7 @@ import com.sleep8.domain.model.AppState
 import com.sleep8.domain.model.ArmSource
 import com.sleep8.domain.scheduler.ConfirmOffScheduler
 import com.sleep8.domain.scheduler.OsAlarmCreator
-import com.sleep8.domain.scheduler.WindowEndScheduler
+import com.sleep8.domain.scheduler.WindowScheduler
 import com.sleep8.domain.state.StateHolder
 import com.sleep8.service.ServiceController
 import com.sleep8.service.notification.NotificationHelper
@@ -65,7 +65,7 @@ class FullFlowIntegrationTest {
         appPreferences = AppPreferences(InMemorySharedPreferences())
         stateHolder = StateHolder(appPreferences)
         val serviceController = mockk<ServiceController>(relaxed = true)
-        val windowEndScheduler = mockk<WindowEndScheduler>(relaxed = true)
+        val windowScheduler = mockk<WindowScheduler>(relaxed = true)
         val confirmScheduler = mockk<ConfirmOffScheduler>(relaxed = true)
 
         val packageManager = mockk<PackageManager>()
@@ -84,7 +84,7 @@ class FullFlowIntegrationTest {
             mockk<NotificationHelper>(relaxed = true)
         )
 
-        armManager = ArmManager(sessionRepository, stateHolder, serviceController, windowEndScheduler, settingsRepository)
+        armManager = ArmManager(sessionRepository, stateHolder, serviceController, windowScheduler, settingsRepository)
         stateMachineManager = StateMachineManager(stateHolder, settingsRepository, sessionRepository, alarmRepository, confirmScheduler, osAlarmCreator)
     }
 

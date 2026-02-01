@@ -284,3 +284,9 @@ Transitions:
 - Default night window times (propose: 22:00–08:00).
 - Default snooze value when enabled (propose: 10 minutes).
 - Whether +8h should ever be configurable in settings (currently fixed).
+
+## Auto-Arming & Scheduling (2026)
+- If "Auto-arm" is enabled, the app uses WindowScheduler to arm at night start and disarm at night end.
+- Manual arming/disarming (via button/tile) acts as an override until the next scheduled event.
+- ArmManager supports ArmSource types: SCHEDULED, APP_BUTTON, QUICK_TILE, etc.
+- WindowScheduler replaces WindowEndScheduler and handles both triggers.

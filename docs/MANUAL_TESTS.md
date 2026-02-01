@@ -212,3 +212,25 @@ These cases are manual because they require physical device interaction, OEM clo
 ### TC-OEM-003: OnePlus Doze Mode
 - Steps: Arm app → let device enter deep doze
 - Expected: Exact alarms still fire
+
+## Auto-Arming & Scheduling
+
+### TC-020: Auto-arm at Night Start (P0)
+- Preconditions: Auto-arm enabled in settings, current time before night start
+- Steps: Wait until night start
+- Expected: App arms automatically; notification appears; tile active
+
+### TC-021: Auto-disarm at Night End (P0)
+- Preconditions: Auto-arm enabled, currently armed, current time before night end
+- Steps: Wait until night end
+- Expected: App disarms automatically; notification removed; tile inactive
+
+### TC-022: Enable Auto-arm During Night Window (P0)
+- Preconditions: Auto-arm disabled, current time within night window
+- Steps: Enable auto-arm in settings
+- Expected: App arms immediately; notification appears; tile active
+
+### TC-023: Manual Override (P0)
+- Preconditions: Auto-arm enabled, currently armed by schedule
+- Steps: Manually disarm via app button or tile
+- Expected: App remains disarmed until next scheduled event (night start); manual override resets after event

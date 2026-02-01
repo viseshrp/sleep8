@@ -10,7 +10,7 @@ import com.sleep8.domain.manager.StateMachineManager
 import com.sleep8.domain.model.AppState
 import com.sleep8.domain.scheduler.ConfirmOffScheduler
 import com.sleep8.domain.scheduler.OsAlarmCreator
-import com.sleep8.domain.scheduler.WindowEndScheduler
+import com.sleep8.domain.scheduler.WindowScheduler
 import com.sleep8.domain.state.StateHolder
 import com.sleep8.service.ServiceController
 import com.sleep8.util.TimeUtils
@@ -32,7 +32,7 @@ class BootReceiver : BroadcastReceiver() {
     @Inject lateinit var serviceController: ServiceController
     @Inject lateinit var confirmOffScheduler: ConfirmOffScheduler
     @Inject lateinit var osAlarmCreator: OsAlarmCreator
-    @Inject lateinit var windowEndScheduler: WindowEndScheduler
+    @Inject lateinit var windowScheduler: WindowScheduler
     @Inject lateinit var stateMachineManager: StateMachineManager
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -66,7 +66,7 @@ class BootReceiver : BroadcastReceiver() {
             stateHolder.setArmed(true)
             stateHolder.setState(AppState.ARMED_IDLE)
             serviceController.startNightMonitorService()
-            windowEndScheduler.scheduleWindowEnd(session.windowEndTs)
+            windowScheduler.scheduleWindowEnd(session.windowEndTs)
 
             val pendingScreenOffTs = stateHolder.pendingCandidateScreenOffTs.value
             if (pendingScreenOffTs > 0) {
