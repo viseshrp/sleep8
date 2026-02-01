@@ -80,6 +80,16 @@ class ArmManager(
         }
     }
 
+    suspend fun updateAutoArmEnabled(enabled: Boolean) {
+        if (enabled) {
+            handleAutoArm()
+        } else {
+            windowScheduler.cancelWindowStart()
+            windowScheduler.cancelWindowEnd()
+            manualOverride = false
+        }
+    }
+
     fun onScheduledEvent(type: String) {
         if (!manualOverride) {
             if (type == "start") {

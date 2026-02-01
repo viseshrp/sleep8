@@ -6,6 +6,7 @@ import android.content.Intent
 import android.os.PowerManager
 import com.sleep8.data.repository.SettingsRepository
 import com.sleep8.data.repository.SessionRepository
+import com.sleep8.domain.manager.ArmManager
 import com.sleep8.domain.manager.StateMachineManager
 import com.sleep8.domain.model.AppState
 import com.sleep8.domain.scheduler.ConfirmOffScheduler
@@ -34,6 +35,7 @@ class BootReceiver : BroadcastReceiver() {
     @Inject lateinit var osAlarmCreator: OsAlarmCreator
     @Inject lateinit var windowScheduler: WindowScheduler
     @Inject lateinit var stateMachineManager: StateMachineManager
+    @Inject lateinit var armManager: ArmManager
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -44,6 +46,7 @@ class BootReceiver : BroadcastReceiver() {
         scope.launch {
             val session = sessionRepository.getActiveSession()
             if (session == null) {
+                armManager.handleAutoArm()
                 pendingResult.finish()
                 return@launch
             }

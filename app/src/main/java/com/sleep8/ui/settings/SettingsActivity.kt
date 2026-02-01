@@ -160,6 +160,11 @@ private fun SettingsScreen(
                     checked = uiState.armedDefault,
                     onCheckedChange = viewModel::updateArmedDefault
                 )
+                RowWithSwitch(
+                    label = "Auto-arm schedule",
+                    checked = uiState.autoArmEnabled,
+                    onCheckedChange = viewModel::updateAutoArmEnabled
+                )
                 InfoRow(
                     label = "Offline only mode",
                     value = "Enabled",

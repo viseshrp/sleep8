@@ -5,8 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sleep8.data.preferences.AppPreferences
 import com.sleep8.data.repository.SettingsRepository
-import com.sleep8.domain.model.AppState
-import com.sleep8.domain.state.StateHolder
+import com.sleep8.domain.manager.ArmManager
 import com.sleep8.domain.model.Settings
 import com.sleep8.service.NightMonitorService
 import com.sleep8.util.PermissionUtils
@@ -21,7 +20,7 @@ import javax.inject.Inject
 class SettingsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val appPreferences: AppPreferences,
-    private val stateHolder: StateHolder
+    private val armManager: ArmManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -37,8 +36,10 @@ class SettingsViewModel @Inject constructor(
                 confirmOffMinutes = settings.confirmOffMinutes.toString(),
                 snoozeEnabled = settings.snoozeMinutes != null,
                 snoozeMinutes = settings.snoozeMinutes?.toString() ?: "5",
-                armedDefault = settings.armedDefault
+                armedDefault = settings.armedDefault,
+                autoArmEnabled = settings.autoArmEnabled
             )
+            appPreferences.alarmOffsetHours = settings.alarmOffsetHours
         }
     }
 
@@ -84,6 +85,28 @@ class SettingsViewModel @Inject constructor(
         persist()
     }
 
+    fun updateAutoArmEnabled(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(autoArmEnabled = enabled)
+        viewModelScope.launch {
+            val state = _uiState.value
+            val snooze = state.snoozeMinutes.toIntOrNull()
+            val offset = state.alarmOffsetHours.toIntOrNull() ?: 8
+            val confirmOff = state.confirmOffMinutes.toIntOrNull() ?: 10
+            val settings = Settings(
+                nightStart = state.nightStart,
+                nightEnd = state.nightEnd,
+                confirmOffMinutes = confirmOff,
+                snoozeMinutes = if (state.snoozeEnabled) snooze else null,
+                alarmOffsetHours = offset,
+                armedDefault = state.armedDefault,
+                autoArmEnabled = state.autoArmEnabled
+            )
+            settingsRepository.updateSettings(settings)
+            appPreferences.alarmOffsetHours = offset
+            armManager.updateAutoArmEnabled(enabled)
+        }
+    }
+
     private fun persist() {
         viewModelScope.launch {
             val state = _uiState.value
@@ -96,9 +119,11 @@ class SettingsViewModel @Inject constructor(
                 confirmOffMinutes = confirmOff,
                 snoozeMinutes = if (state.snoozeEnabled) snooze else null,
                 alarmOffsetHours = offset,
-                armedDefault = state.armedDefault
+                armedDefault = state.armedDefault,
+                autoArmEnabled = state.autoArmEnabled
             )
             settingsRepository.updateSettings(settings)
+            appPreferences.alarmOffsetHours = offset
         }
     }
 

@@ -8,6 +8,7 @@ data class SettingsUiState(
     val snoozeEnabled: Boolean = false,
     val snoozeMinutes: String = "5",
     val armedDefault: Boolean = false,
+    val autoArmEnabled: Boolean = false,
     val exactAlarmAllowed: Boolean = false,
     val batteryOptimizationsIgnored: Boolean = false,
     val foregroundServiceActive: Boolean = false
