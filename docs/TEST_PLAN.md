@@ -1292,3 +1292,4 @@ adb shell date MMDDhhmmYYYY
 - Add tests for separate auto-arm start/end settings (independent from night window).
 - Add tests for boot restore: re-schedules auto-arm boundaries and resumes monitoring only when armed + within Night Window.
 - Add tests for manual override logic: manual arming/disarming persists until next scheduled event.
+- Add tests for night window boundaries: monitoring starts when armed and entering window, stops when exiting.

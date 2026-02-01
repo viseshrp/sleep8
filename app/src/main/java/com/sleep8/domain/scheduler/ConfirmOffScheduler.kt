@@ -16,6 +16,10 @@ class ConfirmOffScheduler(
 
     fun scheduleConfirmation(screenOffTs: Long, confirmMinutes: Int) {
         val triggerAt = screenOffTs + confirmMinutes * 60_000L
+        scheduleConfirmationAt(screenOffTs, triggerAt)
+    }
+
+    fun scheduleConfirmationAt(screenOffTs: Long, triggerAtMillis: Long) {
         val intent = Intent(context, ConfirmationAlarmReceiver::class.java).apply {
             action = Constants.ACTION_CONFIRMATION
         }
@@ -25,8 +29,8 @@ class ConfirmOffScheduler(
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pendingIntent)
-        appPreferences.pendingConfirmDeadlineTs = triggerAt
+        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent)
+        appPreferences.pendingConfirmDeadlineTs = triggerAtMillis
         appPreferences.pendingCandidateScreenOffTs = screenOffTs
     }
 
@@ -42,5 +46,18 @@ class ConfirmOffScheduler(
         )
         alarmManager.cancel(pendingIntent)
         appPreferences.clearPendingConfirmation()
+    }
+
+    fun cancelConfirmationTimerOnly() {
+        val intent = Intent(context, ConfirmationAlarmReceiver::class.java).apply {
+            action = Constants.ACTION_CONFIRMATION
+        }
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            Constants.PENDING_INTENT_REQUEST_CONFIRM,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        alarmManager.cancel(pendingIntent)
     }
 }

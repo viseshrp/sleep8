@@ -137,6 +137,16 @@ These cases are manual because they require physical device interaction, OEM clo
 - Steps: Wait until window ends
 - Expected: Auto-disarm; notification removed; session ended
 
+### TC-045: Armed Outside Window → Enter Window Starts Monitoring (P1)
+- Preconditions: App armed manually, current time outside night window
+- Steps: Wait until night window starts
+- Expected: Monitoring starts (foreground notification appears); no monitoring started before window begins
+
+### TC-046: Armed In Window → Exit Window Stops Monitoring (P1)
+- Preconditions: App armed manually, current time within night window
+- Steps: Wait until night window ends
+- Expected: Monitoring stops (notification removed); app remains armed
+
 ## Settings
 
 ### TC-050: Change Night Window Start (P1)

@@ -14,12 +14,12 @@ import com.sleep8.domain.scheduler.OsAlarmCreator
 import com.sleep8.domain.scheduler.WindowScheduler
 import com.sleep8.domain.state.StateHolder
 import com.sleep8.service.ServiceController
+import com.sleep8.util.TimeUtils
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import java.time.Instant
 import java.time.LocalDateTime
 import javax.inject.Inject
 
@@ -43,42 +43,88 @@ class BootReceiver : BroadcastReceiver() {
 
         val pendingResult = goAsync()
         scope.launch {
-            armManager.handleAutoArm()
             val session = sessionRepository.getActiveSession()
-            if (session == null) {
+            val settings = settingsRepository.getSettings()
+            val now = LocalDateTime.now()
+            val autoStart = TimeUtils.parseLocalTime(settings.autoArmStart)
+            val autoEnd = TimeUtils.parseLocalTime(settings.autoArmEnd)
+            val shouldBeArmedNow = settings.autoArmEnabled &&
+                TimeUtils.isInWindow(now.toLocalTime(), autoStart, autoEnd)
+
+            if (settings.autoArmEnabled) {
+                val autoWindow = TimeUtils.calculateNextWindow(now, autoStart, autoEnd)
+                windowScheduler.scheduleWindowStart(autoWindow.startTs)
+                windowScheduler.scheduleWindowEnd(autoWindow.endTs)
+            }
+
+            if (settings.autoArmEnabled) {
+                if (!shouldBeArmedNow) {
+                    if (session != null) {
+                        sessionRepository.endSession(session.id, System.currentTimeMillis())
+                    }
+                    stateHolder.setActiveSession(null)
+                    stateHolder.setArmed(false)
+                    stateHolder.setState(AppState.DISARMED)
+                    serviceController.stopNightMonitorService()
+                    confirmOffScheduler.cancelConfirmationTimerOnly()
+                    pendingResult.finish()
+                    return@launch
+                }
+
+                if (session != null) {
+                    sessionRepository.endSession(session.id, System.currentTimeMillis())
+                }
+                stateHolder.setActiveSession(null)
+                stateHolder.setArmed(false)
+                armManager.arm(com.sleep8.domain.model.ArmSource.SCHEDULED)
+            }
+
+            val activeSession = sessionRepository.getActiveSession()
+            if (activeSession == null) {
+                if (!settings.autoArmEnabled) {
+                    stateHolder.setActiveSession(null)
+                    stateHolder.setArmed(false)
+                    stateHolder.setState(AppState.DISARMED)
+                    serviceController.stopNightMonitorService()
+                }
                 pendingResult.finish()
                 return@launch
             }
 
-            val settings = settingsRepository.getSettings()
-            val now = LocalDateTime.now()
-
-            if (now.atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli() > session.windowEndTs) {
-                sessionRepository.endSession(session.id, System.currentTimeMillis())
+            if (now.atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli() > activeSession.windowEndTs) {
+                sessionRepository.endSession(activeSession.id, System.currentTimeMillis())
                 stateHolder.setActiveSession(null)
                 stateHolder.setState(AppState.DISARMED)
                 pendingResult.finish()
                 return@launch
             }
 
-            stateHolder.setActiveSession(session)
+            stateHolder.setActiveSession(activeSession)
             stateHolder.setArmed(true)
             stateHolder.setState(AppState.ARMED_IDLE)
-            serviceController.startNightMonitorService()
-            windowScheduler.scheduleWindowEnd(session.windowEndTs)
+            val nightStart = TimeUtils.parseLocalTime(settings.nightStart)
+            val nightEnd = TimeUtils.parseLocalTime(settings.nightEnd)
+            val inNightWindow = TimeUtils.isInWindow(now.toLocalTime(), nightStart, nightEnd)
+            if (inNightWindow) {
+                serviceController.startNightMonitorService()
+            } else {
+                serviceController.stopNightMonitorService()
+            }
+            armManager.refreshNightWindowBoundariesIfArmed()
 
             val pendingScreenOffTs = stateHolder.pendingCandidateScreenOffTs.value
-            if (pendingScreenOffTs > 0) {
+            val pendingDeadlineTs = stateHolder.pendingConfirmDeadlineTs.value
+            if (pendingScreenOffTs > 0 && pendingDeadlineTs > 0 && inNightWindow) {
                 val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
                 val screenOff = !powerManager.isInteractive
                 if (screenOff) {
-                    val elapsedMs = System.currentTimeMillis() - pendingScreenOffTs
-                    if (elapsedMs >= settings.confirmOffMinutes * 60_000L) {
+                    val nowMs = System.currentTimeMillis()
+                    if (nowMs >= pendingDeadlineTs) {
                         osAlarmCreator.createAlarm(pendingScreenOffTs)
                         stateHolder.clearPendingCandidate()
                         stateHolder.setState(AppState.ARMED_ALARM_SET)
                     } else {
-                        confirmOffScheduler.scheduleConfirmation(pendingScreenOffTs, settings.confirmOffMinutes)
+                        confirmOffScheduler.scheduleConfirmationAt(pendingScreenOffTs, pendingDeadlineTs)
                         stateHolder.setState(AppState.ARMED_PENDING_CONFIRM)
                     }
                 } else {

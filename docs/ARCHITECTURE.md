@@ -19,6 +19,7 @@ Sleep8 is a native Android application that automatically schedules OS alarms ba
 │  ArmManager  │  StateMachine  │  NightWindowValidator               │
 │              │                │                                     │
 │  ConfirmOffScheduler  │  OsAlarmCreator  │  BackstopAlarmScheduler  │
+│  NightWindowScheduler                                     │
 └────────┬────────────────────┬──────────────────────┬────────────────┘
          │                    │                      │
          ▼                    ▼                      ▼
@@ -27,6 +28,7 @@ Sleep8 is a native Android application that automatically schedules OS alarms ba
 ├─────────────────────────────────────────────────────────────────────┤
 │  NightMonitorService (Foreground)  │  BootReceiver                  │
 │  ScreenStateReceiver (Runtime)     │  ConfirmationAlarmReceiver     │
+│  NightWindowStartReceiver          │  NightWindowEndReceiver        │
 └────────┬────────────────────┬──────────────────────┬────────────────┘
          │                    │                      │
          ▼                    ▼                      ▼
@@ -130,7 +132,8 @@ com.sleep8/
 │   ├── scheduler/
 │   │   ├── ConfirmOffScheduler.kt    # 10-min confirmation logic
 │   │   ├── BackstopAlarmScheduler.kt # Internal exact alarm
-│   │   └── OsAlarmCreator.kt         # OS Clock alarm creation
+│   │   ├── OsAlarmCreator.kt         # OS Clock alarm creation
+│   │   └── NightWindowScheduler.kt   # Night window monitoring boundaries
 │   └── validator/
 │       └── NightWindowValidator.kt   # Time window checks
 │
@@ -139,7 +142,9 @@ com.sleep8/
 │   ├── receiver/
 │   │   ├── ScreenStateReceiver.kt    # SCREEN_ON/OFF events
 │   │   ├── BootReceiver.kt           # BOOT_COMPLETED handler
-│   │   └── ConfirmationAlarmReceiver.kt # Exact alarm callback
+│   │   ├── ConfirmationAlarmReceiver.kt # Exact alarm callback
+│   │   ├── NightWindowStartReceiver.kt  # Night window start
+│   │   └── NightWindowEndReceiver.kt    # Night window end
 │   └── notification/
 │       └── NotificationHelper.kt     # Service notification
 │

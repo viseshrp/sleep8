@@ -13,11 +13,15 @@ object Constants {
     const val ACTION_BACKSTOP = "com.sleep8.action.BACKSTOP"
     const val ACTION_WINDOW_END = "com.sleep8.action.WINDOW_END"
     const val ACTION_WINDOW_START = "com.sleep8.action.WINDOW_START"
+    const val ACTION_NIGHT_WINDOW_START = "com.sleep8.action.NIGHT_WINDOW_START"
+    const val ACTION_NIGHT_WINDOW_END = "com.sleep8.action.NIGHT_WINDOW_END"
 
     const val PENDING_INTENT_REQUEST_CONFIRM = 2001
     const val PENDING_INTENT_REQUEST_BACKSTOP = 2002
     const val PENDING_INTENT_REQUEST_WINDOW_END = 2003
     const val PENDING_INTENT_REQUEST_WINDOW_START = 2004
+    const val PENDING_INTENT_REQUEST_NIGHT_WINDOW_START = 2005
+    const val PENDING_INTENT_REQUEST_NIGHT_WINDOW_END = 2006
 
     const val PREFS_NAME = "sleep8_prefs"
     const val PREF_ARMED = "pref_armed"

@@ -86,6 +86,37 @@ class StateMachineManager(
         }
     }
 
+    suspend fun onNightWindowEnd() {
+        if (currentState == AppState.DISARMED) return
+        confirmOffScheduler.cancelConfirmationTimerOnly()
+        if (currentState == AppState.ARMED_PENDING_CONFIRM) {
+            stateHolder.setState(AppState.ARMED_IDLE)
+        }
+    }
+
+    suspend fun resumePendingConfirmationIfEligible(screenStillOff: Boolean) {
+        if (currentState == AppState.DISARMED) return
+        val screenOffTs = stateHolder.pendingCandidateScreenOffTs.value
+        val deadlineTs = stateHolder.pendingConfirmDeadlineTs.value
+        if (screenOffTs <= 0 || deadlineTs <= 0) return
+
+        if (!screenStillOff) {
+            stateHolder.setState(AppState.ARMED_IDLE)
+            return
+        }
+
+        val now = System.currentTimeMillis()
+        if (now >= deadlineTs) {
+            osAlarmCreator.createAlarm(screenOffTs)
+            stateHolder.clearPendingCandidate()
+            stateHolder.setState(AppState.ARMED_ALARM_SET)
+            return
+        }
+
+        confirmOffScheduler.scheduleConfirmationAt(screenOffTs, deadlineTs)
+        stateHolder.setState(AppState.ARMED_PENDING_CONFIRM)
+    }
+
     fun disarm() {
         confirmOffScheduler.cancelConfirmation()
         stateHolder.clearPendingCandidate()

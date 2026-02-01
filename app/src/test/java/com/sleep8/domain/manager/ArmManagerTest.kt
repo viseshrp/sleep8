@@ -6,6 +6,7 @@ import com.sleep8.data.repository.SessionRepository
 import com.sleep8.domain.model.ArmSession
 import com.sleep8.domain.model.ArmSource
 import com.sleep8.domain.model.Settings
+import com.sleep8.domain.scheduler.ConfirmOffScheduler
 import com.sleep8.domain.scheduler.WindowScheduler
 import com.sleep8.domain.state.StateHolder
 import com.sleep8.service.ServiceController
@@ -23,6 +24,8 @@ class ArmManagerTest {
     private val sessionRepository = mockk<SessionRepository>(relaxed = true)
     private val serviceController = mockk<ServiceController>(relaxed = true)
     private val windowScheduler = mockk<WindowScheduler>(relaxed = true)
+    private val nightWindowScheduler = mockk<com.sleep8.domain.scheduler.NightWindowScheduler>(relaxed = true)
+    private val confirmOffScheduler = mockk<ConfirmOffScheduler>(relaxed = true)
     private val settingsRepository = mockk<SettingsRepository>()
 
     private val prefs = AppPreferences(InMemorySharedPreferences())
@@ -33,7 +36,9 @@ class ArmManagerTest {
         stateHolder = stateHolder,
         serviceController = serviceController,
         windowScheduler = windowScheduler,
-        settingsRepository = settingsRepository
+        settingsRepository = settingsRepository,
+        nightWindowScheduler = nightWindowScheduler,
+        confirmOffScheduler = confirmOffScheduler
     )
 
     @Test

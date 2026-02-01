@@ -15,6 +15,7 @@ import com.sleep8.domain.manager.ArmManager
 import com.sleep8.domain.manager.StateMachineManager
 import com.sleep8.domain.scheduler.BackstopAlarmScheduler
 import com.sleep8.domain.scheduler.ConfirmOffScheduler
+import com.sleep8.domain.scheduler.NightWindowScheduler
 import com.sleep8.domain.scheduler.OsAlarmCreator
 import com.sleep8.domain.scheduler.WindowScheduler
 import com.sleep8.domain.state.StateHolder
@@ -97,9 +98,19 @@ object AppModule {
         stateHolder: StateHolder,
         serviceController: ServiceController,
         windowScheduler: WindowScheduler,
-        settingsRepository: SettingsRepository
+        settingsRepository: SettingsRepository,
+        nightWindowScheduler: NightWindowScheduler,
+        confirmOffScheduler: ConfirmOffScheduler
     ): ArmManager {
-        return ArmManager(sessionRepository, stateHolder, serviceController, windowScheduler, settingsRepository)
+        return ArmManager(
+            sessionRepository,
+            stateHolder,
+            serviceController,
+            windowScheduler,
+            settingsRepository,
+            nightWindowScheduler,
+            confirmOffScheduler
+        )
     }
 
     @Provides
@@ -168,5 +179,14 @@ object AppModule {
         alarmManager: AlarmManager
     ): WindowScheduler {
         return WindowScheduler(context, alarmManager)
+    }
+
+    @Provides
+    @Singleton
+    fun provideNightWindowScheduler(
+        @ApplicationContext context: Context,
+        alarmManager: AlarmManager
+    ): NightWindowScheduler {
+        return NightWindowScheduler(context, alarmManager)
     }
 }

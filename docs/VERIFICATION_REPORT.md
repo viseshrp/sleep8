@@ -13,7 +13,7 @@ Scope: Full audit against docs/SPEC.md (authoritative), docs/ARCHITECTURE.md, do
 | 3. Screen remains OFF 10 min: create OS alarm at screen_off + 8h | `ConfirmationAlarmReceiver.onReceive()` calls `StateMachineManager.onConfirmationTimerExpired()`; `OsAlarmCreator.createAlarm()` uses `TimeUtils.calculateAlarmTime()` | PASS |
 | 4. Multiple SCREEN_OFF before confirm: latest wins | `StateMachineManager.onScreenOff()` overwrites pending and reschedules confirmation | PASS |
 | 5. Multiple OS alarms allowed (no deletion) | `OsAlarmCreator.createAlarm()` always inserts new record; no deletion logic | PASS |
-| 6. Reboot restore: armed state + pending confirm timer + immediate alarm if deadline passed & screen OFF | `app/src/main/java/com/sleep8/service/receiver/BootReceiver.kt` restores session, schedules auto-arm boundaries, schedules or creates alarm | PASS |
+| 6. Reboot restore: armed state + pending confirm timer + immediate alarm if deadline passed & screen OFF | `app/src/main/java/com/sleep8/service/receiver/BootReceiver.kt` restores armed state from auto-arm schedule, schedules auto-arm boundaries, schedules or creates alarm | PASS |
 | 7. Persist all events and alarm records in DB | `SessionRepository.insertScreenEvent()`, `AlarmRepository.insertRecord()` | PASS |
 | 8. No network traffic | No INTERNET permission in `app/src/main/AndroidManifest.xml`; no networking code | PASS |
 

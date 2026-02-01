@@ -4,7 +4,9 @@ import com.sleep8.data.repository.SettingsRepository
 import com.sleep8.data.repository.SessionRepository
 import com.sleep8.domain.model.ArmSession
 import com.sleep8.domain.model.ArmSource
+import com.sleep8.domain.scheduler.ConfirmOffScheduler
 import com.sleep8.domain.state.StateHolder
+import com.sleep8.domain.scheduler.NightWindowScheduler
 import com.sleep8.domain.scheduler.WindowScheduler
 import com.sleep8.service.ServiceController
 import com.sleep8.util.TimeUtils
@@ -14,14 +16,18 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import java.time.Instant
 import java.time.LocalDateTime
+import java.time.ZoneId
 
 class ArmManager(
     private val sessionRepository: SessionRepository,
     private val stateHolder: StateHolder,
     private val serviceController: ServiceController,
     private val windowScheduler: WindowScheduler,
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    private val nightWindowScheduler: NightWindowScheduler,
+    private val confirmOffScheduler: ConfirmOffScheduler
 ) {
     private var manualOverride: Boolean = false
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -42,7 +48,7 @@ class ArmManager(
         )
         stateHolder.setActiveSession(session)
         stateHolder.setArmed(true)
-        serviceController.startNightMonitorService()
+        refreshNightWindowBoundariesIfArmed()
         windowScheduler.scheduleWindowEnd(window.endTs)
         windowScheduler.scheduleWindowStart(window.startTs)
         if (source != ArmSource.SCHEDULED) manualOverride = true
@@ -56,8 +62,15 @@ class ArmManager(
         }
         stateHolder.setActiveSession(null)
         stateHolder.setArmed(false)
-        stateHolder.clearPendingCandidate()
+        if (source != ArmSource.SCHEDULED) {
+            stateHolder.clearPendingCandidate()
+            confirmOffScheduler.cancelConfirmation()
+        } else {
+            confirmOffScheduler.cancelConfirmationTimerOnly()
+        }
         serviceController.stopNightMonitorService()
+        nightWindowScheduler.cancelWindowStart()
+        nightWindowScheduler.cancelWindowEnd()
         windowScheduler.cancelWindowEnd()
         windowScheduler.cancelWindowStart()
         if (source != ArmSource.SCHEDULED) manualOverride = true
@@ -99,6 +112,42 @@ class ArmManager(
             }
         } else {
             manualOverride = false // reset override after scheduled event
+        }
+    }
+
+    suspend fun refreshNightWindowBoundariesIfArmed() {
+        if (!isArmed()) {
+            serviceController.stopNightMonitorService()
+            nightWindowScheduler.cancelWindowStart()
+            nightWindowScheduler.cancelWindowEnd()
+            return
+        }
+        val settings = settingsRepository.getSettings()
+        scheduleNightWindowBoundaries(settings.nightStart, settings.nightEnd)
+    }
+
+    private fun scheduleNightWindowBoundaries(nightStart: String, nightEnd: String) {
+        val start = TimeUtils.parseLocalTime(nightStart)
+        val end = TimeUtils.parseLocalTime(nightEnd)
+        val now = LocalDateTime.now()
+        val inWindow = TimeUtils.isInWindow(now.toLocalTime(), start, end)
+        val currentOrNext = TimeUtils.calculateNextWindow(now, start, end)
+        if (inWindow) {
+            serviceController.startNightMonitorService()
+            nightWindowScheduler.scheduleWindowEnd(currentOrNext.endTs)
+            val nextStart = TimeUtils.calculateNextWindow(
+                LocalDateTime.ofInstant(
+                    Instant.ofEpochMilli(currentOrNext.endTs + 60_000L),
+                    ZoneId.systemDefault()
+                ),
+                start,
+                end
+            )
+            nightWindowScheduler.scheduleWindowStart(nextStart.startTs)
+        } else {
+            serviceController.stopNightMonitorService()
+            nightWindowScheduler.scheduleWindowStart(currentOrNext.startTs)
+            nightWindowScheduler.scheduleWindowEnd(currentOrNext.endTs)
         }
     }
 
