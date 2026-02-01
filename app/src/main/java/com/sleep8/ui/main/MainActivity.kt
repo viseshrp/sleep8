@@ -5,21 +5,21 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.sleep8.ui.components.ArmButton
 import com.sleep8.ui.components.StatusCard
@@ -80,19 +81,31 @@ private fun MainScreen(
             verticalArrangement = Arrangement.SpaceBetween,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                TextButton(onClick = onOpenSettings) {
+                    Text(text = "Settings", color = Color(0xFFB8C3D6))
+                }
+            }
+
             Column(
                 modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text(
-                    text = "Sleep8",
-                    style = MaterialTheme.typography.displaySmall,
-                    color = Color(0xFFE9EEF7)
+                Image(
+                    painter = painterResource(id = com.sleep8.R.mipmap.ic_launcher),
+                    contentDescription = "Sleep8",
+                    modifier = Modifier
+                        .clip(MaterialTheme.shapes.large)
+                        .size(96.dp)
                 )
                 Text(
-                    text = "Auto-arm sleep, set a real alarm.",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = Color(0xFFB8C3D6)
+                    text = "Sleep8",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = Color(0xFFE9EEF7)
                 )
             }
 
@@ -112,28 +125,6 @@ private fun MainScreen(
                     onToggle = { viewModel.toggleArmed() },
                     modifier = Modifier.fillMaxWidth()
                 )
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(MaterialTheme.shapes.large),
-                    colors = CardDefaults.cardColors(containerColor = Color(0x1AFFFFFF))
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = "Quick actions",
-                            style = MaterialTheme.typography.labelLarge,
-                            color = Color(0xFFB8C3D6)
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Button(
-                            onClick = onOpenSettings,
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1F2C43))
-                        ) {
-                            Text(text = "Settings", color = Color(0xFFE9EEF7))
-                        }
-                    }
-                }
             }
         }
     }
