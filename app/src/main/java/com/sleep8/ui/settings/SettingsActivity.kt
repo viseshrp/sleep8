@@ -112,6 +112,11 @@ private fun SettingsScreen(
                     value = uiState.nightEnd,
                     onValueSelected = viewModel::updateNightEnd
                 )
+                RowWithSwitch(
+                    label = "Auto-arm schedule",
+                    checked = uiState.autoArmEnabled,
+                    onCheckedChange = viewModel::updateAutoArmEnabled
+                )
             }
 
             // Section: Alarm Behavior
@@ -153,25 +158,6 @@ private fun SettingsScreen(
                 }
             }
 
-            // Section: Defaults
-            SettingsSection(title = "App Behavior") {
-                RowWithSwitch(
-                    label = "Armed by default",
-                    checked = uiState.armedDefault,
-                    onCheckedChange = viewModel::updateArmedDefault
-                )
-                RowWithSwitch(
-                    label = "Auto-arm schedule",
-                    checked = uiState.autoArmEnabled,
-                    onCheckedChange = viewModel::updateAutoArmEnabled
-                )
-                InfoRow(
-                    label = "Offline only mode",
-                    value = "Enabled",
-                    description = "Privacy-first: All processing happens locally. No data ever leaves your device."
-                )
-            }
-
             // Section: Reliability
             SettingsSection(title = "System Reliability") {
                 ChecklistRow(
@@ -193,14 +179,6 @@ private fun SettingsScreen(
                         context.startActivity(PermissionUtils.batteryOptimizationIntent(context))
                         viewModel.setBatteryOptAck(true)
                     }
-                )
-
-                ChecklistRow(
-                    label = "Foreground service",
-                    ok = uiState.foregroundServiceActive,
-                    actionText = "Arm now",
-                    description = "Active when the app is monitoring your sleep. You must 'Arm' the app from the home screen to start the service.",
-                    onAction = onBack
                 )
 
                 Button(
