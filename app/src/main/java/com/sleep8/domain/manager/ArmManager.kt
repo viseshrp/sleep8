@@ -103,16 +103,33 @@ class ArmManager(
         }
     }
 
-    fun onScheduledEvent(type: String) {
-        val wasManualOverride = manualOverride
-        if (wasManualOverride) {
-            manualOverride = false // reset override at the scheduled boundary
+    suspend fun onScheduledEvent(type: String) {
+        manualOverride = false // reset override at the scheduled boundary
+        if (type == "start") {
+            arm(ArmSource.SCHEDULED)
+        } else if (type == "end") {
+            disarm(ArmSource.SCHEDULED)
         }
-        if (!wasManualOverride || !manualOverride) {
-            if (type == "start") {
-                scope.launch { arm(ArmSource.SCHEDULED) }
-            } else if (type == "end") {
-                scope.launch { disarm(ArmSource.SCHEDULED) }
+    }
+
+    suspend fun syncAutoArmStateNow() {
+        val settings = settingsRepository.getSettings()
+        if (!settings.autoArmEnabled) return
+        if (manualOverride) return
+
+        val start = TimeUtils.parseLocalTime(settings.autoArmStart)
+        val end = TimeUtils.parseLocalTime(settings.autoArmEnd)
+        val now = LocalDateTime.now()
+        val inAutoWindow = TimeUtils.isInWindow(now.toLocalTime(), start, end)
+        val session = stateHolder.activeSession.value
+
+        if (inAutoWindow) {
+            if (!isArmed()) {
+                arm(ArmSource.SCHEDULED)
+            }
+        } else {
+            if (session?.source == ArmSource.SCHEDULED) {
+                disarm(ArmSource.SCHEDULED)
             }
         }
     }
