@@ -49,8 +49,6 @@ class ArmManager(
         stateHolder.setActiveSession(session)
         stateHolder.setArmed(true)
         refreshNightWindowBoundariesIfArmed()
-        windowScheduler.scheduleWindowEnd(window.endTs)
-        windowScheduler.scheduleWindowStart(window.startTs)
         if (source != ArmSource.SCHEDULED) manualOverride = true
         return Result.success(session)
     }

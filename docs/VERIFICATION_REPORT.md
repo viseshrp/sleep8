@@ -55,11 +55,7 @@ Scope: Re-audit against updated docs/SPEC.md (authoritative), docs/ARCHITECTURE.
 ## Punch List (Prioritized)
 
 ### P0 — Spec Violations
-1. **Auto-Arm boundaries are overwritten by Night Window times.**
-   - `ArmManager.arm()` schedules `WindowScheduler` using **Night Window** start/end, which can toggle `armed` at Night Window boundaries. This violates the rule that Night Window never toggles `armed` and that Auto-Arm boundaries are separate.
-   - Minimal fix: in `app/src/main/java/com/sleep8/domain/manager/ArmManager.kt`, remove `windowScheduler.scheduleWindowStart/End()` from manual `arm()`; only schedule auto-arm boundaries inside `handleAutoArm()` or when auto-arm is enabled. Ensure `WindowScheduler` uses `auto_arm_start/end` only.
-
-2. **Manual disarm cancels Auto-Arm schedule.**
+1. **Manual disarm cancels Auto-Arm schedule.**
    - `ArmManager.disarm()` cancels `windowScheduler` regardless of source, preventing auto-arm from resuming at the next scheduled boundary (spec says manual override lasts until next scheduled event).
    - Minimal fix: in `ArmManager.disarm()`, only cancel `WindowScheduler` when auto-arm is disabled; otherwise keep auto-arm boundaries intact.
 
