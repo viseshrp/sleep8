@@ -31,6 +31,7 @@ object Constants {
     const val PENDING_INTENT_REQUEST_WINDOW_START = 2005
     const val PENDING_INTENT_REQUEST_NIGHT_WINDOW_START = 2006
     const val PENDING_INTENT_REQUEST_NIGHT_WINDOW_END = 2007
+    const val ALARM_SHOW_INTENT_REQUEST_CODE_OFFSET = 10_000
 
     const val EXTRA_ALARM_ID = "extra_alarm_id"
     const val EXTRA_ALARM_INSTANCE_ID = "extra_alarm_instance_id"

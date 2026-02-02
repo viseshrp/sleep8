@@ -5,6 +5,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import com.sleep8.BuildConfig
 import com.sleep8.R
 import com.sleep8.data.preferences.AppPreferences
 import com.sleep8.data.repository.AlarmRepository
@@ -15,6 +16,7 @@ import com.sleep8.domain.model.AlarmSource
 import com.sleep8.domain.model.AlarmStatus
 import com.sleep8.service.notification.NotificationHelper
 import com.sleep8.service.receiver.AlarmReceiver
+import com.sleep8.util.AlarmIntents
 import com.sleep8.util.Constants
 import com.sleep8.util.PermissionUtils
 import com.sleep8.util.TimeUtils
@@ -65,8 +67,7 @@ class AlarmScheduler(
             Log.e("AlarmScheduler", "Exact alarm permission missing; cannot reschedule alarm after reboot.")
             notificationHelper.showExactAlarmWarning()
         }
-        val operation = buildAlarmPendingIntent(record.id, record.requestCode, record.alarmInstanceId)
-        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, operation)
+        scheduleAlarmClock(triggerAt, record.id, record.requestCode, record.alarmInstanceId)
     }
 
     suspend fun cancelActiveAlarms(reason: AlarmCancelReason) {
@@ -127,8 +128,7 @@ class AlarmScheduler(
             notificationHelper.showExactAlarmWarning()
         }
 
-        val operation = buildAlarmPendingIntent(alarmId, requestCode, instanceId)
-        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, operation)
+        scheduleAlarmClock(triggerAt, alarmId, requestCode, instanceId)
         updateActiveAlarmIdentity(record.copy(id = alarmId))
 
         val scheduledText = context.getString(
@@ -190,5 +190,30 @@ class AlarmScheduler(
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
+    }
+
+    private fun scheduleAlarmClock(
+        triggerAt: Long,
+        alarmId: Long,
+        requestCode: Int,
+        alarmInstanceId: Long
+    ) {
+        val operation = buildAlarmPendingIntent(alarmId, requestCode, alarmInstanceId)
+        val showIntent = AlarmIntents.alarmDetailPendingIntent(
+            context,
+            requestCode + Constants.ALARM_SHOW_INTENT_REQUEST_CODE_OFFSET,
+            alarmId
+        )
+        val alarmClockInfo = AlarmManager.AlarmClockInfo(triggerAt, showIntent)
+        alarmManager.setAlarmClock(alarmClockInfo, operation)
+        if (BuildConfig.DEBUG) {
+            val next = alarmManager.nextAlarmClock
+            if (next == null || next.triggerTime > triggerAt) {
+                Log.w(
+                    "AlarmScheduler",
+                    "Next alarm clock not reflecting scheduled trigger=$triggerAt; next=${next?.triggerTime}"
+                )
+            }
+        }
     }
 }

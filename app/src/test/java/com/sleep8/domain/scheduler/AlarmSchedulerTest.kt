@@ -87,7 +87,7 @@ class AlarmSchedulerTest {
             })
         }
         verify {
-            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, expectedTrigger, any())
+            alarmManager.setAlarmClock(match { it.triggerTime == expectedTrigger }, any())
         }
     }
 
@@ -183,7 +183,7 @@ class AlarmSchedulerTest {
         scheduler.scheduleSnooze(5L, snoozeMinutes = 10)
 
         coVerify { alarmRepository.markSnoozed(5L, any(), any()) }
-        verify { alarmManager.setExactAndAllowWhileIdle(any(), any(), any()) }
+        verify { alarmManager.setAlarmClock(any(), any()) }
     }
 
     @Test
