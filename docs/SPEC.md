@@ -27,6 +27,7 @@ When the user **arms** the app (button or Quick Settings tile), the app watches 
 - Alarm ownership: **app-owned** exact alarm via `AlarmManager.setExactAndAllowWhileIdle` (`RTC_WAKEUP`) → receiver → foreground ringing service → full-screen activity (optional overlay).
 - **Single active alarm**: at most one scheduled (not fired) alarm exists at any time. New confirmed alarms and snooze replace the prior active alarm.
 - Duration: **configurable**, default **480 minutes** (8 hours).
+- Invalid duration values are rejected and not persisted until corrected.
 - Snooze: configurable option in settings, uses app-owned alarms.
 - Reboot: **restore state** and reschedule alarms from DB.
 - Storage: persist `duration_used_minutes`, `alarm_instance_id`, `request_code`, `snoozed_at`, `snoozed_until`, `overlay_used`, `activity_presented`.

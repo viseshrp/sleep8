@@ -13,7 +13,7 @@ These tests require **physical devices** (Pixel 8 / Android 14+ recommended).
 ## Duration Settings
 - Set duration to 0 minutes → alarm rings immediately at confirmation time.
 - Set duration to 720 minutes → alarm scheduled exactly +720 minutes.
-- Enter -1 or 721 → inline error shown; value is clamped/reset on save.
+- Enter -1 or 721 → inline error shown; value is not saved until corrected.
 
 ## Overlay (Optional)
 - Enable overlay toggle → if permission granted, overlay appears while alarm is ringing.
