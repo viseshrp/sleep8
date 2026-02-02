@@ -2,40 +2,7 @@
 
 ## 1. Overview
 
-Sleep8 is a native Android application that schedules **app-owned exact alarms** based on screen-off detection during a user-defined night window. The app uses a layered architecture with foreground services for monitoring, `AlarmManager` for exact alarms, and Room for persistence.
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                         PRESENTATION LAYER                          │
-├─────────────────────────────────────────────────────────────────────┤
-│  MainActivity  │  SettingsActivity  │  AlarmActivity  │  QS Tile     │
-└────────┬───────────────┬────────────┬────────────┬──────────────────┘
-         │               │            │            │
-         ▼               ▼            ▼            ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│                          DOMAIN LAYER                               │
-├─────────────────────────────────────────────────────────────────────┤
-│  ArmManager  │  StateMachine  │  AlarmScheduler  │  WindowSchedulers│
-└────────┬───────────────┬────────────┬────────────┬──────────────────┘
-         │               │            │            │
-         ▼               ▼            ▼            ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│                         SERVICE LAYER                               │
-├─────────────────────────────────────────────────────────────────────┤
-│  NightMonitorService │ AlarmReceiver │ AlarmRingingService │ BootRx │
-└────────┬───────────────┬────────────┬───────────────┬───────────────┘
-         │               │            │               │
-         ▼               ▼            ▼               ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│                          DATA LAYER                                 │
-├─────────────────────────────────────────────────────────────────────┤
-│  Room Database  │  SharedPreferences  │  In-Memory StateHolder      │
-└─────────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## 2. High-Level Component Diagram
+Sleep8 schedules **app-owned alarm clocks** using `AlarmManager.setAlarmClock`, then drives a full-screen alarm UI with a foreground ringing service. The app never delegates to the OS Clock app.
 
 ```
 User
@@ -51,9 +18,9 @@ MainActivity / QS Tile ──► ArmManager ──► NightMonitorService
                                          │ (screen off confirmed)
                                          ▼
                                  AlarmScheduler
-                                         │
+                                         │  setAlarmClock(showIntent, operation)
                                          ▼
-                              AlarmManager (exact)
+                                AlarmManager
                                          │
                                          ▼
                                  AlarmReceiver
@@ -64,64 +31,48 @@ MainActivity / QS Tile ──► ArmManager ──► NightMonitorService
 
 ---
 
-## 3. Module Structure (key parts)
+## 2. Key Components
 
-```
-com.sleep8/
-├── ui/
-│   ├── main/...
-│   ├── history/...
-│   ├── settings/...
-│   └── alarm/
-│       ├── AlarmActivity.kt
-│       ├── AlarmViewModel.kt
-│       └── AlarmUiState.kt
-├── domain/
-│   ├── manager/
-│   │   ├── ArmManager.kt
-│   │   └── StateMachineManager.kt
-│   ├── scheduler/
-│   │   ├── AlarmScheduler.kt
-│   │   ├── ConfirmOffScheduler.kt
-│   │   └── NightWindowScheduler.kt
-│   └── model/AlarmRecord.kt
-├── service/
-│   ├── NightMonitorService.kt
-│   ├── AlarmRingingService.kt
-│   └── receiver/
-│       ├── AlarmReceiver.kt
-│       ├── BootReceiver.kt
-│       └── ConfirmationAlarmReceiver.kt
-└── data/
-    ├── db/...
-    ├── repository/...
-    └── preferences/...
-```
+- **AlarmScheduler**
+  - Calculates `triggerAt` using configured duration.
+  - Persists metadata (`duration_used`, `alarm_instance_id`, `request_code`).
+  - Schedules `AlarmManager.setAlarmClock` with showIntent to alarm history.
+
+- **AlarmReceiver**
+  - Receives the alarm clock operation.
+  - Dedupes by `alarm_instance_id` and record status.
+  - Starts ringing service and full-screen activity.
+
+- **AlarmRingingService**
+  - Foreground service only while ringing.
+  - Uses ALARM-category notification with Dismiss/Snooze actions.
+
+- **AlarmActivity**
+  - Full-screen, shows over lock screen, turns screen on.
 
 ---
 
-## 4. Alarm Flow (owned)
+## 3. Best-effort OS Integration
 
-1. Screen goes OFF during night window.
-2. Confirm timer expires with screen still OFF.
-3. `AlarmScheduler` schedules an exact alarm for `screen_off + 8 hours` and persists a `SCHEDULED` record.
-4. `AlarmManager` fires → `AlarmReceiver`.
-5. `AlarmReceiver` marks record `FIRED`, starts `AlarmRingingService`, and launches `AlarmActivity`.
-6. User dismisses (or snoozes). DB is updated and the foreground service stops.
+- **ACTION_SHOW_ALARMS** opens Alarm History.
+- **Deep links**:
+  - `sleep8://alarms`
+  - `sleep8://alarm/<id>`
+
+Android does not guarantee a third-party app can be the system default alarm app; this is best-effort.
+
+---
+
+## 4. Data Flow
+
+- Screen-off confirmed → DB record written (`SCHEDULED`).
+- Alarm fires → record set `FIRED`.
+- Dismiss → record set `DISMISSED`.
+- Snooze → original record set `SNOOZED`, new record scheduled.
 
 ---
 
 ## 5. Reboot Restore
 
-- `BootReceiver` restores armed state and pending confirmation timers.
-- If a `SCHEDULED` alarm exists in DB, it is rescheduled.
-- If `trigger_at` is already in the past, the alarm is scheduled to fire immediately.
-
----
-
-## 6. Alarm Observability Data Flow (Read-Only UI)
-
-- Alarm creation → `AlarmRepository` → `alarm_records` (Room) is the **only** source of truth.
-- Home screen reads the **latest** alarm record to show “most recently scheduled alarm.”
-- Alarm History screen reads **all** alarm records (newest → oldest).
-- No dependency on the OS Clock app.
+- Restore armed state and pending confirmation timers.
+- Reschedule latest `SCHEDULED` record; if overdue, fire immediately.

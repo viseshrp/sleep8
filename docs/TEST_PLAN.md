@@ -1,36 +1,35 @@
-# Sleep8 — Testing Plan (Owned Alarm Model)
+# Sleep8 — Testing Plan (AlarmClock Semantics)
 
 ## Overview
-This plan covers unit tests, integration tests, and manual validation for the app-owned exact alarm flow. **Physical device testing is required**; emulators are not authoritative for exact alarm delivery or lock-screen behavior.
+Physical device testing is required; emulators are not authoritative for AlarmClock scheduling, lockscreen behavior, or system alarm indicators.
 
 ---
 
-## 1. Unit Tests (required)
-
-### 1.1 Alarm trigger time calculation
-- Verify `screen_off + 8 hours` is used for scheduling.
-
-### 1.2 Snooze calculation
-- Verify `now + snooze_minutes` for the next trigger.
-
-### 1.3 Persistence logic
-- `AlarmRecord` inserts include `scheduled_at`, `trigger_at`, `source`, `status`.
-- Status updates set `fired_at` / `dismissed_at` / `snoozed_until`.
+## Unit Tests
+- Duration config stored in `duration_used_minutes`.
+- `AlarmManager.setAlarmClock` uses expected `AlarmClockInfo.triggerTime`.
+- PendingIntent uniqueness via `alarm_instance_id`/`request_code`.
+- Snooze schedules AlarmClock and updates next alarm.
+- Notification permission logic (Android 13+).
 
 ---
 
-## 2. Integration Tests (Robolectric)
-- Full flow: arm → screen off → confirm → alarm scheduled.
-- Boot restore: scheduled record is rescheduled on boot.
+## Integration Tests (Robolectric)
+- Arm → screen off → confirm → alarm scheduled.
+- Boot restore reschedules `SCHEDULED` record.
 
 ---
 
-## 3. Manual Tests (physical device)
-- Screen off → confirmation → alarm fires ~8 hours later.
-- Alarm fires while device locked.
-- Alarm fires in Doze (device idle overnight).
-- Alarm fires after app process death.
-- Alarm fires after reboot.
-- Dismiss stops sound immediately.
+## Manual Tests (Pixel 8 / Android 14+)
+- Next alarm appears in system UI/lockscreen after scheduling (verify system alarm indicator).
+- Snooze updates next alarm display.
+- ACTION_SHOW_ALARMS opens Alarm History screen.
+- Deep links:
+  - `sleep8://alarms`
+  - `sleep8://alarm/<id>`
+- Notifications permission denied still rings; UI warns about reduced lockscreen UX.
 
-**Note:** Emulator behavior is not authoritative for alarm timing or lock-screen UI.
+---
+
+## Emulator Disclaimer
+Emulators are not authoritative for Doze, exact alarms, or lockscreen alarm indicators.
