@@ -2,10 +2,10 @@
 
 ## Phase 1 — Exact Alarm Scheduling
 - Add `AlarmScheduler` with `AlarmManager.setAlarmClock(AlarmClockInfo(triggerAt, showIntent), operation)` so system “next alarm” reflects Sleep8.
-- Persist metadata: `duration_used_minutes`, `alarm_instance_id`, `request_code`, `snoozed_at`, `snoozed_until`, `overlay_used`, `activity_presented`.
+- Persist metadata: `duration_used_minutes`, `alarm_instance_id`, `request_code`, `overlay_used`, `activity_presented`.
 
 ## Phase 2 — Alarm Trigger Flow
-- `AlarmReceiver` → `AlarmRingingService` (FGS) → `AlarmActivity`.
+- `AlarmReceiver` → `AlarmRingingService` (FGS) → `AlarmRingingActivity`.
 - Optional overlay (WindowManager) shown while ringing when user-enabled + permission granted.
 - Deduplicate by `alarm_instance_id` and record status.
 
@@ -24,5 +24,5 @@
 - Reschedule latest `SCHEDULED` record; if overdue, fire immediately.
 
 ## Phase 6 — Tests & Docs
-- Unit: duration config, setAlarmClock scheduling, snooze reschedule, overlay policy, notification actions.
+- Unit: duration config, setAlarmClock scheduling, overlay policy, notification actions.
 - Manual: lockscreen alarm UI + next alarm indicator, overlay behavior, notification permission denial.

@@ -10,14 +10,15 @@ Scope: Re-audit against updated docs/SPEC.md (authoritative), docs/ARCHITECTURE.
 |---|---|---|
 | Owned exact alarm scheduling (`setAlarmClock`) | `AlarmScheduler` uses `AlarmManager.setAlarmClock` | PASS |
 | System “next alarm” UI reflects app alarm when earliest | Requires physical device verification | TODO |
-| Alarm fires to receiver → activity → ringing service | `AlarmReceiver`, `AlarmActivity`, `AlarmRingingService` | PASS |
+| Alarm fires to receiver → activity → ringing service | `AlarmReceiver`, `AlarmRingingActivity`, `AlarmRingingService` | PASS |
 | Duration configurable (0-720 minutes, default 480) stored in record | `Settings` + `AlarmRecord.durationUsedMinutes` | PASS |
 | Single active alarm invariant | `AlarmScheduler.cancelScheduledAlarms` + DB status updates | PASS |
 | Optional overlay fallback | Settings toggle + `AlarmOverlayController` | PASS |
 | Exact alarm guidance + notification permission flow | Settings reliability section + POST_NOTIFICATIONS flow | PASS |
 | Best-effort OS integration (`ACTION_SHOW_ALARMS`, deep links) | Manifest intent-filters + `AlarmHistoryActivity` | PASS |
 | Offline-only (no INTERNET permission) | Manifest | PASS |
-| Alarm UI title updated | `AlarmActivity` label + UI string | PASS |
+| Alarm ringing UI title updated | `AlarmRingingActivity` label + UI string | PASS |
+| Snooze removed everywhere | No snooze actions/UI/DB fields | PASS |
 | Duration UI hours+minutes invariant | Settings UI fields + tests | PASS |
 | Alarm page is AOSP-style toggle list | `AlarmListActivity` + `AlarmListViewModel` | PASS |
 

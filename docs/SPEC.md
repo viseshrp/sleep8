@@ -25,14 +25,14 @@ When the user **arms** the app (button or Quick Settings tile), the app watches 
 - Rescheduling: **latest screen-off wins** (keep updating the scheduled time until confirmed).
 - Confirm rule: only commit when **screen remains OFF for 10 minutes** after an OFF event.
 - Alarm ownership: **app-owned** exact alarm via `AlarmManager.setAlarmClock` → receiver → foreground ringing service → full-screen activity (optional overlay).
-- **Single active alarm**: at most one scheduled (not fired) alarm exists at any time. New confirmed alarms and snooze replace the prior active alarm.
+- **Single active alarm**: at most one scheduled (not fired) alarm exists at any time.
 - Duration: **configurable**, default **8h 0m** (480 minutes).
 - Duration UI is **always hours + minutes inputs**. Never minutes-only; never hours-only.
 - Invalid duration values are rejected and not persisted until corrected.
 - Minutes >= 60 are normalized into hours; total is clamped to 0-720 minutes.
-- Snooze: configurable option in settings, uses app-owned alarms.
+- **No snooze**: snooze is not supported anywhere in the app.
 - Reboot: **restore state** and reschedule alarms from DB.
-- Storage: persist `duration_used_minutes`, `alarm_instance_id`, `request_code`, `snoozed_at`, `snoozed_until`, `overlay_used`, `activity_presented`.
+- Storage: persist `duration_used_minutes`, `alarm_instance_id`, `request_code`, `overlay_used`, `activity_presented`.
 - Privacy: **strictly offline**.
 
 ---
@@ -50,7 +50,6 @@ When the user **arms** the app (button or Quick Settings tile), the app watches 
   - Night window start/end (e.g., 22:00-08:00).
   - Auto-arm schedule start/end (separate from night window; defaults to night window times).
   - **Alarm duration** in hours + minutes (0-720 total, default 8h 0m).
-  - Snooze option (default OFF or a chosen minutes value).
 - App shows a “Reliability checklist”:
   - Exact alarm capability (Android 12+)
   - Notifications permission (Android 13+)
@@ -88,12 +87,11 @@ When the screen has remained OFF for 10 minutes since the latest OFF event:
 
 ### 5.5 Alarm firing
 - `AlarmManager` delivers to `AlarmReceiver`.
-- Receiver starts `AlarmRingingService` (foreground) and launches `AlarmActivity`.
+- Receiver starts `AlarmRingingService` (foreground) and launches `AlarmRingingActivity`.
 - Alarm UI shows over lock screen, turns screen on, and rings until dismissed.
 
-### 5.6 Dismiss / Snooze
+### 5.6 Dismiss
 - **Dismiss** stops audio/vibration, stops the foreground service, records `dismissed_at` in DB.
-- **Snooze** schedules a new exact alarm (e.g., +10 minutes) and marks the original record as `SNOOZED`.
 
 ### 5.7 Disarming
 - User can disarm anytime (button/tile).
@@ -136,7 +134,6 @@ When the screen has remained OFF for 10 minutes since the latest OFF event:
 
 ### 6.4 Single active alarm invariant
 - Only one `SCHEDULED` alarm may exist at a time.
-- Snooze replaces the active alarm (original marked `SNOOZED`, any scheduled alarms canceled with reason `SNOOZE_REPLACE`).
 
 ### 6.5 Reboot handling
 If armed at reboot or there was a pending confirmation:
@@ -155,11 +152,11 @@ If armed at reboot or there was a pending confirmation:
 Use `AlarmManager.setAlarmClock(AlarmClockInfo(triggerAt, showIntent), operation)` with an app-owned `BroadcastReceiver`, so the system lockscreen “next alarm” reflects the app’s alarm.
 
 ### 7.2 Alarm UI
-- `AlarmActivity` is full-screen, shows over lock screen, and turns screen on.
-- Screen title/label: **Alarm** (used for UI header and task switcher).
+- `AlarmRingingActivity` is full-screen, shows over lock screen, and turns screen on.
+- UI is AOSP-like: large time, subtle label, single **Dismiss** action.
 - Alarm uses `AudioManager.STREAM_ALARM` semantics with looping sound and repeating vibration.
 - Foreground service runs **only while ringing**.
-- Optional overlay (if user-enabled + permission granted) shows a full-screen WindowManager UI while ringing.
+- Optional overlay (if user-enabled + permission granted) shows the same ringing UI while ringing.
 
 ### 7.3 Best-effort OS integration
 - Handle `AlarmClock.ACTION_SHOW_ALARMS` to open the app’s alarm history screen.
@@ -203,7 +200,6 @@ Tables:
 - `auto_arm_end` (HH:MM)
 - `auto_arm_enabled` (bool, default false)
 - `confirm_off_minutes` (default 10)
-- `snooze_minutes` (nullable / default null)
 - `alarm_duration_minutes` (0-720, default 480)
 - `overlay_enabled` (bool, default false)
 - `armed_default` (bool, default false)
@@ -214,16 +210,14 @@ Tables:
 - `screen_off_ts` (timestamp)         # triggering OFF
 - `confirmed_at` (timestamp)          # after 10 min off
 - `scheduled_at` (timestamp)          # record creation time
-- `trigger_at` (timestamp)            # off + duration or snooze time
+- `trigger_at` (timestamp)            # off + duration
 - `duration_used_minutes` (int)
 - `alarm_instance_id` (long)
 - `request_code` (int)
-- `source` (enum: SLEEP_AUTOMATION | SNOOZE)
-- `status` (enum: SCHEDULED | FIRED | DISMISSED | SNOOZED | CANCELED)
-- `canceled_reason` (enum: REPLACED_BY_NEW_ALARM | USER_DISARM | SNOOZE_REPLACE | REBOOT_CLEANUP)
+- `source` (enum: SLEEP_AUTOMATION)
+- `status` (enum: SCHEDULED | FIRED | DISMISSED | CANCELED)
+- `canceled_reason` (enum: REPLACED_BY_NEW_ALARM | USER_DISARM | USER_TOGGLE_OFF | REBOOT_CLEANUP)
 - `fired_at` (timestamp nullable)
 - `dismissed_at` (timestamp nullable)
-- `snoozed_at` (timestamp nullable)
-- `snoozed_until` (timestamp nullable)
 - `overlay_used` (bool)
 - `activity_presented` (bool)

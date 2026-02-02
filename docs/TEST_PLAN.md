@@ -9,23 +9,22 @@ Physical device testing is required; emulators are not authoritative for exact a
 - Duration config stored in `duration_used_minutes`.
 - `AlarmManager.setAlarmClock` uses expected trigger time.
 - PendingIntent uniqueness via `alarm_instance_id`/`request_code`.
-- Snooze schedules exact alarm with expected trigger time.
 - Notification permission logic (Android 13+).
 - Overlay policy logic (enabled vs permission granted).
-- Alarm ringing notification includes Dismiss/Snooze actions.
+- Alarm ringing notification includes Dismiss-only action.
 - Alarm menu routing chooses ringing UI vs preview/history.
 - Single active alarm: scheduling a new confirmed alarm cancels prior scheduled alarms.
-- Single active alarm: snooze replaces any scheduled alarm.
 - Reboot cleanup: multiple scheduled alarms → keep newest, cancel extras.
 - Disarm cancels the active scheduled alarm.
 - Duration boundaries: 0, 1, 480, 720 minutes.
 - Invalid duration inputs: below 0 / above 720 are rejected (not persisted).
 - Duration 0 schedules at confirmation timestamp.
-- Alarm UI title appears in AlarmActivity label and UI header.
+- Alarm ringing activity label uses the ringing title.
 - Duration UI has both Hours and Minutes inputs.
 - Alarm list toggles schedule/cancel alarms and enforce single-active policy.
 - Alarm list has no edit actions.
 - `AlarmManager.getNextAlarmClock` reflects the earliest scheduled alarm (debug/log assertion).
+- AlarmRingingActivity fullScreenIntent is used for ringing UI.
 
 ---
 
@@ -46,6 +45,7 @@ Physical device testing is required; emulators are not authoritative for exact a
   - `sleep8://alarm/<id>`
 - Lockscreen/system “next alarm” shows app alarm when earlier than other alarms.
 - Alarm page list shows time + switch; toggling off disables the alarm.
+- Ringing UI shows Dismiss only (no snooze anywhere).
 - Notifications permission denied still rings; UI warns about reduced lockscreen UX.
 
 ---

@@ -26,7 +26,7 @@ MainActivity / QS Tile ──► ArmManager ──► NightMonitorService
                                  AlarmReceiver
                                          │
                                          ├──► AlarmRingingService (FGS)
-                                         ├──► AlarmActivity (full-screen)
+                                         ├──► AlarmRingingActivity (full-screen)
                                          └──► Optional Overlay (WindowManager)
 ```
 
@@ -47,7 +47,7 @@ MainActivity / QS Tile ──► ArmManager ──► NightMonitorService
 
 - **AlarmRingingService**
   - Foreground service only while ringing.
-  - Uses ALARM-category notification with Dismiss/Snooze actions.
+  - Uses ALARM-category notification with **Dismiss-only** action.
   - Shows optional overlay when user-enabled + permission granted.
 
 - **Navigation**
@@ -61,7 +61,7 @@ MainActivity / QS Tile ──► ArmManager ──► NightMonitorService
   - Toggle OFF → `AlarmScheduler.cancelAlarm` → DB status update.
   - Single active invariant: enabling one alarm cancels other scheduled alarms.
 
-- **AlarmActivity**
+- **AlarmRingingActivity**
   - Full-screen, shows over lock screen, turns screen on.
 
 - **Duration UI invariant**
@@ -85,7 +85,7 @@ Android does not guarantee a third-party app can be the system default alarm app
 - Screen-off confirmed → DB record written (`SCHEDULED`).
 - Alarm fires → record set `FIRED`.
 - Dismiss → record set `DISMISSED`.
-- Snooze → original record set `SNOOZED`, new record scheduled.
+- Dismiss → record set `DISMISSED`.
 
 ---
 

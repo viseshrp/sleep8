@@ -23,11 +23,11 @@ These tests require **physical devices** (Pixel 8 / Android 14+ recommended).
 ## Overlay (Optional)
 - Enable overlay toggle → if permission granted, overlay appears while alarm is ringing.
 - Enable overlay toggle without permission → permission screen opens; overlay does not show until granted.
-- Disable overlay toggle → only AlarmActivity is shown.
+- Disable overlay toggle → only AlarmRingingActivity is shown.
 
 ## Notifications / Permission
 - Deny POST_NOTIFICATIONS → alarm still rings; UI shows warning about limited lockscreen UX.
-- Grant POST_NOTIFICATIONS → ringing notification appears with Dismiss/Snooze actions.
+- Grant POST_NOTIFICATIONS → ringing notification appears with **Dismiss-only** action.
 
 ## OS Integration
 - ACTION_SHOW_ALARMS opens Alarm History screen.
@@ -40,3 +40,7 @@ These tests require **physical devices** (Pixel 8 / Android 14+ recommended).
 - Alarm page shows time, subtitle, and toggle switch per alarm.
 - Toggling ON enables the alarm; toggling OFF disables it.
 - Past alarms show disabled toggles.
+
+## Ringing UI (AOSP-style)
+- Alarm fires → ringing UI shows large time + subtle label + **Dismiss** only.
+- Dismiss stops sound/vibration immediately and closes the ringing UI.
