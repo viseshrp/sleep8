@@ -22,6 +22,9 @@ Physical device testing is required; emulators are not authoritative for exact a
 - Invalid duration inputs: below 0 / above 720 are rejected (not persisted).
 - Duration 0 schedules at confirmation timestamp.
 - Alarm UI title appears in AlarmActivity label and UI header.
+- Duration UI has both Hours and Minutes inputs.
+- Alarm list toggles schedule/cancel alarms and enforce single-active policy.
+- Alarm list has no edit actions.
 - `AlarmManager.getNextAlarmClock` reflects the earliest scheduled alarm (debug/log assertion).
 
 ---
@@ -42,6 +45,7 @@ Physical device testing is required; emulators are not authoritative for exact a
   - `sleep8://alarms`
   - `sleep8://alarm/<id>`
 - Lockscreen/system “next alarm” shows app alarm when earlier than other alarms.
+- Alarm page list shows time + switch; toggling off disables the alarm.
 - Notifications permission denied still rings; UI warns about reduced lockscreen UX.
 
 ---

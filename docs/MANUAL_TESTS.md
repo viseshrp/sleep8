@@ -18,6 +18,7 @@ These tests require **physical devices** (Pixel 8 / Android 14+ recommended).
 - Set duration to 0 minutes → alarm rings immediately at confirmation time.
 - Set duration to 720 minutes → alarm scheduled exactly +720 minutes.
 - Enter -1 or 721 → inline error shown; value is not saved until corrected.
+- Duration inputs are always Hours + Minutes fields.
 
 ## Overlay (Optional)
 - Enable overlay toggle → if permission granted, overlay appears while alarm is ringing.
@@ -34,3 +35,8 @@ These tests require **physical devices** (Pixel 8 / Android 14+ recommended).
   - `sleep8://alarms` opens history
   - `sleep8://alarm/<id>` opens history with selected record
 - Schedule an alarm earlier than Google Clock → lockscreen “next alarm” shows Sleep8 time.
+
+## Alarm List (AOSP-style)
+- Alarm page shows time, subtitle, and toggle switch per alarm.
+- Toggling ON enables the alarm; toggling OFF disables it.
+- Past alarms show disabled toggles.

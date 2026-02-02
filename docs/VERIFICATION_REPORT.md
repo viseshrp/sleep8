@@ -18,6 +18,8 @@ Scope: Re-audit against updated docs/SPEC.md (authoritative), docs/ARCHITECTURE.
 | Best-effort OS integration (`ACTION_SHOW_ALARMS`, deep links) | Manifest intent-filters + `AlarmHistoryActivity` | PASS |
 | Offline-only (no INTERNET permission) | Manifest | PASS |
 | Alarm UI title updated | `AlarmActivity` label + UI string | PASS |
+| Duration UI hours+minutes invariant | Settings UI fields + tests | PASS |
+| Alarm page is AOSP-style toggle list | `AlarmListActivity` + `AlarmListViewModel` | PASS |
 
 ## Hardware Verification
 

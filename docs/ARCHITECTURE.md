@@ -53,9 +53,19 @@ MainActivity / QS Tile ──► ArmManager ──► NightMonitorService
 - **Navigation**
   - Hamburger menu includes **Alarm** entry.
   - Routes to active ringing UI if an alarm is ringing; otherwise opens alarm preview/history.
+  - Alarm page is an AOSP-style list with toggle-only controls (no edits).
+
+- **Alarm List Flow**
+  - Alarm list screen reads from DB (`AlarmRecord`).
+  - Toggle ON → `AlarmScheduler.enableExisting` → `AlarmManager.setAlarmClock` + DB status update.
+  - Toggle OFF → `AlarmScheduler.cancelAlarm` → DB status update.
+  - Single active invariant: enabling one alarm cancels other scheduled alarms.
 
 - **AlarmActivity**
   - Full-screen, shows over lock screen, turns screen on.
+
+- **Duration UI invariant**
+  - Settings duration input is always **hours + minutes** (never minutes-only).
 
 ---
 
