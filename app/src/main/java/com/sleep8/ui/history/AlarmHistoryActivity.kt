@@ -1,5 +1,6 @@
 package com.sleep8.ui.history
 
+import android.content.Intent
 import android.os.Bundle
 import android.provider.AlarmClock
 import androidx.activity.ComponentActivity
@@ -59,17 +60,15 @@ class AlarmHistoryActivity : ComponentActivity() {
         }
     }
 
-    override fun onNewIntent(intent: android.content.Intent?) {
+    override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        if (intent != null) {
-            handleIntent(intent)
-        }
+        handleIntent(intent)
     }
 
-    private fun handleIntent(intent: android.content.Intent) {
+    private fun handleIntent(intent: Intent) {
         when (intent.action) {
             AlarmClock.ACTION_SHOW_ALARMS,
-            android.content.Intent.ACTION_VIEW -> {
+            Intent.ACTION_VIEW -> {
                 viewModel.loadAlarm(AlarmIntents.parseAlarmId(intent.data))
             }
             else -> viewModel.loadAlarm(null)
