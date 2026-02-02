@@ -10,6 +10,10 @@ These tests require **physical devices** (Pixel 8 / Android 14+ recommended).
 - Re-arm or confirm twice → only the newest scheduled alarm remains active.
 - Alarm UI title displays updated label (task switcher and screen header match).
 
+## Navigation Tap Reliability
+- On Home, Alarm History, and Settings: tap the top-left icon 20x; no missed taps.
+- Ensure taps do not accidentally open the notification shade.
+
 ## Duration Settings
 - Set duration to 0 minutes → alarm rings immediately at confirmation time.
 - Set duration to 720 minutes → alarm scheduled exactly +720 minutes.
