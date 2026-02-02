@@ -23,6 +23,10 @@
             android:exported="false" />
 
         <activity
+            android:name=".ui.history.AlarmHistoryActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".ui.main.MainActivity"
             android:exported="true">
             <intent-filter>

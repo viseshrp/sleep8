@@ -20,6 +20,8 @@ fun StatusCard(
     status: String,
     armedUntil: String,
     lastScreenOff: String,
+    latestAlarmText: String,
+    latestAlarmSubtitle: String,
     pendingCountdown: String?
 ) {
     Card(colors = CardDefaults.cardColors(containerColor = Color(0x1AFFFFFF))) {
@@ -42,6 +44,15 @@ fun StatusCard(
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(text = "Last screen off", style = MaterialTheme.typography.labelMedium, color = Color(0xFFB8C3D6))
                     Text(text = lastScreenOff, style = MaterialTheme.typography.bodyLarge, color = Color(0xFFE9EEF7))
+                }
+            }
+            if (latestAlarmText.isNotBlank()) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(text = "Latest alarm", style = MaterialTheme.typography.labelMedium, color = Color(0xFFB8C3D6))
+                    Text(text = latestAlarmText, style = MaterialTheme.typography.bodyLarge, color = Color(0xFFE9EEF7))
+                }
+                if (latestAlarmSubtitle.isNotBlank()) {
+                    Text(text = latestAlarmSubtitle, style = MaterialTheme.typography.bodySmall, color = Color(0xFF93A4BC))
                 }
             }
             if (!pendingCountdown.isNullOrBlank()) {

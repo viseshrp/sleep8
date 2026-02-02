@@ -18,7 +18,8 @@ import javax.inject.Inject
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val armManager: ArmManager,
-    private val stateHolder: StateHolder
+    private val stateHolder: StateHolder,
+    private val alarmRepository: com.sleep8.data.repository.AlarmRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MainUiState())
@@ -33,13 +34,14 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    private fun updateState() {
+    private suspend fun updateState() {
         val state = stateHolder.state.value
         val armed = state != AppState.DISARMED
         val lastScreenOffTs = stateHolder.lastScreenOffTs.value
         val pendingDeadline = stateHolder.pendingConfirmDeadlineTs.value
         val now = System.currentTimeMillis()
         val pendingRemaining = if (pendingDeadline > 0) pendingDeadline - now else 0L
+        val latestAlarm = alarmRepository.getLatestRecord()
 
         val armedUntilText = stateHolder.activeSession.value?.windowEndTs?.takeIf { it > 0 }?.let {
             TimeUtils.formatAlarmTime(TimeUtils.toLocalTime(it))
@@ -58,6 +60,19 @@ class MainViewModel @Inject constructor(
             ""
         }
 
+        val latestAlarmText = if (latestAlarm != null) {
+            val time = TimeUtils.toLocalTime(latestAlarm.scheduledAlarmTs)
+            "Alarm scheduled for ${TimeUtils.formatAlarmTime(time)}"
+        } else {
+            "No alarms scheduled yet"
+        }
+
+        val latestAlarmSubtitle = if (latestAlarm != null) {
+            "Scheduled automatically"
+        } else {
+            ""
+        }
+
         val statusText = when (state) {
             AppState.DISARMED -> "Disarmed"
             AppState.ARMED_IDLE -> "Armed"
@@ -70,6 +85,8 @@ class MainViewModel @Inject constructor(
             statusText = statusText,
             armedUntilText = armedUntilText,
             lastScreenOffText = lastScreenOffText,
+            latestAlarmText = latestAlarmText,
+            latestAlarmSubtitle = latestAlarmSubtitle,
             pendingCountdownText = pendingText,
             showPending = pendingRemaining > 0
         )
