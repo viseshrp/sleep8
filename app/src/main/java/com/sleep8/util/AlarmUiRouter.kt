@@ -2,8 +2,8 @@ package com.sleep8.util
 
 import android.content.Context
 import android.content.Intent
-import com.sleep8.ui.alarm.AlarmActivity
 import com.sleep8.ui.alarm.AlarmListActivity
+import com.sleep8.ui.ringing.AlarmRingingActivity
 
 object AlarmUiRouter {
 
@@ -13,7 +13,7 @@ object AlarmUiRouter {
         activeAlarmId: Long?
     ): Intent {
         return if (isRinging && (activeAlarmId ?: -1L) > 0L) {
-            Intent(context, AlarmActivity::class.java).apply {
+            Intent(context, AlarmRingingActivity::class.java).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
                 putExtra(Constants.EXTRA_ALARM_ID, activeAlarmId)
             }

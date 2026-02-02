@@ -3,73 +3,47 @@ package com.sleep8.service.overlay
 import android.content.Context
 import android.graphics.PixelFormat
 import android.os.Build
-import android.os.Handler
-import android.os.Looper
 import android.view.Gravity
-import android.view.LayoutInflater
 import android.view.View
 import android.view.WindowManager
-import android.widget.Button
-import android.widget.TextView
-import com.sleep8.R
-import com.sleep8.util.TimeUtils
-import java.time.LocalTime
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.ViewCompositionStrategy
+import com.sleep8.ui.ringing.AlarmRingingContent
 
 class AlarmOverlayController(
     private val context: Context
 ) {
 
     private val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-    private val handler = Handler(Looper.getMainLooper())
     private var overlayView: View? = null
-    private var timeView: TextView? = null
-    private var ticker: Runnable? = null
 
-    fun show(showSnooze: Boolean, onDismiss: () -> Unit, onSnooze: () -> Unit) {
+    fun show(onDismiss: () -> Unit) {
         if (overlayView != null) return
-        val inflater = LayoutInflater.from(context)
-        val view = inflater.inflate(R.layout.overlay_alarm, null)
-        val dismissButton = view.findViewById<Button>(R.id.overlay_dismiss)
-        val snoozeButton = view.findViewById<Button>(R.id.overlay_snooze)
-        val timeLabel = view.findViewById<TextView>(R.id.overlay_time)
-        timeView = timeLabel
-        snoozeButton.visibility = if (showSnooze) View.VISIBLE else View.GONE
-
-        dismissButton.setOnClickListener { onDismiss() }
-        snoozeButton.setOnClickListener { onSnooze() }
+        val view = ComposeView(context).apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindow)
+            setContent {
+                MaterialTheme {
+                    AlarmRingingContent(
+                        label = context.getString(com.sleep8.R.string.alarm_ringing_title),
+                        onDismiss = onDismiss
+                    )
+                }
+            }
+        }
 
         overlayView = view
         windowManager.addView(view, buildLayoutParams())
-        startTicker()
     }
 
     fun dismiss() {
         val view = overlayView ?: return
-        stopTicker()
         try {
             windowManager.removeView(view)
         } catch (_: IllegalArgumentException) {
             // View already removed
         }
         overlayView = null
-        timeView = null
-    }
-
-    private fun startTicker() {
-        val runnable = object : Runnable {
-            override fun run() {
-                val now = LocalTime.now()
-                timeView?.text = TimeUtils.formatAlarmTime(now)
-                handler.postDelayed(this, 1000)
-            }
-        }
-        ticker = runnable
-        handler.post(runnable)
-    }
-
-    private fun stopTicker() {
-        ticker?.let { handler.removeCallbacks(it) }
-        ticker = null
     }
 
     private fun buildLayoutParams(): WindowManager.LayoutParams {

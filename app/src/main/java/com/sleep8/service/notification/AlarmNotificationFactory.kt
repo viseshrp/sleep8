@@ -12,8 +12,7 @@ class AlarmNotificationFactory(private val context: Context) {
     fun buildRingingNotification(
         alarmIntent: PendingIntent,
         contentIntent: PendingIntent,
-        dismissIntent: PendingIntent,
-        snoozeIntent: PendingIntent?
+        dismissIntent: PendingIntent
     ): Notification {
         val builder = NotificationCompat.Builder(context, Constants.ALARM_RINGING_CHANNEL_ID)
             .setContentTitle(context.getString(R.string.alarm_notification_title))
@@ -27,9 +26,6 @@ class AlarmNotificationFactory(private val context: Context) {
             .addAction(R.drawable.ic_tile, context.getString(R.string.alarm_dismiss), dismissIntent)
             .setOngoing(true)
 
-        if (snoozeIntent != null) {
-            builder.addAction(R.drawable.ic_tile, context.getString(R.string.alarm_snooze), snoozeIntent)
-        }
         return builder.build()
     }
 }

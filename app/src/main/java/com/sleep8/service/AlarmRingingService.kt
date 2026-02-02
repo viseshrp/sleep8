@@ -11,13 +11,11 @@ import com.sleep8.R
 import com.sleep8.data.preferences.AppPreferences
 import com.sleep8.data.repository.AlarmRepository
 import com.sleep8.data.repository.SettingsRepository
-import com.sleep8.domain.scheduler.AlarmScheduler
 import com.sleep8.domain.overlay.AlarmOverlayPolicy
 import com.sleep8.service.notification.AlarmNotificationFactory
 import com.sleep8.service.notification.NotificationHelper
 import com.sleep8.service.overlay.AlarmOverlayController
-import com.sleep8.ui.alarm.AlarmActivity
-import com.sleep8.util.AlarmIntents
+import com.sleep8.ui.ringing.AlarmRingingActivity
 import com.sleep8.util.Constants
 import com.sleep8.util.PermissionUtils
 import dagger.hilt.android.AndroidEntryPoint
@@ -33,7 +31,6 @@ class AlarmRingingService : Service() {
 
     @Inject lateinit var notificationHelper: NotificationHelper
     @Inject lateinit var alarmRepository: AlarmRepository
-    @Inject lateinit var alarmScheduler: AlarmScheduler
     @Inject lateinit var settingsRepository: SettingsRepository
     @Inject lateinit var appPreferences: AppPreferences
 
@@ -51,10 +48,6 @@ class AlarmRingingService : Service() {
                 handleDismiss()
                 return START_NOT_STICKY
             }
-            Constants.ACTION_ALARM_SNOOZE -> {
-                handleSnooze()
-                return START_NOT_STICKY
-            }
             else -> startRinging()
         }
         return START_STICKY
@@ -67,22 +60,13 @@ class AlarmRingingService : Service() {
 
     private fun startRinging() {
         appPreferences.activeAlarmId = if (alarmId > 0) alarmId else -1L
-        val alarmIntent = AlarmActivity.pendingIntent(this, alarmId)
-        val contentIntent = AlarmIntents.alarmDetailPendingIntent(
-            this,
-            alarmId.toInt(),
-            alarmId
-        )
+        val alarmIntent = AlarmRingingActivity.pendingIntent(this, alarmId)
+        val contentIntent = alarmIntent
         val dismissIntent = createActionIntent(Constants.ACTION_ALARM_DISMISS)
-        val snoozeEnabled = runBlocking {
-            settingsRepository.getSettings().snoozeMinutes != null
-        }
-        val snoozeIntent = if (snoozeEnabled) createActionIntent(Constants.ACTION_ALARM_SNOOZE) else null
         val notification = AlarmNotificationFactory(this).buildRingingNotification(
             alarmIntent = alarmIntent,
             contentIntent = contentIntent,
-            dismissIntent = dismissIntent,
-            snoozeIntent = snoozeIntent
+            dismissIntent = dismissIntent
         )
 
         notificationHelper.ensureAlarmRingingChannel()
@@ -96,7 +80,7 @@ class AlarmRingingService : Service() {
             ringer = AlarmRinger(this)
         }
         ringer?.start()
-        maybeShowOverlay(snoozeEnabled)
+        maybeShowOverlay()
     }
 
     private fun stopRinging() {
@@ -116,26 +100,10 @@ class AlarmRingingService : Service() {
         stopSelf()
     }
 
-    private fun handleSnooze() {
-        stopRinging()
-        scheduleSnooze()
-        broadcastAlarmAction(Constants.ACTION_ALARM_SNOOZE)
-        stopSelf()
-    }
-
     private fun markDismissed() {
         if (alarmId <= 0) return
         serviceScope.launch {
             alarmRepository.markDismissed(alarmId, System.currentTimeMillis())
-        }
-    }
-
-    private fun scheduleSnooze() {
-        if (alarmId <= 0) return
-        serviceScope.launch {
-            val settings = settingsRepository.getSettings()
-            val minutes = settings.snoozeMinutes ?: return@launch
-            alarmScheduler.scheduleSnooze(alarmId, minutes)
         }
     }
 
@@ -146,16 +114,14 @@ class AlarmRingingService : Service() {
         sendBroadcast(intent)
     }
 
-    private fun maybeShowOverlay(showSnooze: Boolean) {
+    private fun maybeShowOverlay() {
         if (alarmId <= 0) return
         val settings = runBlocking { settingsRepository.getSettings() }
         val overlayAllowed = PermissionUtils.canDrawOverlays(this)
         if (!AlarmOverlayPolicy.shouldShowOverlay(settings.overlayEnabled, overlayAllowed)) return
         overlayController = AlarmOverlayController(this).also { controller ->
             controller.show(
-                showSnooze = showSnooze,
-                onDismiss = { handleDismiss() },
-                onSnooze = { handleSnooze() }
+                onDismiss = { handleDismiss() }
             )
         }
         serviceScope.launch {

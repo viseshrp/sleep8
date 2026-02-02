@@ -6,7 +6,7 @@ import android.content.Intent
 import com.sleep8.data.repository.AlarmRepository
 import com.sleep8.domain.model.AlarmStatus
 import com.sleep8.service.AlarmRingingService
-import com.sleep8.ui.alarm.AlarmActivity
+import com.sleep8.ui.ringing.AlarmRingingActivity
 import com.sleep8.util.Constants
 import com.sleep8.util.PermissionUtils
 import dagger.hilt.android.AndroidEntryPoint
@@ -42,9 +42,9 @@ class AlarmReceiver : BroadcastReceiver() {
         val notificationsAllowed = !(PermissionUtils.needsPostNotifications(context) && !PermissionUtils.canPostNotifications(context))
         if (notificationsAllowed) {
             AlarmRingingService.start(context, alarmId)
-            AlarmActivity.launch(context, alarmId)
+            AlarmRingingActivity.launch(context, alarmId)
         } else {
-            AlarmActivity.launch(context, alarmId, ringInActivity = true)
+            AlarmRingingActivity.launch(context, alarmId, ringInActivity = true)
         }
 
         val pendingResult = goAsync()

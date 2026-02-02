@@ -22,9 +22,9 @@
         android:usesCleartextTraffic="false">
 
         <activity
-            android:name=".ui.alarm.AlarmActivity"
+            android:name=".ui.ringing.AlarmRingingActivity"
             android:exported="false"
-            android:label="@string/alarm_ui_title"
+            android:label="@string/alarm_ringing_title"
             android:showWhenLocked="true"
             android:turnScreenOn="true" />
 
