@@ -66,8 +66,7 @@ class OsAlarmCreatorTest {
         verify {
             context.startActivity(match { intent: Intent ->
                 intent.getIntExtra(AlarmClock.EXTRA_HOUR, -1) == 7 &&
-                    intent.getIntExtra(AlarmClock.EXTRA_MINUTES, -1) == 30 &&
-                    intent.getBooleanExtra(AlarmClock.EXTRA_SKIP_UI, true) == false
+                    intent.getIntExtra(AlarmClock.EXTRA_MINUTES, -1) == 30
             })
         }
     }
@@ -89,30 +88,7 @@ class OsAlarmCreatorTest {
 
         verify {
             context.startActivity(match { intent: Intent ->
-                intent.getIntExtra(AlarmClock.EXTRA_ALARM_SNOOZE_DURATION, -1) == 10 &&
-                    intent.getBooleanExtra(AlarmClock.EXTRA_SKIP_UI, true) == false
-            })
-        }
-    }
-
-    @Test
-    fun `create alarm always shows clock ui`() = runTest {
-        coEvery { settingsRepository.getSettings() } returns Settings(
-            nightStart = "22:00",
-            nightEnd = "08:00",
-            confirmOffMinutes = 10,
-            snoozeMinutes = null,
-            alarmOffsetHours = 8,
-            armedDefault = false,
-            autoArmEnabled = true
-        )
-        every { packageManager.resolveActivity(any(), any()) } returns ResolveInfo()
-
-        creator.createAlarm(Instant.parse("2024-01-15T23:30:00Z").toEpochMilli())
-
-        verify {
-            context.startActivity(match { intent: Intent ->
-                intent.getBooleanExtra(AlarmClock.EXTRA_SKIP_UI, true) == false
+                intent.getIntExtra(AlarmClock.EXTRA_ALARM_SNOOZE_DURATION, -1) == 10
             })
         }
     }

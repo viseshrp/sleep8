@@ -121,13 +121,14 @@ If armed at reboot or there was a pending confirmation:
 ## 7. OS Alarm Integration (Clock app)
 
 ### 7.1 Target mechanism
-Always show the system Clock UI when creating an alarm to ensure reliability across devices and emulators:
+Use a best-effort strategy to create an alarm in the system’s clock/alarm app:
 - Primary: `AlarmClock.ACTION_SET_ALARM` intent with extras:
   - hour/minute derived from alarm_time (local)
-  - message and snooze extras (where supported)
-  - `EXTRA_SKIP_UI` must be **false**
+  - optional extras for message/skip UI/snooze (where supported)
 
-**Important constraint**: The Clock UI is always shown; the app does not attempt silent alarm creation.
+**Important constraint**: Some OEM clock apps may ignore “skip UI” or require UI confirmation. The app should:
+- Detect if the intent can resolve.
+- If UI is required by the OS clock app, show a one-time warning: “Your clock app requires confirmation”.
 
 ### 7.2 Exact timing
 In addition to creating the OS alarm entry, schedule an internal exact wake trigger (for resilience and telemetry) using `AlarmManager.setExactAndAllowWhileIdle`.  
@@ -259,6 +260,7 @@ Transitions:
 
 ## 13. Known Constraints / Risks
 - Some OEM Clock apps may:
+  - ignore “skip UI”, requiring manual confirmation
   - limit setting alarms programmatically
 - Battery optimization settings vary by OEM; provide guidance but can’t guarantee.
 - “Screen off” is not a perfect proxy for “sleep”, but confirmation delay reduces false positives.
@@ -276,7 +278,7 @@ Transitions:
 - Implement confirmation deadline persistence + restoration.
 
 ### Milestone C — Alarm creation
-- Implement OsAlarmCreator with `ACTION_SET_ALARM` that always shows the Clock UI (`EXTRA_SKIP_UI = false`).
+- Implement OsAlarmCreator with best-effort `ACTION_SET_ALARM`.
 - Add internal backstop exact AlarmManager scheduling for confirmations.
 
 ### Milestone D — Reboot + resilience

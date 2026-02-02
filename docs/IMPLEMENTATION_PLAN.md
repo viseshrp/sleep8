@@ -1279,7 +1279,7 @@ Tasks:
 
 | Risk | Probability | Impact | Mitigation |
 |------|-------------|--------|------------|
-| OEM Clock app requires UI confirmation | High | Medium | Always show Clock UI |
+| OEM Clock app doesn't support skip UI | High | Medium | Document, show warning |
 | Battery optimization kills service | Medium | High | Guidance UI, backstop alarms |
 | Exact alarm permission denied | Low | High | Graceful degradation, user guidance |
 | Room migration issues | Low | Medium | Comprehensive testing, backup |
