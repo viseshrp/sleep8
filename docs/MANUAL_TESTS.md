@@ -33,3 +33,4 @@ These tests require **physical devices** (Pixel 8 / Android 14+ recommended).
 - Deep links:
   - `sleep8://alarms` opens history
   - `sleep8://alarm/<id>` opens history with selected record
+- Schedule an alarm earlier than Google Clock → lockscreen “next alarm” shows Sleep8 time.

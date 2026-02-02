@@ -1,7 +1,7 @@
 # Sleep8 — Implementation Plan (Owned Exact Alarm + Optional Overlay)
 
 ## Phase 1 — Exact Alarm Scheduling
-- Add `AlarmScheduler` with `AlarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, operation)`.
+- Add `AlarmScheduler` with `AlarmManager.setAlarmClock(AlarmClockInfo(triggerAt, showIntent), operation)` so system “next alarm” reflects Sleep8.
 - Persist metadata: `duration_used_minutes`, `alarm_instance_id`, `request_code`, `snoozed_at`, `snoozed_until`, `overlay_used`, `activity_presented`.
 
 ## Phase 2 — Alarm Trigger Flow
@@ -24,5 +24,5 @@
 - Reschedule latest `SCHEDULED` record; if overdue, fire immediately.
 
 ## Phase 6 — Tests & Docs
-- Unit: duration config, setExact scheduling, snooze reschedule, overlay policy, notification actions.
-- Manual: lockscreen alarm UI, overlay behavior, notification permission denial.
+- Unit: duration config, setAlarmClock scheduling, snooze reschedule, overlay policy, notification actions.
+- Manual: lockscreen alarm UI + next alarm indicator, overlay behavior, notification permission denial.

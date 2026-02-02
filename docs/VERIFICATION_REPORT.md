@@ -2,13 +2,14 @@
 
 Date: 2026-02-02
 
-Scope: Re-audit against updated docs/SPEC.md (authoritative), docs/ARCHITECTURE.md, docs/IMPLEMENTATION_PLAN.md, docs/TEST_PLAN.md. Alarm ownership is app-owned via AlarmManager.setExactAndAllowWhileIdle. Offline-only preserved.
+Scope: Re-audit against updated docs/SPEC.md (authoritative), docs/ARCHITECTURE.md, docs/IMPLEMENTATION_PLAN.md, docs/TEST_PLAN.md. Alarm ownership is app-owned via AlarmManager.setAlarmClock. Offline-only preserved.
 
 ## Compliance Matrix (SPEC.md Acceptance Criteria)
 
 | Requirement | Evidence | Status |
 |---|---|---|
-| Owned exact alarm scheduling (`setExactAndAllowWhileIdle`) | `AlarmScheduler` uses `AlarmManager.setExactAndAllowWhileIdle` | PASS |
+| Owned exact alarm scheduling (`setAlarmClock`) | `AlarmScheduler` uses `AlarmManager.setAlarmClock` | PASS |
+| System “next alarm” UI reflects app alarm when earliest | Requires physical device verification | TODO |
 | Alarm fires to receiver → activity → ringing service | `AlarmReceiver`, `AlarmActivity`, `AlarmRingingService` | PASS |
 | Duration configurable (0-720 minutes, default 480) stored in record | `Settings` + `AlarmRecord.durationUsedMinutes` | PASS |
 | Single active alarm invariant | `AlarmScheduler.cancelScheduledAlarms` + DB status updates | PASS |

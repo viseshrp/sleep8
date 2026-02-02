@@ -1,7 +1,7 @@
 # spec.md — Sleep8: Owned Alarm (Configurable Duration)
 
 ## 0. One-liner
-When the user **arms** the app (button or Quick Settings tile), the app watches for **screen-off** events during a **fixed night window**; once the screen has stayed off for **10 minutes**, it schedules an **app-owned exact alarm** for **screen-off + configured duration** (default **480 minutes**, range **0-720**) using `AlarmManager.setExactAndAllowWhileIdle` (`RTC_WAKEUP`), and always uses the **latest** screen-off event. Duration **0** rings immediately at confirmation time.
+When the user **arms** the app (button or Quick Settings tile), the app watches for **screen-off** events during a **fixed night window**; once the screen has stayed off for **10 minutes**, it schedules an **app-owned exact alarm** for **screen-off + configured duration** (default **480 minutes**, range **0-720**) using `AlarmManager.setAlarmClock` (so the system “next alarm” UI reflects it), and always uses the **latest** screen-off event. Duration **0** rings immediately at confirmation time.
 
 ---
 
@@ -24,7 +24,7 @@ When the user **arms** the app (button or Quick Settings tile), the app watches 
 - Night window: **fixed** start/end time configured by user.
 - Rescheduling: **latest screen-off wins** (keep updating the scheduled time until confirmed).
 - Confirm rule: only commit when **screen remains OFF for 10 minutes** after an OFF event.
-- Alarm ownership: **app-owned** exact alarm via `AlarmManager.setExactAndAllowWhileIdle` (`RTC_WAKEUP`) → receiver → foreground ringing service → full-screen activity (optional overlay).
+- Alarm ownership: **app-owned** exact alarm via `AlarmManager.setAlarmClock` → receiver → foreground ringing service → full-screen activity (optional overlay).
 - **Single active alarm**: at most one scheduled (not fired) alarm exists at any time. New confirmed alarms and snooze replace the prior active alarm.
 - Duration: **configurable**, default **480 minutes** (8 hours).
 - Invalid duration values are rejected and not persisted until corrected.
@@ -143,7 +143,7 @@ If armed at reboot or there was a pending confirmation:
 ## 7. Alarm Ownership (App)
 
 ### 7.1 Target mechanism
-Use `AlarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, operation)` with an app-owned `BroadcastReceiver`.
+Use `AlarmManager.setAlarmClock(AlarmClockInfo(triggerAt, showIntent), operation)` with an app-owned `BroadcastReceiver`, so the system lockscreen “next alarm” reflects the app’s alarm.
 
 ### 7.2 Alarm UI
 - `AlarmActivity` is full-screen, shows over lock screen, and turns screen on.

@@ -2,7 +2,7 @@
 
 ## 1. Overview
 
-Sleep8 schedules **app-owned exact alarms** using `AlarmManager.setExactAndAllowWhileIdle` (`RTC_WAKEUP`), then drives a full-screen alarm UI with a foreground ringing service. The app never delegates to the OS Clock app.
+Sleep8 schedules **app-owned exact alarms** using `AlarmManager.setAlarmClock`, then drives a full-screen alarm UI with a foreground ringing service. The app never delegates to the OS Clock app.
 
 ```
 User
@@ -18,7 +18,7 @@ MainActivity / QS Tile ──► ArmManager ──► NightMonitorService
                                          │ (screen off confirmed)
                                          ▼
                                  AlarmScheduler
-                                         │  setExactAndAllowWhileIdle(RTC_WAKEUP)
+                                         │  setAlarmClock(AlarmClockInfo)
                                          ▼
                                 AlarmManager
                                          │
@@ -37,7 +37,7 @@ MainActivity / QS Tile ──► ArmManager ──► NightMonitorService
 - **AlarmScheduler**
   - Calculates `triggerAt` using configured duration.
   - Persists metadata (`duration_used_minutes`, `alarm_instance_id`, `request_code`, `overlay_used`, `activity_presented`).
-  - Schedules `AlarmManager.setExactAndAllowWhileIdle` (`RTC_WAKEUP`).
+  - Schedules `AlarmManager.setAlarmClock` so system “next alarm” UI reflects the app’s alarm.
   - Enforces **single active alarm** by canceling previously scheduled alarms and marking them `CANCELED`.
 
 - **AlarmReceiver**
