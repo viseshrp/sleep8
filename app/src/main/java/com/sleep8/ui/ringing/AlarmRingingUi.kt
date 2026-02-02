@@ -21,6 +21,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.sleep8.R
 import com.sleep8.util.TimeUtils
 import kotlinx.coroutines.delay
 import java.time.LocalTime
@@ -69,7 +71,7 @@ fun AlarmRingingContent(
                 .fillMaxWidth()
                 .height(64.dp)
         ) {
-            Text(text = "Dismiss")
+            Text(text = stringResource(id = R.string.alarm_dismiss))
         }
     }
 }
