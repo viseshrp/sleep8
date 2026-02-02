@@ -12,14 +12,14 @@ class TimeUtilsTest {
     @Test
     fun `calculate alarm time adds 8 hours`() {
         val screenOff = Instant.parse("2024-01-15T23:00:00Z")
-        val alarm = TimeUtils.calculateAlarmTime(screenOff, 8)
+        val alarm = TimeUtils.calculateAlarmTime(screenOff, 8 * 60)
         assertEquals(Instant.parse("2024-01-16T07:00:00Z"), alarm)
     }
 
     @Test
     fun `calculate alarm time handles day rollover`() {
         val screenOff = Instant.parse("2024-01-15T20:00:00Z")
-        val alarm = TimeUtils.calculateAlarmTime(screenOff, 8)
+        val alarm = TimeUtils.calculateAlarmTime(screenOff, 8 * 60)
         assertEquals(Instant.parse("2024-01-16T04:00:00Z"), alarm)
     }
 
@@ -49,5 +49,12 @@ class TimeUtilsTest {
         val remaining = Duration.ofSeconds(325)
         val formatted = TimeUtils.formatCountdown(remaining)
         assertEquals("5:25", formatted)
+    }
+
+    @Test
+    fun `format duration minutes`() {
+        assertEquals("8h", TimeUtils.formatDurationMinutes(480))
+        assertEquals("1h 30m", TimeUtils.formatDurationMinutes(90))
+        assertEquals("45m", TimeUtils.formatDurationMinutes(45))
     }
 }

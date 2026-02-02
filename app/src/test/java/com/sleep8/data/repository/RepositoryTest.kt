@@ -44,6 +44,7 @@ class RepositoryTest {
         val settings = kotlinx.coroutines.runBlocking { settingsRepository.getSettings() }
         assertEquals("22:00", settings.nightStart)
         assertEquals("08:00", settings.nightEnd)
+        assertEquals(com.sleep8.util.Constants.ALARM_DEFAULT_DURATION_MINUTES, settings.alarmDurationMinutes)
     }
 
     @Test
@@ -88,12 +89,14 @@ class RepositoryTest {
             durationUsedMinutes = 480,
             alarmInstanceId = 111L,
             requestCode = 111,
-            scheduledViaAlarmClock = true,
             source = AlarmSource.SLEEP_AUTOMATION,
             status = AlarmStatus.SCHEDULED,
             firedAt = null,
             dismissedAt = null,
-            snoozedUntil = null
+            snoozedAt = null,
+            snoozedUntil = null,
+            overlayUsed = false,
+            activityPresented = false
         )
         val id = kotlinx.coroutines.runBlocking { alarmRepository.insertRecord(record) }
         val retrieved = kotlinx.coroutines.runBlocking { alarmRepository.getRecord(id) }
@@ -113,12 +116,14 @@ class RepositoryTest {
             durationUsedMinutes = 480,
             alarmInstanceId = 222L,
             requestCode = 222,
-            scheduledViaAlarmClock = true,
             source = AlarmSource.SLEEP_AUTOMATION,
             status = AlarmStatus.SCHEDULED,
             firedAt = null,
             dismissedAt = null,
-            snoozedUntil = null
+            snoozedAt = null,
+            snoozedUntil = null,
+            overlayUsed = false,
+            activityPresented = false
         )
         val newer = older.copy(
             screenOffTs = 4000L,
@@ -148,12 +153,14 @@ class RepositoryTest {
             durationUsedMinutes = 480,
             alarmInstanceId = 444L,
             requestCode = 444,
-            scheduledViaAlarmClock = true,
             source = AlarmSource.SLEEP_AUTOMATION,
             status = AlarmStatus.SCHEDULED,
             firedAt = null,
             dismissedAt = null,
-            snoozedUntil = null
+            snoozedAt = null,
+            snoozedUntil = null,
+            overlayUsed = false,
+            activityPresented = false
         )
         val second = first.copy(
             screenOffTs = 4000L,

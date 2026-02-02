@@ -1,4 +1,4 @@
-# Sleep8 — Manual Test Cases (AlarmClock + Owned Alarms)
+# Sleep8 — Manual Test Cases (Owned Exact Alarms + Optional Overlay)
 
 These tests require **physical devices** (Pixel 8 / Android 14+ recommended).
 
@@ -8,9 +8,10 @@ These tests require **physical devices** (Pixel 8 / Android 14+ recommended).
 - Alarm fires in Doze and after app process death.
 - Alarm fires after reboot; if overdue, fires immediately.
 
-## Next Alarm Indicator
-- After scheduling, verify system “next alarm” indicator shows the scheduled time.
-- After snooze, verify the system “next alarm” updates to the snoozed time.
+## Overlay (Optional)
+- Enable overlay toggle → if permission granted, overlay appears while alarm is ringing.
+- Enable overlay toggle without permission → permission screen opens; overlay does not show until granted.
+- Disable overlay toggle → only AlarmActivity is shown.
 
 ## Notifications / Permission
 - Deny POST_NOTIFICATIONS → alarm still rings; UI shows warning about limited lockscreen UX.

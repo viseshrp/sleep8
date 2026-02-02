@@ -1,12 +1,12 @@
-# Sleep8 — Implementation Plan (Owned Alarm + AlarmClock Semantics)
+# Sleep8 — Implementation Plan (Owned Exact Alarm + Optional Overlay)
 
-## Phase 1 — Alarm Clock Scheduling
-- Add `AlarmScheduler` with `AlarmManager.setAlarmClock(AlarmClockInfo(...), operation)`.
-- Persist metadata: `duration_used_minutes`, `alarm_instance_id`, `request_code`, `scheduled_via_alarm_clock`.
-- Use showIntent to open alarm history.
+## Phase 1 — Exact Alarm Scheduling
+- Add `AlarmScheduler` with `AlarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, operation)`.
+- Persist metadata: `duration_used_minutes`, `alarm_instance_id`, `request_code`, `snoozed_at`, `snoozed_until`, `overlay_used`, `activity_presented`.
 
 ## Phase 2 — Alarm Trigger Flow
 - `AlarmReceiver` → `AlarmRingingService` (FGS) → `AlarmActivity`.
+- Optional overlay (WindowManager) shown while ringing when user-enabled + permission granted.
 - Deduplicate by `alarm_instance_id` and record status.
 
 ## Phase 3 — Notifications & Permissions
@@ -24,5 +24,5 @@
 - Reschedule latest `SCHEDULED` record; if overdue, fire immediately.
 
 ## Phase 6 — Tests & Docs
-- Unit: duration config, AlarmClockInfo construction, snooze reschedule, dedupe.
-- Manual: lockscreen “next alarm” indicator on Pixel 8, notification permission denial.
+- Unit: duration config, setExact scheduling, snooze reschedule, overlay policy, notification actions.
+- Manual: lockscreen alarm UI, overlay behavior, notification permission denial.

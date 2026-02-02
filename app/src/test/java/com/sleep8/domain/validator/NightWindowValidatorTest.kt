@@ -73,11 +73,7 @@ private class FakeSettingsDao(private val start: String, private val end: String
     override fun observeSettings() = kotlinx.coroutines.flow.flowOf(null)
     override suspend fun getSettings() = com.sleep8.data.db.entity.SettingsEntity(
         nightStart = start,
-        nightEnd = end,
-        confirmOffMinutes = 10,
-        snoozeMinutes = null,
-        armedDefault = false,
-        offlineOnly = true
+        nightEnd = end
     )
     override suspend fun upsert(settings: com.sleep8.data.db.entity.SettingsEntity) = Unit
 }

@@ -92,12 +92,14 @@ class DatabaseIntegrationTest {
             durationUsedMinutes = 480,
             alarmInstanceId = 123L,
             requestCode = 123,
-            scheduledViaAlarmClock = true,
             source = "SLEEP_AUTOMATION",
             status = "SCHEDULED",
             firedAt = null,
             dismissedAt = null,
-            snoozedUntil = null
+            snoozedAt = null,
+            snoozedUntil = null,
+            overlayUsed = false,
+            activityPresented = false
         )
     }
 }

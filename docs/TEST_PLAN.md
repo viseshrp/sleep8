@@ -1,16 +1,18 @@
-# Sleep8 — Testing Plan (AlarmClock Semantics)
+# Sleep8 — Testing Plan (Owned Exact Alarm + Optional Overlay)
 
 ## Overview
-Physical device testing is required; emulators are not authoritative for AlarmClock scheduling, lockscreen behavior, or system alarm indicators.
+Physical device testing is required; emulators are not authoritative for exact alarm scheduling, lockscreen behavior, or overlay reliability.
 
 ---
 
 ## Unit Tests
 - Duration config stored in `duration_used_minutes`.
-- `AlarmManager.setAlarmClock` uses expected `AlarmClockInfo.triggerTime`.
+- `AlarmManager.setExactAndAllowWhileIdle` uses expected trigger time.
 - PendingIntent uniqueness via `alarm_instance_id`/`request_code`.
-- Snooze schedules AlarmClock and updates next alarm.
+- Snooze schedules exact alarm with expected trigger time.
 - Notification permission logic (Android 13+).
+- Overlay policy logic (enabled vs permission granted).
+- Alarm ringing notification includes Dismiss/Snooze actions.
 
 ---
 
@@ -21,8 +23,9 @@ Physical device testing is required; emulators are not authoritative for AlarmCl
 ---
 
 ## Manual Tests (Pixel 8 / Android 14+)
-- Next alarm appears in system UI/lockscreen after scheduling (verify system alarm indicator).
-- Snooze updates next alarm display.
+- Alarm fires and displays full-screen UI on lockscreen.
+- Overlay toggle on: overlay appears while ringing (permission granted).
+- Overlay toggle on, permission denied: alarm still rings; overlay not shown.
 - ACTION_SHOW_ALARMS opens Alarm History screen.
 - Deep links:
   - `sleep8://alarms`

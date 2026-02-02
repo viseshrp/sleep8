@@ -56,7 +56,8 @@ class AlarmSchedulerTest {
             nightEnd = "08:00",
             confirmOffMinutes = 10,
             snoozeMinutes = null,
-            alarmOffsetHours = 8,
+            alarmDurationMinutes = 480,
+            overlayEnabled = false,
             armedDefault = false,
             autoArmEnabled = true
         )
@@ -81,13 +82,12 @@ class AlarmSchedulerTest {
                 it.triggerAt == expectedTrigger &&
                     it.durationUsedMinutes == 480 &&
                     it.source == AlarmSource.SLEEP_AUTOMATION &&
-                    it.status == AlarmStatus.SCHEDULED &&
-                    it.scheduledViaAlarmClock
+                    it.status == AlarmStatus.SCHEDULED
             })
         }
-        val infoSlot = io.mockk.slot<AlarmManager.AlarmClockInfo>()
-        verify { alarmManager.setAlarmClock(capture(infoSlot), any()) }
-        assertEquals(expectedTrigger, infoSlot.captured.triggerTime)
+        verify {
+            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, expectedTrigger, any())
+        }
     }
 
     @Test
@@ -97,7 +97,8 @@ class AlarmSchedulerTest {
             nightEnd = "08:00",
             confirmOffMinutes = 10,
             snoozeMinutes = null,
-            alarmOffsetHours = 6,
+            alarmDurationMinutes = 360,
+            overlayEnabled = false,
             armedDefault = false,
             autoArmEnabled = true
         )
@@ -140,19 +141,21 @@ class AlarmSchedulerTest {
             durationUsedMinutes = 480,
             alarmInstanceId = 111L,
             requestCode = 111,
-            scheduledViaAlarmClock = true,
             source = AlarmSource.SLEEP_AUTOMATION,
             status = AlarmStatus.FIRED,
             firedAt = 3000L,
             dismissedAt = null,
-            snoozedUntil = null
+            snoozedAt = null,
+            snoozedUntil = null,
+            overlayUsed = false,
+            activityPresented = false
         )
         coEvery { alarmRepository.getRecord(5L) } returns original
         coEvery { alarmRepository.insertRecord(any()) } returns 6L
 
         scheduler.scheduleSnooze(5L, snoozeMinutes = 10)
 
-        coVerify { alarmRepository.markSnoozed(5L, any()) }
-        verify { alarmManager.setAlarmClock(any(), any()) }
+        coVerify { alarmRepository.markSnoozed(5L, any(), any()) }
+        verify { alarmManager.setExactAndAllowWhileIdle(any(), any(), any()) }
     }
 }

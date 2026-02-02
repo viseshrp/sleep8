@@ -55,7 +55,8 @@ class StateMachineManagerTest {
             nightEnd = "08:00",
             confirmOffMinutes = 10,
             snoozeMinutes = null,
-            alarmOffsetHours = 8,
+            alarmDurationMinutes = 480,
+            overlayEnabled = false,
             armedDefault = false,
             autoArmEnabled = true
         )

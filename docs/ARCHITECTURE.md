@@ -2,7 +2,7 @@
 
 ## 1. Overview
 
-Sleep8 schedules **app-owned alarm clocks** using `AlarmManager.setAlarmClock`, then drives a full-screen alarm UI with a foreground ringing service. The app never delegates to the OS Clock app.
+Sleep8 schedules **app-owned exact alarms** using `AlarmManager.setExactAndAllowWhileIdle` (`RTC_WAKEUP`), then drives a full-screen alarm UI with a foreground ringing service. The app never delegates to the OS Clock app.
 
 ```
 User
@@ -18,7 +18,7 @@ MainActivity / QS Tile ──► ArmManager ──► NightMonitorService
                                          │ (screen off confirmed)
                                          ▼
                                  AlarmScheduler
-                                         │  setAlarmClock(showIntent, operation)
+                                         │  setExactAndAllowWhileIdle(RTC_WAKEUP)
                                          ▼
                                 AlarmManager
                                          │
@@ -26,7 +26,8 @@ MainActivity / QS Tile ──► ArmManager ──► NightMonitorService
                                  AlarmReceiver
                                          │
                                          ├──► AlarmRingingService (FGS)
-                                         └──► AlarmActivity (full-screen)
+                                         ├──► AlarmActivity (full-screen)
+                                         └──► Optional Overlay (WindowManager)
 ```
 
 ---
@@ -35,8 +36,8 @@ MainActivity / QS Tile ──► ArmManager ──► NightMonitorService
 
 - **AlarmScheduler**
   - Calculates `triggerAt` using configured duration.
-  - Persists metadata (`duration_used`, `alarm_instance_id`, `request_code`).
-  - Schedules `AlarmManager.setAlarmClock` with showIntent to alarm history.
+  - Persists metadata (`duration_used_minutes`, `alarm_instance_id`, `request_code`, `overlay_used`, `activity_presented`).
+  - Schedules `AlarmManager.setExactAndAllowWhileIdle` (`RTC_WAKEUP`).
 
 - **AlarmReceiver**
   - Receives the alarm clock operation.
@@ -46,6 +47,7 @@ MainActivity / QS Tile ──► ArmManager ──► NightMonitorService
 - **AlarmRingingService**
   - Foreground service only while ringing.
   - Uses ALARM-category notification with Dismiss/Snooze actions.
+  - Shows optional overlay when user-enabled + permission granted.
 
 - **AlarmActivity**
   - Full-screen, shows over lock screen, turns screen on.

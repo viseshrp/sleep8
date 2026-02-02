@@ -16,6 +16,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class ArmManagerTest {
@@ -42,7 +43,16 @@ class ArmManagerTest {
 
     @Test
     fun `arm creates session with correct source`() = runTest {
-        val settings = Settings("22:00", "08:00", 10, null, 8, false, true)
+        val settings = Settings(
+            nightStart = "22:00",
+            nightEnd = "08:00",
+            confirmOffMinutes = 10,
+            snoozeMinutes = null,
+            alarmDurationMinutes = 480,
+            overlayEnabled = false,
+            armedDefault = false,
+            autoArmEnabled = true
+        )
         coEvery { settingsRepository.getSettings() } returns settings
         val session = ArmSession(1L, 0L, null, 0L, 0L, ArmSource.APP_BUTTON)
         coEvery { sessionRepository.createSession(any(), any(), any(), any()) } returns session
@@ -55,7 +65,16 @@ class ArmManagerTest {
 
     @Test
     fun `arm starts foreground service`() = runTest {
-        val settings = Settings("22:00", "08:00", 10, null, 8, false, true)
+        val settings = Settings(
+            nightStart = "22:00",
+            nightEnd = "08:00",
+            confirmOffMinutes = 10,
+            snoozeMinutes = null,
+            alarmDurationMinutes = 480,
+            overlayEnabled = false,
+            armedDefault = false,
+            autoArmEnabled = true
+        )
         coEvery { settingsRepository.getSettings() } returns settings
         val session = ArmSession(1L, 0L, null, 0L, 0L, ArmSource.QUICK_TILE)
         coEvery { sessionRepository.createSession(any(), any(), any(), any()) } returns session
@@ -91,7 +110,16 @@ class ArmManagerTest {
     fun `arm when already armed is idempotent`() = runTest {
         stateHolder.setArmed(true)
         stateHolder.setActiveSession(ArmSession(1L, 0L, null, 0L, 0L, ArmSource.APP_BUTTON))
-        val settings = Settings("22:00", "08:00", 10, null, 8, false, true)
+        val settings = Settings(
+            nightStart = "22:00",
+            nightEnd = "08:00",
+            confirmOffMinutes = 10,
+            snoozeMinutes = null,
+            alarmDurationMinutes = 480,
+            overlayEnabled = false,
+            armedDefault = false,
+            autoArmEnabled = true
+        )
         coEvery { settingsRepository.getSettings() } returns settings
 
         armManager.arm(ArmSource.APP_BUTTON)
@@ -101,7 +129,16 @@ class ArmManagerTest {
 
     @Test
     fun `auto-arm arms at night start and disarms at night end`() = runTest {
-        val settings = Settings("22:00", "08:00", 10, null, 8, false, true)
+        val settings = Settings(
+            nightStart = "22:00",
+            nightEnd = "08:00",
+            confirmOffMinutes = 10,
+            snoozeMinutes = null,
+            alarmDurationMinutes = 480,
+            overlayEnabled = false,
+            armedDefault = false,
+            autoArmEnabled = true
+        )
         coEvery { settingsRepository.getSettings() } returns settings.copy(autoArmEnabled = true)
 
         armManager.handleAutoArm()
@@ -111,7 +148,16 @@ class ArmManagerTest {
 
     @Test
     fun `manual disarm does not block auto-arm start`() = runTest {
-        val settings = Settings("22:00", "08:00", 10, null, 8, false, true)
+        val settings = Settings(
+            nightStart = "22:00",
+            nightEnd = "08:00",
+            confirmOffMinutes = 10,
+            snoozeMinutes = null,
+            alarmDurationMinutes = 480,
+            overlayEnabled = false,
+            armedDefault = false,
+            autoArmEnabled = true
+        )
         coEvery { settingsRepository.getSettings() } returns settings.copy(autoArmEnabled = true)
         coEvery { sessionRepository.createSession(any(), any(), any(), any()) } returns ArmSession(5L, 0L, null, 0L, 0L, ArmSource.APP_BUTTON)
 
@@ -124,7 +170,16 @@ class ArmManagerTest {
 
     @Test
     fun `manual arm does not block auto-disarm end`() = runTest {
-        val settings = Settings("22:00", "08:00", 10, null, 8, false, true)
+        val settings = Settings(
+            nightStart = "22:00",
+            nightEnd = "08:00",
+            confirmOffMinutes = 10,
+            snoozeMinutes = null,
+            alarmDurationMinutes = 480,
+            overlayEnabled = false,
+            armedDefault = false,
+            autoArmEnabled = true
+        )
         coEvery { settingsRepository.getSettings() } returns settings.copy(autoArmEnabled = true)
         val session = ArmSession(7L, 0L, null, 0L, 0L, ArmSource.APP_BUTTON)
         stateHolder.setActiveSession(session)
@@ -136,7 +191,16 @@ class ArmManagerTest {
 
     @Test
     fun `arm uses correct ArmSource for scheduled and manual`() = runTest {
-        val settings = Settings("22:00", "08:00", 10, null, 8, false, true)
+        val settings = Settings(
+            nightStart = "22:00",
+            nightEnd = "08:00",
+            confirmOffMinutes = 10,
+            snoozeMinutes = null,
+            alarmDurationMinutes = 480,
+            overlayEnabled = false,
+            armedDefault = false,
+            autoArmEnabled = true
+        )
         coEvery { settingsRepository.getSettings() } returns settings
         coEvery { sessionRepository.createSession(any(), any(), any(), any()) } returns ArmSession(6L, 0L, null, 0L, 0L, ArmSource.SCHEDULED)
 
