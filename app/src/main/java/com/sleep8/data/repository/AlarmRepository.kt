@@ -17,6 +17,14 @@ class AlarmRepository(private val alarmRecordDao: AlarmRecordDao) {
     suspend fun getRecord(alarmId: Long): AlarmRecord? {
         return alarmRecordDao.getRecord(alarmId)?.toDomain()
     }
+
+    suspend fun getAllRecordsNewestFirst(): List<AlarmRecord> {
+        return alarmRecordDao.getAllRecordsNewestFirst().map { it.toDomain() }
+    }
+
+    suspend fun getLatestRecord(): AlarmRecord? {
+        return alarmRecordDao.getLatestRecord()?.toDomain()
+    }
 }
 
 private fun AlarmRecord.toEntity(): AlarmRecordEntity {

@@ -16,4 +16,10 @@ interface AlarmRecordDao {
 
     @Query("SELECT * FROM alarm_records WHERE alarm_id = :alarmId")
     suspend fun getRecord(alarmId: Long): AlarmRecordEntity?
+
+    @Query("SELECT * FROM alarm_records ORDER BY confirmed_at DESC")
+    suspend fun getAllRecordsNewestFirst(): List<AlarmRecordEntity>
+
+    @Query("SELECT * FROM alarm_records ORDER BY confirmed_at DESC LIMIT 1")
+    suspend fun getLatestRecord(): AlarmRecordEntity?
 }
