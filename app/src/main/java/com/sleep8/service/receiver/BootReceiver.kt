@@ -137,7 +137,7 @@ class BootReceiver : BroadcastReceiver() {
             if (scheduled != null) {
                 val nowMs = System.currentTimeMillis()
                 val triggerAt = if (scheduled.triggerAt <= nowMs) nowMs + 1_000L else scheduled.triggerAt
-                alarmScheduler.scheduleImmediate(scheduled.id, triggerAt)
+                alarmScheduler.rescheduleExisting(scheduled, triggerAt)
             }
             pendingResult.finish()
         }

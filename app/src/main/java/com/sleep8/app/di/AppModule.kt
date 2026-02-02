@@ -148,6 +148,7 @@ object AppModule {
         @ApplicationContext context: Context,
         alarmManager: AlarmManager,
         alarmRepository: AlarmRepository,
+        settingsRepository: SettingsRepository,
         appPreferences: AppPreferences,
         notificationHelper: NotificationHelper
     ): AlarmScheduler {
@@ -155,6 +156,7 @@ object AppModule {
             context,
             alarmManager,
             alarmRepository,
+            settingsRepository,
             appPreferences,
             notificationHelper
         )

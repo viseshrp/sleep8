@@ -78,6 +78,7 @@ class FullFlowIntegrationTest {
             context,
             mockk(relaxed = true),
             alarmRepository,
+            settingsRepository,
             appPreferences,
             mockk<NotificationHelper>(relaxed = true)
         )

@@ -40,8 +40,23 @@ class AppPreferences(private val prefs: SharedPreferences) {
         get() = prefs.getInt(Constants.PREF_ALARM_OFFSET_HOURS, Constants.ALARM_OFFSET_HOURS)
         set(value) = prefs.edit().putInt(Constants.PREF_ALARM_OFFSET_HOURS, value).apply()
 
+    var notificationsAsked: Boolean
+        get() = prefs.getBoolean(Constants.PREF_NOTIFICATIONS_ASKED, false)
+        set(value) = prefs.edit().putBoolean(Constants.PREF_NOTIFICATIONS_ASKED, value).apply()
+
+    private var lastAlarmInstanceId: Long
+        get() = prefs.getLong(Constants.PREF_LAST_ALARM_INSTANCE_ID, 0L)
+        set(value) = prefs.edit().putLong(Constants.PREF_LAST_ALARM_INSTANCE_ID, value).apply()
+
     fun clearPendingConfirmation() {
         pendingCandidateScreenOffTs = -1L
         pendingConfirmDeadlineTs = -1L
+    }
+
+    fun nextAlarmInstanceId(): Long {
+        val now = System.currentTimeMillis()
+        val next = if (now <= lastAlarmInstanceId) lastAlarmInstanceId + 1 else now
+        lastAlarmInstanceId = next
+        return next
     }
 }

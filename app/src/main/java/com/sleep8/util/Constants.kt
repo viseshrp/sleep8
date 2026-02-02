@@ -8,8 +8,10 @@ object Constants {
 
     const val NOTIFICATION_CHANNEL_ID = "sleep8_monitoring"
     const val NOTIFICATION_ID = 1001
-    const val ALARM_NOTIFICATION_CHANNEL_ID = "sleep8_alarm"
-    const val ALARM_NOTIFICATION_ID = 3001
+    const val ALARM_RINGING_CHANNEL_ID = "alarm_ringing"
+    const val ALARM_SCHEDULED_CHANNEL_ID = "alarm_scheduled"
+    const val ALARM_RINGING_NOTIFICATION_ID = 3001
+    const val ALARM_SCHEDULED_NOTIFICATION_ID = 3002
 
     const val ACTION_CONFIRMATION = "com.sleep8.action.CONFIRMATION"
     const val ACTION_ALARM_RING = "com.sleep8.action.ALARM_RING"
@@ -29,6 +31,7 @@ object Constants {
     const val PENDING_INTENT_REQUEST_NIGHT_WINDOW_END = 2007
 
     const val EXTRA_ALARM_ID = "extra_alarm_id"
+    const val EXTRA_ALARM_INSTANCE_ID = "extra_alarm_instance_id"
 
     const val PREFS_NAME = "sleep8_prefs"
     const val PREF_ARMED = "pref_armed"
@@ -39,4 +42,6 @@ object Constants {
     const val PREF_CLOCK_UI_WARNING_SHOWN = "pref_clock_ui_warning_shown"
     const val PREF_BATTERY_OPT_ACK = "pref_battery_opt_ack"
     const val PREF_ALARM_OFFSET_HOURS = "pref_alarm_offset_hours"
+    const val PREF_NOTIFICATIONS_ASKED = "pref_notifications_asked"
+    const val PREF_LAST_ALARM_INSTANCE_ID = "pref_last_alarm_instance_id"
 }

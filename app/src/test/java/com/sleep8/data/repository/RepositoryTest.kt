@@ -85,6 +85,10 @@ class RepositoryTest {
             confirmedAt = 2000L,
             scheduledAt = 2500L,
             triggerAt = 3000L,
+            durationUsedMinutes = 480,
+            alarmInstanceId = 111L,
+            requestCode = 111,
+            scheduledViaAlarmClock = true,
             source = AlarmSource.SLEEP_AUTOMATION,
             status = AlarmStatus.SCHEDULED,
             firedAt = null,
@@ -106,13 +110,24 @@ class RepositoryTest {
             confirmedAt = 2000L,
             scheduledAt = 2500L,
             triggerAt = 3000L,
+            durationUsedMinutes = 480,
+            alarmInstanceId = 222L,
+            requestCode = 222,
+            scheduledViaAlarmClock = true,
             source = AlarmSource.SLEEP_AUTOMATION,
             status = AlarmStatus.SCHEDULED,
             firedAt = null,
             dismissedAt = null,
             snoozedUntil = null
         )
-        val newer = older.copy(screenOffTs = 4000L, confirmedAt = 5000L, scheduledAt = 5500L, triggerAt = 6000L)
+        val newer = older.copy(
+            screenOffTs = 4000L,
+            confirmedAt = 5000L,
+            scheduledAt = 5500L,
+            triggerAt = 6000L,
+            alarmInstanceId = 333L,
+            requestCode = 333
+        )
         kotlinx.coroutines.runBlocking { alarmRepository.insertRecord(older) }
         kotlinx.coroutines.runBlocking { alarmRepository.insertRecord(newer) }
 
@@ -130,14 +145,32 @@ class RepositoryTest {
             confirmedAt = 2000L,
             scheduledAt = 2500L,
             triggerAt = 3000L,
+            durationUsedMinutes = 480,
+            alarmInstanceId = 444L,
+            requestCode = 444,
+            scheduledViaAlarmClock = true,
             source = AlarmSource.SLEEP_AUTOMATION,
             status = AlarmStatus.SCHEDULED,
             firedAt = null,
             dismissedAt = null,
             snoozedUntil = null
         )
-        val second = first.copy(screenOffTs = 4000L, confirmedAt = 5000L, scheduledAt = 5500L, triggerAt = 6000L)
-        val third = first.copy(screenOffTs = 7000L, confirmedAt = 8000L, scheduledAt = 8500L, triggerAt = 9000L)
+        val second = first.copy(
+            screenOffTs = 4000L,
+            confirmedAt = 5000L,
+            scheduledAt = 5500L,
+            triggerAt = 6000L,
+            alarmInstanceId = 555L,
+            requestCode = 555
+        )
+        val third = first.copy(
+            screenOffTs = 7000L,
+            confirmedAt = 8000L,
+            scheduledAt = 8500L,
+            triggerAt = 9000L,
+            alarmInstanceId = 666L,
+            requestCode = 666
+        )
         kotlinx.coroutines.runBlocking { alarmRepository.insertRecord(first) }
         kotlinx.coroutines.runBlocking { alarmRepository.insertRecord(third) }
         kotlinx.coroutines.runBlocking { alarmRepository.insertRecord(second) }
