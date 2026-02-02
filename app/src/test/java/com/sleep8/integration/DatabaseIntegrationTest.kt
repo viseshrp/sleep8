@@ -94,6 +94,7 @@ class DatabaseIntegrationTest {
             requestCode = 123,
             source = "SLEEP_AUTOMATION",
             status = "SCHEDULED",
+            canceledReason = null,
             firedAt = null,
             dismissedAt = null,
             snoozedAt = null,

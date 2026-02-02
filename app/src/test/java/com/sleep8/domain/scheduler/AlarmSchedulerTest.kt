@@ -61,6 +61,7 @@ class AlarmSchedulerTest {
             armedDefault = false,
             autoArmEnabled = true
         )
+        coEvery { alarmRepository.getScheduledRecords() } returns emptyList()
         scheduler = AlarmScheduler(context, alarmManager, alarmRepository, settingsRepository, prefs, notificationHelper)
     }
 
@@ -143,6 +144,7 @@ class AlarmSchedulerTest {
             requestCode = 111,
             source = AlarmSource.SLEEP_AUTOMATION,
             status = AlarmStatus.FIRED,
+            canceledReason = null,
             firedAt = 3000L,
             dismissedAt = null,
             snoozedAt = null,
@@ -157,5 +159,101 @@ class AlarmSchedulerTest {
 
         coVerify { alarmRepository.markSnoozed(5L, any(), any()) }
         verify { alarmManager.setExactAndAllowWhileIdle(any(), any(), any()) }
+    }
+
+    @Test
+    fun `snooze replaces any scheduled alarms`() = runTest {
+        val scheduled = AlarmRecord(
+            id = 30L,
+            sessionId = 1L,
+            screenOffTs = 1000L,
+            confirmedAt = 2000L,
+            scheduledAt = 2500L,
+            triggerAt = 3000L,
+            durationUsedMinutes = 480,
+            alarmInstanceId = 300L,
+            requestCode = 300,
+            source = AlarmSource.SLEEP_AUTOMATION,
+            status = AlarmStatus.SCHEDULED,
+            canceledReason = null,
+            firedAt = null,
+            dismissedAt = null,
+            snoozedAt = null,
+            snoozedUntil = null,
+            overlayUsed = false,
+            activityPresented = false
+        )
+        val original = scheduled.copy(id = 31L, status = AlarmStatus.FIRED)
+        coEvery { alarmRepository.getScheduledRecords() } returns listOf(scheduled)
+        coEvery { alarmRepository.getRecord(31L) } returns original
+        coEvery { alarmRepository.insertRecord(any()) } returns 32L
+
+        scheduler.scheduleSnooze(31L, snoozeMinutes = 10)
+
+        coVerify { alarmRepository.markCanceled(30L, com.sleep8.domain.model.AlarmCancelReason.SNOOZE_REPLACE) }
+        coVerify { alarmRepository.markSnoozed(31L, any(), any()) }
+    }
+
+    @Test
+    fun `schedule sleep alarm cancels prior scheduled alarms`() = runTest {
+        val existing = AlarmRecord(
+            id = 10L,
+            sessionId = 42L,
+            screenOffTs = 1000L,
+            confirmedAt = 2000L,
+            scheduledAt = 2500L,
+            triggerAt = 3000L,
+            durationUsedMinutes = 480,
+            alarmInstanceId = 99L,
+            requestCode = 99,
+            source = AlarmSource.SLEEP_AUTOMATION,
+            status = AlarmStatus.SCHEDULED,
+            canceledReason = null,
+            firedAt = null,
+            dismissedAt = null,
+            snoozedAt = null,
+            snoozedUntil = null,
+            overlayUsed = false,
+            activityPresented = false
+        )
+        coEvery { alarmRepository.getScheduledRecords() } returns listOf(existing)
+        coEvery { alarmRepository.insertRecord(any()) } returns 11L
+
+        scheduler.scheduleSleepAlarm(Instant.parse("2024-01-15T23:30:00Z").toEpochMilli(), confirmedAt = 1000L)
+
+        coVerify { alarmRepository.markCanceled(10L, com.sleep8.domain.model.AlarmCancelReason.REPLACED_BY_NEW_ALARM) }
+        verify { alarmManager.cancel(any()) }
+    }
+
+    @Test
+    fun `reconcile scheduled after boot keeps newest and cancels extras`() = runTest {
+        val older = AlarmRecord(
+            id = 20L,
+            sessionId = 1L,
+            screenOffTs = 1000L,
+            confirmedAt = 2000L,
+            scheduledAt = 2500L,
+            triggerAt = 3000L,
+            durationUsedMinutes = 480,
+            alarmInstanceId = 200L,
+            requestCode = 200,
+            source = AlarmSource.SLEEP_AUTOMATION,
+            status = AlarmStatus.SCHEDULED,
+            canceledReason = null,
+            firedAt = null,
+            dismissedAt = null,
+            snoozedAt = null,
+            snoozedUntil = null,
+            overlayUsed = false,
+            activityPresented = false
+        )
+        val newer = older.copy(id = 21L, scheduledAt = 3500L, alarmInstanceId = 201L, requestCode = 201)
+        coEvery { alarmRepository.getScheduledRecords() } returns listOf(older, newer)
+
+        val result = scheduler.reconcileScheduledAfterBoot()
+
+        assertEquals(21L, result?.id)
+        coVerify { alarmRepository.markCanceled(20L, com.sleep8.domain.model.AlarmCancelReason.REBOOT_CLEANUP) }
+        verify { alarmManager.cancel(any()) }
     }
 }

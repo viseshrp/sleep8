@@ -7,6 +7,7 @@ import com.sleep8.domain.model.ArmSession
 import com.sleep8.domain.model.ArmSource
 import com.sleep8.domain.model.Settings
 import com.sleep8.domain.scheduler.ConfirmOffScheduler
+import com.sleep8.domain.scheduler.AlarmScheduler
 import com.sleep8.domain.scheduler.WindowScheduler
 import com.sleep8.domain.state.StateHolder
 import com.sleep8.service.ServiceController
@@ -26,6 +27,7 @@ class ArmManagerTest {
     private val windowScheduler = mockk<WindowScheduler>(relaxed = true)
     private val nightWindowScheduler = mockk<com.sleep8.domain.scheduler.NightWindowScheduler>(relaxed = true)
     private val confirmOffScheduler = mockk<ConfirmOffScheduler>(relaxed = true)
+    private val alarmScheduler = mockk<AlarmScheduler>(relaxed = true)
     private val settingsRepository = mockk<SettingsRepository>()
 
     private val prefs = AppPreferences(InMemorySharedPreferences())
@@ -38,7 +40,8 @@ class ArmManagerTest {
         windowScheduler = windowScheduler,
         settingsRepository = settingsRepository,
         nightWindowScheduler = nightWindowScheduler,
-        confirmOffScheduler = confirmOffScheduler
+        confirmOffScheduler = confirmOffScheduler,
+        alarmScheduler = alarmScheduler
     )
 
     @Test
@@ -104,6 +107,17 @@ class ArmManagerTest {
         armManager.disarm()
 
         coVerify { serviceController.stopNightMonitorService() }
+    }
+
+    @Test
+    fun `disarm cancels active alarm`() = runTest {
+        val session = ArmSession(9L, 0L, null, 0L, 0L, ArmSource.APP_BUTTON)
+        stateHolder.setActiveSession(session)
+        stateHolder.setArmed(true)
+
+        armManager.disarm()
+
+        coVerify { alarmScheduler.cancelActiveAlarms(com.sleep8.domain.model.AlarmCancelReason.USER_DISARM) }
     }
 
     @Test
