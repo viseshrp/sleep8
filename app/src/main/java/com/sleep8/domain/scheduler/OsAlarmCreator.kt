@@ -31,7 +31,8 @@ class OsAlarmCreator(
             putExtra(AlarmClock.EXTRA_HOUR, alarmTime.hour)
             putExtra(AlarmClock.EXTRA_MINUTES, alarmTime.minute)
             putExtra(AlarmClock.EXTRA_MESSAGE, context.getString(R.string.alarm_message))
-            putExtra(AlarmClock.EXTRA_SKIP_UI, true)
+            // Always show Clock UI to ensure alarm persistence across devices/emulators.
+            putExtra(AlarmClock.EXTRA_SKIP_UI, false)
             settings.snoozeMinutes?.let { snooze ->
                 putExtra(AlarmClock.EXTRA_ALARM_SNOOZE_DURATION, snooze)
             }
