@@ -5,8 +5,8 @@ object Constants {
     const val ALARM_MIN_DURATION_MINUTES = 0
     const val ALARM_MAX_DURATION_MINUTES = 12 * 60
     const val DEFAULT_CONFIRM_MINUTES = 10
-    const val DEFAULT_NIGHT_START = "22:00"
-    const val DEFAULT_NIGHT_END = "08:00"
+    const val DEFAULT_NIGHT_START = "21:00"
+    const val DEFAULT_NIGHT_END = "04:00"
 
     const val NOTIFICATION_CHANNEL_ID = "sleep8_monitoring"
     const val NOTIFICATION_ID = 1001

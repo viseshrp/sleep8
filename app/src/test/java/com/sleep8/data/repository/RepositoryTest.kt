@@ -42,9 +42,34 @@ class RepositoryTest {
     @Test
     fun `get settings returns default when empty`() {
         val settings = kotlinx.coroutines.runBlocking { settingsRepository.getSettings() }
-        assertEquals("22:00", settings.nightStart)
-        assertEquals("08:00", settings.nightEnd)
+        assertEquals("21:00", settings.nightStart)
+        assertEquals("04:00", settings.nightEnd)
         assertEquals(com.sleep8.util.Constants.ALARM_DEFAULT_DURATION_MINUTES, settings.alarmDurationMinutes)
+    }
+
+    @Test
+    fun `existing settings are not overridden by defaults`() {
+        val custom = com.sleep8.data.db.entity.SettingsEntity(
+            id = 1,
+            nightStart = "23:30",
+            nightEnd = "05:30",
+            confirmOffMinutes = 15,
+            alarmDurationMinutes = 300,
+            overlayEnabled = true,
+            armedDefault = true,
+            autoArmEnabled = true,
+            autoArmStart = "22:00",
+            autoArmEnd = "06:00"
+        )
+        kotlinx.coroutines.runBlocking { db.settingsDao().upsert(custom) }
+
+        val settings = kotlinx.coroutines.runBlocking { settingsRepository.getSettings() }
+
+        assertEquals("23:30", settings.nightStart)
+        assertEquals("05:30", settings.nightEnd)
+        assertEquals("22:00", settings.autoArmStart)
+        assertEquals("06:00", settings.autoArmEnd)
+        assertEquals(300, settings.alarmDurationMinutes)
     }
 
     @Test

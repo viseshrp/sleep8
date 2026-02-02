@@ -47,8 +47,8 @@ When the user **arms** the app (button or Quick Settings tile), the app watches 
 
 ### 5.1 First-run setup
 - User sets:
-  - Night window start/end (e.g., 22:00-08:00).
-  - Auto-arm schedule start/end (separate from night window; defaults to night window times).
+  - Night window start/end (default **21:00–04:00**).
+  - Auto-arm schedule start/end (default **20:00–04:00**).
   - **Alarm duration** in hours + minutes (0-720 total, default 8h 0m).
 - App shows a “Reliability checklist”:
   - Exact alarm capability (Android 12+)
@@ -194,10 +194,10 @@ Tables:
 
 #### `settings`
 - `id` (singleton)
-- `night_start` (HH:MM)
-- `night_end` (HH:MM)
-- `auto_arm_start` (HH:MM)
-- `auto_arm_end` (HH:MM)
+- `night_start` (HH:MM, default 21:00)
+- `night_end` (HH:MM, default 04:00)
+- `auto_arm_start` (HH:MM, default 20:00)
+- `auto_arm_end` (HH:MM, default 04:00)
 - `auto_arm_enabled` (bool, default false)
 - `confirm_off_minutes` (default 10)
 - `alarm_duration_minutes` (0-720, default 480)
