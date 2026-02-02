@@ -46,4 +46,5 @@ object Constants {
     const val PREF_ALARM_DURATION_MINUTES = "pref_alarm_duration_minutes"
     const val PREF_NOTIFICATIONS_ASKED = "pref_notifications_asked"
     const val PREF_LAST_ALARM_INSTANCE_ID = "pref_last_alarm_instance_id"
+    const val PREF_ACTIVE_ALARM_ID = "pref_active_alarm_id"
 }

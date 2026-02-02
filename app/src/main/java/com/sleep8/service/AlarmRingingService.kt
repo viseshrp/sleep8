@@ -16,6 +16,7 @@ import android.media.RingtoneManager
 import android.util.Log
 import androidx.core.content.ContextCompat
 import com.sleep8.R
+import com.sleep8.data.preferences.AppPreferences
 import com.sleep8.data.repository.AlarmRepository
 import com.sleep8.data.repository.SettingsRepository
 import com.sleep8.domain.scheduler.AlarmScheduler
@@ -42,6 +43,7 @@ class AlarmRingingService : Service() {
     @Inject lateinit var alarmRepository: AlarmRepository
     @Inject lateinit var alarmScheduler: AlarmScheduler
     @Inject lateinit var settingsRepository: SettingsRepository
+    @Inject lateinit var appPreferences: AppPreferences
 
     private var mediaPlayer: MediaPlayer? = null
     private var vibrator: Vibrator? = null
@@ -75,6 +77,7 @@ class AlarmRingingService : Service() {
     }
 
     private fun startRinging() {
+        appPreferences.activeAlarmId = if (alarmId > 0) alarmId else -1L
         val alarmIntent = AlarmActivity.pendingIntent(this, alarmId)
         val contentIntent = AlarmIntents.alarmDetailPendingIntent(
             this,
@@ -163,6 +166,7 @@ class AlarmRingingService : Service() {
     private fun stopRinging() {
         overlayController?.dismiss()
         overlayController = null
+        appPreferences.activeAlarmId = -1L
         mediaPlayer?.run {
             stop()
             release()

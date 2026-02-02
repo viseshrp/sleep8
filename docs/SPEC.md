@@ -63,6 +63,11 @@ Armed state shows:
 - Last screen-off detected time (if any)
 - Pending confirmation timer (10 min) or confirmed alarm schedule time
 
+Navigation:
+- Hamburger menu includes **Alarm** entry:
+  - If ringing → opens active Alarm UI.
+  - If not ringing → opens alarm preview (latest scheduled alarm detail or history).
+
 
 ### 5.3 During the night window
 - Foreground service runs (persistent notification: “Sleep8 armed”).

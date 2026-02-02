@@ -13,6 +13,7 @@ Physical device testing is required; emulators are not authoritative for exact a
 - Notification permission logic (Android 13+).
 - Overlay policy logic (enabled vs permission granted).
 - Alarm ringing notification includes Dismiss/Snooze actions.
+- Alarm menu routing chooses ringing UI vs preview/history.
 
 ---
 

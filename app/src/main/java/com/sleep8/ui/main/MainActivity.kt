@@ -40,11 +40,15 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.lifecycleScope
 import com.sleep8.ui.components.ArmButton
 import com.sleep8.ui.components.StatusCard
 import com.sleep8.ui.history.AlarmHistoryActivity
 import com.sleep8.ui.settings.SettingsActivity
 import com.sleep8.data.preferences.AppPreferences
+import com.sleep8.data.repository.AlarmRepository
+import com.sleep8.service.AlarmRingingService
+import com.sleep8.util.AlarmUiRouter
 import com.sleep8.util.PermissionUtils
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -55,6 +59,7 @@ class MainActivity : ComponentActivity() {
 
     private val viewModel: MainViewModel by viewModels()
     @Inject lateinit var appPreferences: AppPreferences
+    @Inject lateinit var alarmRepository: AlarmRepository
 
     private val notificationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -70,6 +75,7 @@ class MainActivity : ComponentActivity() {
                     MainScreen(
                         viewModel = viewModel,
                         onOpenSettings = { startActivity(Intent(this, SettingsActivity::class.java)) },
+                        onOpenAlarm = { openAlarmUi() },
                         onOpenHistory = { startActivity(Intent(this, AlarmHistoryActivity::class.java)) },
                         onToggleArmed = { handleArmToggle() }
                     )
@@ -85,12 +91,37 @@ class MainActivity : ComponentActivity() {
         }
         viewModel.toggleArmed()
     }
+
+    private fun openAlarmUi() {
+        val isRinging = PermissionUtils.isServiceRunning(this, AlarmRingingService::class.java)
+        if (isRinging) {
+            val intent = AlarmUiRouter.buildIntent(
+                this,
+                isRinging = true,
+                activeAlarmId = appPreferences.activeAlarmId,
+                latestAlarmId = null
+            )
+            startActivity(intent)
+            return
+        }
+        lifecycleScope.launch {
+            val latest = alarmRepository.getLatestScheduledRecord() ?: alarmRepository.getLatestRecord()
+            val intent = AlarmUiRouter.buildIntent(
+                this@MainActivity,
+                isRinging = false,
+                activeAlarmId = null,
+                latestAlarmId = latest?.id
+            )
+            startActivity(intent)
+        }
+    }
 }
 
 @Composable
 private fun MainScreen(
     viewModel: MainViewModel,
     onOpenSettings: () -> Unit,
+    onOpenAlarm: () -> Unit,
     onOpenHistory: () -> Unit,
     onToggleArmed: () -> Unit
 ) {
@@ -120,6 +151,15 @@ private fun MainScreen(
                     label = { Text("Home") },
                     selected = true,
                     onClick = { scope.launch { drawerState.close() } },
+                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                )
+                NavigationDrawerItem(
+                    label = { Text("Alarm") },
+                    selected = false,
+                    onClick = {
+                        scope.launch { drawerState.close() }
+                        onOpenAlarm()
+                    },
                     modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                 )
                 NavigationDrawerItem(

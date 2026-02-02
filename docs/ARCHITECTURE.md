@@ -49,6 +49,10 @@ MainActivity / QS Tile ──► ArmManager ──► NightMonitorService
   - Uses ALARM-category notification with Dismiss/Snooze actions.
   - Shows optional overlay when user-enabled + permission granted.
 
+- **Navigation**
+  - Hamburger menu includes **Alarm** entry.
+  - Routes to active ringing UI if an alarm is ringing; otherwise opens alarm preview/history.
+
 - **AlarmActivity**
   - Full-screen, shows over lock screen, turns screen on.
 

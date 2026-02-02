@@ -51,6 +51,10 @@ class AppPreferences(private val prefs: SharedPreferences) {
         get() = prefs.getBoolean(Constants.PREF_NOTIFICATIONS_ASKED, false)
         set(value) = prefs.edit().putBoolean(Constants.PREF_NOTIFICATIONS_ASKED, value).apply()
 
+    var activeAlarmId: Long
+        get() = prefs.getLong(Constants.PREF_ACTIVE_ALARM_ID, -1L)
+        set(value) = prefs.edit().putLong(Constants.PREF_ACTIVE_ALARM_ID, value).apply()
+
     private var lastAlarmInstanceId: Long
         get() = prefs.getLong(Constants.PREF_LAST_ALARM_INSTANCE_ID, 0L)
         set(value) = prefs.edit().putLong(Constants.PREF_LAST_ALARM_INSTANCE_ID, value).apply()
