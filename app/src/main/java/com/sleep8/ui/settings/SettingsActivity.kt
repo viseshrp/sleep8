@@ -41,6 +41,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -151,31 +152,18 @@ private fun SettingsScreen(
 
             // Section: Alarm Behavior
             SettingsSection(title = "Alarm Behavior") {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(
-                        text = "Alarm duration (minutes)",
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Medium
-                    )
-                    OutlinedTextField(
-                        value = uiState.alarmDurationMinutesInput,
-                        onValueChange = viewModel::updateAlarmDurationMinutes,
-                        label = { Text("Minutes") },
-                        modifier = Modifier.fillMaxWidth(),
-                        isError = uiState.alarmDurationError != null,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        supportingText = {
-                            val message = uiState.alarmDurationError
-                                ?: "Allowed range: 0-720 minutes"
-                            Text(message)
-                        }
-                    )
-                    Button(onClick = {
-                        viewModel.updateAlarmDurationMinutes(defaultDurationMinutes.toString())
-                    }) {
-                        Text("Reset to default")
+                AlarmDurationFields(
+                    hours = uiState.alarmDurationHoursInput,
+                    minutes = uiState.alarmDurationMinutesInput,
+                    error = uiState.alarmDurationError,
+                    onHoursChanged = viewModel::updateAlarmDurationHours,
+                    onMinutesChanged = viewModel::updateAlarmDurationMinutes,
+                    onReset = {
+                        val (hours, minutes) = com.sleep8.util.AlarmDurationValidator.split(defaultDurationMinutes)
+                        viewModel.updateAlarmDurationHours(hours.toString())
+                        viewModel.updateAlarmDurationMinutes(minutes.toString())
                     }
-                }
+                )
 
                 OutlinedTextField(
                     value = uiState.confirmOffMinutes,
@@ -272,6 +260,54 @@ private fun SettingsScreen(
             }
             
             Spacer(modifier = Modifier.height(32.dp))
+        }
+    }
+}
+
+@Composable
+fun AlarmDurationFields(
+    hours: String,
+    minutes: String,
+    error: String?,
+    onHoursChanged: (String) -> Unit,
+    onMinutesChanged: (String) -> Unit,
+    onReset: () -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            text = "Alarm duration",
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Medium
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            OutlinedTextField(
+                value = hours,
+                onValueChange = onHoursChanged,
+                label = { Text("Hours") },
+                modifier = Modifier
+                    .weight(1f)
+                    .testTag("alarm-duration-hours"),
+                isError = error != null,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            )
+            OutlinedTextField(
+                value = minutes,
+                onValueChange = onMinutesChanged,
+                label = { Text("Minutes") },
+                modifier = Modifier
+                    .weight(1f)
+                    .testTag("alarm-duration-minutes"),
+                isError = error != null,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            )
+        }
+        val message = error ?: "Allowed range: 0-720 minutes"
+        Text(text = message, style = MaterialTheme.typography.bodySmall)
+        Button(onClick = onReset) {
+            Text("Reset to default")
         }
     }
 }

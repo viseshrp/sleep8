@@ -55,7 +55,8 @@ class SettingsViewModelTest {
         val viewModel = SettingsViewModel(settingsRepository, prefs, armManager)
         advanceUntilIdle()
 
-        viewModel.updateAlarmDurationMinutes("721")
+        viewModel.updateAlarmDurationHours("13")
+        viewModel.updateAlarmDurationMinutes("0")
         advanceUntilIdle()
 
         assertNotNull(viewModel.uiState.value.alarmDurationError)
@@ -82,10 +83,38 @@ class SettingsViewModelTest {
         val viewModel = SettingsViewModel(settingsRepository, prefs, armManager)
         advanceUntilIdle()
 
+        viewModel.updateAlarmDurationHours("0")
         viewModel.updateAlarmDurationMinutes("0")
         advanceUntilIdle()
 
         assertNull(viewModel.uiState.value.alarmDurationError)
+        assertEquals("0", viewModel.uiState.value.alarmDurationHoursInput)
         assertEquals("0", viewModel.uiState.value.alarmDurationMinutesInput)
+    }
+
+    @Test
+    fun `minutes normalize into hours`() = runTest {
+        coEvery { settingsRepository.getSettings() } returns Settings(
+            nightStart = "22:00",
+            nightEnd = "08:00",
+            confirmOffMinutes = 10,
+            snoozeMinutes = null,
+            alarmDurationMinutes = 480,
+            overlayEnabled = false,
+            armedDefault = false,
+            autoArmEnabled = false,
+            autoArmStart = "22:00",
+            autoArmEnd = "08:00"
+        )
+        val viewModel = SettingsViewModel(settingsRepository, prefs, armManager)
+        advanceUntilIdle()
+
+        viewModel.updateAlarmDurationHours("1")
+        viewModel.updateAlarmDurationMinutes("75")
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.alarmDurationError)
+        assertEquals("2", viewModel.uiState.value.alarmDurationHoursInput)
+        assertEquals("15", viewModel.uiState.value.alarmDurationMinutesInput)
     }
 }

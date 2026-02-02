@@ -29,12 +29,14 @@ class SettingsViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             val settings = settingsRepository.getSettings()
+            val (hours, minutes) = com.sleep8.util.AlarmDurationValidator.split(settings.alarmDurationMinutes)
             _uiState.value = _uiState.value.copy(
                 nightStart = settings.nightStart,
                 nightEnd = settings.nightEnd,
                 autoArmStart = settings.autoArmStart,
                 autoArmEnd = settings.autoArmEnd,
-                alarmDurationMinutesInput = settings.alarmDurationMinutes.toString(),
+                alarmDurationHoursInput = hours.toString(),
+                alarmDurationMinutesInput = minutes.toString(),
                 alarmDurationError = null,
                 confirmOffMinutes = settings.confirmOffMinutes.toString(),
                 snoozeEnabled = settings.snoozeMinutes != null,
@@ -91,12 +93,12 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun updateAlarmDurationHours(value: String) {
+        updateAlarmDuration(value, _uiState.value.alarmDurationMinutesInput)
+    }
+
     fun updateAlarmDurationMinutes(value: String) {
-        _uiState.value = _uiState.value.copy(
-            alarmDurationMinutesInput = value,
-            alarmDurationError = com.sleep8.util.AlarmDurationValidator.errorFor(value)
-        )
-        persist()
+        updateAlarmDuration(_uiState.value.alarmDurationHoursInput, value)
     }
 
     fun updateConfirmOffMinutes(value: String) {
@@ -142,12 +144,12 @@ class SettingsViewModel @Inject constructor(
 
     private suspend fun persistSettings(state: SettingsUiState) {
         val snooze = state.snoozeMinutes.toIntOrNull()
-        val isDurationValid = com.sleep8.util.AlarmDurationValidator.errorFor(state.alarmDurationMinutesInput) == null
-        val durationMinutes = if (isDurationValid) {
-            com.sleep8.util.AlarmDurationValidator.clamp(
-                com.sleep8.util.AlarmDurationValidator.parseMinutes(state.alarmDurationMinutesInput)
-                    ?: com.sleep8.util.Constants.ALARM_DEFAULT_DURATION_MINUTES
-            )
+        val durationResult = com.sleep8.util.AlarmDurationValidator.normalizeInputs(
+            state.alarmDurationHoursInput,
+            state.alarmDurationMinutesInput
+        )
+        val durationMinutes = if (durationResult.error == null) {
+            durationResult.totalMinutes ?: com.sleep8.util.Constants.ALARM_DEFAULT_DURATION_MINUTES
         } else {
             appPreferences.alarmDurationMinutes
         }
@@ -165,9 +167,19 @@ class SettingsViewModel @Inject constructor(
             autoArmEnd = state.autoArmEnd
         )
         settingsRepository.updateSettings(settings)
-        if (isDurationValid) {
+        if (durationResult.error == null) {
             appPreferences.alarmDurationMinutes = durationMinutes
         }
+    }
+
+    private fun updateAlarmDuration(hours: String, minutes: String) {
+        val result = com.sleep8.util.AlarmDurationValidator.normalizeInputs(hours, minutes)
+        _uiState.value = _uiState.value.copy(
+            alarmDurationHoursInput = result.hoursInput,
+            alarmDurationMinutesInput = result.minutesInput,
+            alarmDurationError = result.error
+        )
+        persist()
     }
 
     fun setBatteryOptAck(ack: Boolean) {

@@ -16,17 +16,32 @@ class AlarmDurationValidatorTest {
     }
 
     @Test
-    fun `error returned for invalid values`() {
-        assertNotNull(AlarmDurationValidator.errorFor("-1"))
-        assertNotNull(AlarmDurationValidator.errorFor("721"))
-        assertNotNull(AlarmDurationValidator.errorFor(""))
+    fun `normalize rejects invalid inputs`() {
+        val result = AlarmDurationValidator.normalizeInputs("", "0")
+        assertNotNull(result.error)
     }
 
     @Test
-    fun `no error for valid values`() {
-        assertNull(AlarmDurationValidator.errorFor("0"))
-        assertNull(AlarmDurationValidator.errorFor("1"))
-        assertNull(AlarmDurationValidator.errorFor("480"))
-        assertNull(AlarmDurationValidator.errorFor("720"))
+    fun `normalizes minutes into hours`() {
+        val result = AlarmDurationValidator.normalizeInputs("1", "75")
+        assertNull(result.error)
+        assertEquals("2", result.hoursInput)
+        assertEquals("15", result.minutesInput)
+    }
+
+    @Test
+    fun `clamps total to max`() {
+        val result = AlarmDurationValidator.normalizeInputs("12", "30")
+        assertNotNull(result.error)
+        assertEquals("12", result.hoursInput)
+        assertEquals("0", result.minutesInput)
+        assertEquals(720, result.totalMinutes)
+    }
+
+    @Test
+    fun `converts hours and minutes to total`() {
+        assertEquals(480, AlarmDurationValidator.normalizeInputs("8", "0").totalMinutes)
+        assertEquals(0, AlarmDurationValidator.normalizeInputs("0", "0").totalMinutes)
+        assertEquals(720, AlarmDurationValidator.normalizeInputs("12", "0").totalMinutes)
     }
 }
