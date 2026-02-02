@@ -35,5 +35,6 @@ class AlarmListContentTest {
 
         composeRule.onNodeWithText("10:15").assertExists()
         composeRule.onNodeWithTag("alarm-toggle-1").assertExists()
+        composeRule.onNodeWithText("Edit").assertDoesNotExist()
     }
 }
