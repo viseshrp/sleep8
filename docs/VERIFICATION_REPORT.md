@@ -83,3 +83,8 @@ End of report.
 - [ ] No Night Window logic writes to `armed`
 - [ ] All changes to `armed` trace back to manual action or auto-arm boundary
 - [ ] Monitoring always obeys `armed && inNightWindow`
+
+## Alarm Observability Verification Notes
+- Home displays latest scheduled alarm from local `alarm_records` only.
+- Alarm History screen reads from local DB only (newest → oldest).
+- No system Clock alarm querying is present.

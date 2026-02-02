@@ -1309,6 +1309,20 @@ adb shell date MMDDhhmmYYYY
     - starts monitoring only when `armed && inNightWindow`
     - pending confirmation restoration respects the same gate
 
+## 2026 Update: Alarm Observability UI
+- Unit tests:
+  - Latest alarm selection from DB (confirmed_at newest).
+  - Alarm history ordering (newest → oldest).
+  - Empty state when no alarms exist.
+- UI / instrumentation tests (if feasible):
+  - Navigation drawer opens.
+  - Drawer navigation works (Home ↔ Alarm History ↔ Settings).
+  - Home shows latest alarm from local DB.
+  - Alarm History shows full list from local DB.
+- Manual tests (if UI automation is unreliable):
+  - Drawer navigation flows.
+  - Empty states on Home/History when DB empty.
+
 ### Regression Tests — Must Never Break
 - Manual disarm does NOT cancel upcoming auto-arm boundary.
 - Manual arm does NOT cancel upcoming auto-disarm boundary.

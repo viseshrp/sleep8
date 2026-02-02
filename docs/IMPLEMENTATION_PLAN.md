@@ -914,6 +914,13 @@ Files to create:
 
 ---
 
+## 2026 Update: Alarm Observability UI
+- Add Alarm History screen (read-only list from `alarm_records`).
+- Add “latest scheduled alarm” section on Home (latest record from `alarm_records`).
+- Add navigation drawer with Home, Alarm History, Settings.
+- Remove Settings entry from Home UI; access via drawer only.
+- Do not query system Clock alarms; local DB is the source of truth.
+
 ## Milestone D — Reboot & Resilience
 
 ### Objective

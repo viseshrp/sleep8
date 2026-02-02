@@ -81,6 +81,12 @@ When the screen has remained OFF for 10 minutes since the latest OFF event:
 - Disarm stops monitoring service and cancels pending confirmation timer.
 - Does **not** delete already created OS alarms (we’re not the alarm app).
 
+### 5.6 Alarm Observability (Local Only)
+- The app maintains a **local alarm log** in its DB (`alarm_records`) as the single source of truth for alarms it has scheduled.
+- Home screen shows the **most recently scheduled alarm** from the local DB.
+- Alarm History screen shows the full alarm log (newest → oldest).
+- The app does **not** and **cannot** query, enumerate, or sync system Clock alarms.
+
 ---
 
 ## 6. Behavior Rules (exact)

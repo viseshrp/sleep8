@@ -244,3 +244,18 @@ These cases are manual because they require physical device interaction, OEM clo
 - Preconditions: Auto-arm enabled, currently armed by schedule
 - Steps: Manually disarm via app button or tile
 - Expected: App disarms immediately; at the next auto-arm boundary, scheduled arming applies again
+
+### TC-024: Navigation Drawer (P1)
+- Preconditions: App installed, Home screen visible
+- Steps: Open hamburger menu, navigate to Alarm History, then Settings, then back to Home
+- Expected: Drawer opens; each destination loads; Home is default landing screen
+
+### TC-025: Alarm History Empty State (P1)
+- Preconditions: No alarm records in local DB
+- Steps: Open Alarm History
+- Expected: Empty state message shown ("No alarms recorded yet.")
+
+### TC-026: Home Latest Alarm Empty State (P1)
+- Preconditions: No alarm records in local DB
+- Steps: Open Home
+- Expected: Latest alarm section shows empty state ("No alarms scheduled yet")

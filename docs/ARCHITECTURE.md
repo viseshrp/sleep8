@@ -110,6 +110,10 @@ com.sleep8/
 │   │   ├── MainActivity.kt           # Main screen with arm/disarm
 │   │   ├── MainViewModel.kt          # UI state management
 │   │   └── MainUiState.kt            # UI state data class
+│   ├── history/
+│   │   ├── AlarmHistoryActivity.kt   # Alarm log screen (read-only)
+│   │   ├── AlarmHistoryViewModel.kt
+│   │   └── AlarmHistoryUiState.kt
 │   ├── settings/
 │   │   ├── SettingsActivity.kt       # Night window & snooze config
 │   │   ├── SettingsViewModel.kt
@@ -181,6 +185,14 @@ com.sleep8/
 ### 4.1 State Diagram
 
 ```
+
+---
+
+## 5. Alarm Observability Data Flow (Read-Only UI)
+- Alarm creation → `AlarmRepository` → `alarm_records` (Room) is the **only** source of truth.
+- Home screen reads the **latest** alarm record to show “most recently scheduled alarm.”
+- Alarm History screen reads **all** alarm records (newest → oldest).
+- The UI does not read or query system Clock alarms; Clock alarms are treated as **write-only**.
                               ┌─────────────┐
                               │  DISARMED   │◄────────────────────────┐
                               └──────┬──────┘                         │
