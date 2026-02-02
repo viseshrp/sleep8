@@ -87,10 +87,13 @@ class DatabaseIntegrationTest {
             sessionId = sessionId,
             screenOffTs = 1000L,
             confirmedAt = 2000L,
-            scheduledAlarmTs = 3000L,
-            osAlarmIntentResolved = true,
-            osAlarmUiRequired = null,
-            internalBackstopScheduled = true
+            scheduledAt = 2500L,
+            triggerAt = 3000L,
+            source = "SLEEP_AUTOMATION",
+            status = "SCHEDULED",
+            firedAt = null,
+            dismissedAt = null,
+            snoozedUntil = null
         )
     }
 }

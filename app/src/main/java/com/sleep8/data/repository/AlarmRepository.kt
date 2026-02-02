@@ -3,6 +3,8 @@ package com.sleep8.data.repository
 import com.sleep8.data.db.dao.AlarmRecordDao
 import com.sleep8.data.db.entity.AlarmRecordEntity
 import com.sleep8.domain.model.AlarmRecord
+import com.sleep8.domain.model.AlarmSource
+import com.sleep8.domain.model.AlarmStatus
 
 class AlarmRepository(private val alarmRecordDao: AlarmRecordDao) {
 
@@ -25,6 +27,22 @@ class AlarmRepository(private val alarmRecordDao: AlarmRecordDao) {
     suspend fun getLatestRecord(): AlarmRecord? {
         return alarmRecordDao.getLatestRecord()?.toDomain()
     }
+
+    suspend fun getLatestScheduledRecord(): AlarmRecord? {
+        return alarmRecordDao.getLatestByStatus(AlarmStatus.SCHEDULED.name)?.toDomain()
+    }
+
+    suspend fun markFired(alarmId: Long, firedAt: Long) {
+        alarmRecordDao.markFired(alarmId, AlarmStatus.FIRED.name, firedAt)
+    }
+
+    suspend fun markDismissed(alarmId: Long, dismissedAt: Long) {
+        alarmRecordDao.markDismissed(alarmId, AlarmStatus.DISMISSED.name, dismissedAt)
+    }
+
+    suspend fun markSnoozed(alarmId: Long, snoozedUntil: Long) {
+        alarmRecordDao.markSnoozed(alarmId, AlarmStatus.SNOOZED.name, snoozedUntil)
+    }
 }
 
 private fun AlarmRecord.toEntity(): AlarmRecordEntity {
@@ -33,10 +51,13 @@ private fun AlarmRecord.toEntity(): AlarmRecordEntity {
         sessionId = sessionId,
         screenOffTs = screenOffTs,
         confirmedAt = confirmedAt,
-        scheduledAlarmTs = scheduledAlarmTs,
-        osAlarmIntentResolved = osAlarmIntentResolved,
-        osAlarmUiRequired = osAlarmUiRequired,
-        internalBackstopScheduled = internalBackstopScheduled
+        scheduledAt = scheduledAt,
+        triggerAt = triggerAt,
+        source = source.name,
+        status = status.name,
+        firedAt = firedAt,
+        dismissedAt = dismissedAt,
+        snoozedUntil = snoozedUntil
     )
 }
 
@@ -46,9 +67,12 @@ private fun AlarmRecordEntity.toDomain(): AlarmRecord {
         sessionId = sessionId,
         screenOffTs = screenOffTs,
         confirmedAt = confirmedAt,
-        scheduledAlarmTs = scheduledAlarmTs,
-        osAlarmIntentResolved = osAlarmIntentResolved,
-        osAlarmUiRequired = osAlarmUiRequired,
-        internalBackstopScheduled = internalBackstopScheduled
+        scheduledAt = scheduledAt,
+        triggerAt = triggerAt,
+        source = AlarmSource.valueOf(source),
+        status = AlarmStatus.valueOf(status),
+        firedAt = firedAt,
+        dismissedAt = dismissedAt,
+        snoozedUntil = snoozedUntil
     )
 }

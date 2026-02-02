@@ -23,8 +23,11 @@ data class AlarmRecordEntity(
     @ColumnInfo(name = "session_id") val sessionId: Long,
     @ColumnInfo(name = "screen_off_ts") val screenOffTs: Long,
     @ColumnInfo(name = "confirmed_at") val confirmedAt: Long,
-    @ColumnInfo(name = "scheduled_alarm_ts") val scheduledAlarmTs: Long,
-    @ColumnInfo(name = "os_alarm_intent_resolved") val osAlarmIntentResolved: Boolean,
-    @ColumnInfo(name = "os_alarm_ui_required") val osAlarmUiRequired: Boolean?,
-    @ColumnInfo(name = "internal_backstop_scheduled") val internalBackstopScheduled: Boolean
+    @ColumnInfo(name = "scheduled_at") val scheduledAt: Long,
+    @ColumnInfo(name = "trigger_at") val triggerAt: Long,
+    @ColumnInfo(name = "source") val source: String,
+    @ColumnInfo(name = "status") val status: String,
+    @ColumnInfo(name = "fired_at") val firedAt: Long?,
+    @ColumnInfo(name = "dismissed_at") val dismissedAt: Long?,
+    @ColumnInfo(name = "snoozed_until") val snoozedUntil: Long?
 )

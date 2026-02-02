@@ -5,6 +5,8 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.sleep8.data.db.Sleep8Database
 import com.sleep8.domain.model.AlarmRecord
+import com.sleep8.domain.model.AlarmSource
+import com.sleep8.domain.model.AlarmStatus
 import com.sleep8.domain.model.ArmSource
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -81,10 +83,13 @@ class RepositoryTest {
             sessionId = session.id,
             screenOffTs = 1000L,
             confirmedAt = 2000L,
-            scheduledAlarmTs = 3000L,
-            osAlarmIntentResolved = true,
-            osAlarmUiRequired = null,
-            internalBackstopScheduled = true
+            scheduledAt = 2500L,
+            triggerAt = 3000L,
+            source = AlarmSource.SLEEP_AUTOMATION,
+            status = AlarmStatus.SCHEDULED,
+            firedAt = null,
+            dismissedAt = null,
+            snoozedUntil = null
         )
         val id = kotlinx.coroutines.runBlocking { alarmRepository.insertRecord(record) }
         val retrieved = kotlinx.coroutines.runBlocking { alarmRepository.getRecord(id) }
@@ -99,17 +104,20 @@ class RepositoryTest {
             sessionId = session.id,
             screenOffTs = 1000L,
             confirmedAt = 2000L,
-            scheduledAlarmTs = 3000L,
-            osAlarmIntentResolved = true,
-            osAlarmUiRequired = null,
-            internalBackstopScheduled = true
+            scheduledAt = 2500L,
+            triggerAt = 3000L,
+            source = AlarmSource.SLEEP_AUTOMATION,
+            status = AlarmStatus.SCHEDULED,
+            firedAt = null,
+            dismissedAt = null,
+            snoozedUntil = null
         )
-        val newer = older.copy(screenOffTs = 4000L, confirmedAt = 5000L, scheduledAlarmTs = 6000L)
+        val newer = older.copy(screenOffTs = 4000L, confirmedAt = 5000L, scheduledAt = 5500L, triggerAt = 6000L)
         kotlinx.coroutines.runBlocking { alarmRepository.insertRecord(older) }
         kotlinx.coroutines.runBlocking { alarmRepository.insertRecord(newer) }
 
         val latest = kotlinx.coroutines.runBlocking { alarmRepository.getLatestRecord() }
-        assertEquals(5000L, latest?.confirmedAt)
+        assertEquals(5500L, latest?.scheduledAt)
     }
 
     @Test
@@ -120,18 +128,21 @@ class RepositoryTest {
             sessionId = session.id,
             screenOffTs = 1000L,
             confirmedAt = 2000L,
-            scheduledAlarmTs = 3000L,
-            osAlarmIntentResolved = true,
-            osAlarmUiRequired = null,
-            internalBackstopScheduled = true
+            scheduledAt = 2500L,
+            triggerAt = 3000L,
+            source = AlarmSource.SLEEP_AUTOMATION,
+            status = AlarmStatus.SCHEDULED,
+            firedAt = null,
+            dismissedAt = null,
+            snoozedUntil = null
         )
-        val second = first.copy(screenOffTs = 4000L, confirmedAt = 5000L, scheduledAlarmTs = 6000L)
-        val third = first.copy(screenOffTs = 7000L, confirmedAt = 8000L, scheduledAlarmTs = 9000L)
+        val second = first.copy(screenOffTs = 4000L, confirmedAt = 5000L, scheduledAt = 5500L, triggerAt = 6000L)
+        val third = first.copy(screenOffTs = 7000L, confirmedAt = 8000L, scheduledAt = 8500L, triggerAt = 9000L)
         kotlinx.coroutines.runBlocking { alarmRepository.insertRecord(first) }
         kotlinx.coroutines.runBlocking { alarmRepository.insertRecord(third) }
         kotlinx.coroutines.runBlocking { alarmRepository.insertRecord(second) }
 
         val history = kotlinx.coroutines.runBlocking { alarmRepository.getAllRecordsNewestFirst() }
-        assertEquals(listOf(8000L, 5000L, 2000L), history.map { it.confirmedAt })
+        assertEquals(listOf(8500L, 5500L, 2500L), history.map { it.scheduledAt })
     }
 }
