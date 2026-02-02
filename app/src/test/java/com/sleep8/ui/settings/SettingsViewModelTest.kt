@@ -39,7 +39,7 @@ class SettingsViewModelTest {
     }
 
     @Test
-    fun `invalid duration shows error and is clamped on save`() = runTest {
+    fun `invalid duration shows error and does not persist`() = runTest {
         coEvery { settingsRepository.getSettings() } returns Settings(
             nightStart = "22:00",
             nightEnd = "08:00",
@@ -59,7 +59,10 @@ class SettingsViewModelTest {
         advanceUntilIdle()
 
         assertNotNull(viewModel.uiState.value.alarmDurationError)
-        coVerify { settingsRepository.updateSettings(match { it.alarmDurationMinutes == 720 }) }
+        coVerify(exactly = 1) {
+            settingsRepository.updateSettings(match { it.alarmDurationMinutes == 480 })
+        }
+        assertEquals(480, prefs.alarmDurationMinutes)
     }
 
     @Test
