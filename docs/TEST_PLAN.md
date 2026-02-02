@@ -36,6 +36,7 @@ Physical device testing is required; emulators are not authoritative for exact a
 - Alarm fires and displays full-screen UI on lockscreen.
 - Overlay toggle on: overlay appears while ringing (permission granted).
 - Overlay toggle on, permission denied: alarm still rings; overlay not shown.
+- Notification permission requested on first arm; deny → alarm still rings without FGS notification.
 - ACTION_SHOW_ALARMS opens Alarm History screen.
 - Deep links:
   - `sleep8://alarms`
