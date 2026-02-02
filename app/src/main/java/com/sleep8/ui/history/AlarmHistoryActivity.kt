@@ -15,6 +15,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -40,7 +44,10 @@ class AlarmHistoryActivity : ComponentActivity() {
         setContent {
             MaterialTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    AlarmHistoryScreen(viewModel = viewModel)
+                    AlarmHistoryScreen(
+                        viewModel = viewModel,
+                        onBack = { finish() }
+                    )
                 }
             }
         }
@@ -48,7 +55,10 @@ class AlarmHistoryActivity : ComponentActivity() {
 }
 
 @Composable
-private fun AlarmHistoryScreen(viewModel: AlarmHistoryViewModel) {
+private fun AlarmHistoryScreen(
+    viewModel: AlarmHistoryViewModel,
+    onBack: () -> Unit
+) {
     val uiState by viewModel.uiState.collectAsState()
     val background = Brush.linearGradient(
         colors = listOf(
@@ -65,11 +75,24 @@ private fun AlarmHistoryScreen(viewModel: AlarmHistoryViewModel) {
             .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text(
-            text = "Alarm History",
-            style = MaterialTheme.typography.headlineSmall,
-            color = Color(0xFFE9EEF7)
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            IconButton(onClick = onBack) {
+                Icon(
+                    imageVector = Icons.Default.ArrowBack,
+                    contentDescription = "Back",
+                    tint = Color(0xFFE9EEF7)
+                )
+            }
+            Text(
+                text = "Alarm History",
+                style = MaterialTheme.typography.headlineSmall,
+                color = Color(0xFFE9EEF7)
+            )
+        }
 
         if (uiState.alarms.isEmpty()) {
             Text(
