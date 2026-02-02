@@ -9,7 +9,7 @@ import com.sleep8.domain.model.ArmSession
 import com.sleep8.domain.model.ArmSource
 import com.sleep8.domain.model.Settings
 import com.sleep8.domain.scheduler.ConfirmOffScheduler
-import com.sleep8.domain.scheduler.OsAlarmCreator
+import com.sleep8.domain.scheduler.AlarmScheduler
 import com.sleep8.domain.state.StateHolder
 import com.sleep8.testutil.InMemorySharedPreferences
 import io.mockk.coEvery
@@ -33,7 +33,7 @@ class StateMachineManagerTest {
     private val sessionRepository = mockk<SessionRepository>(relaxed = true)
     private val alarmRepository = mockk<AlarmRepository>(relaxed = true)
     private val confirmScheduler = mockk<ConfirmOffScheduler>(relaxed = true)
-    private val osAlarmCreator = mockk<OsAlarmCreator>(relaxed = true)
+    private val alarmScheduler = mockk<AlarmScheduler>(relaxed = true)
 
     private val prefs = AppPreferences(InMemorySharedPreferences())
     private val stateHolder = StateHolder(prefs)
@@ -44,7 +44,7 @@ class StateMachineManagerTest {
         sessionRepository = sessionRepository,
         alarmRepository = alarmRepository,
         confirmOffScheduler = confirmScheduler,
-        osAlarmCreator = osAlarmCreator
+        alarmScheduler = alarmScheduler
     )
 
     private suspend fun setupSession() {

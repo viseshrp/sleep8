@@ -6,7 +6,7 @@ import com.sleep8.data.repository.SessionRepository
 import com.sleep8.domain.model.AppState
 import com.sleep8.domain.model.ScreenEventType
 import com.sleep8.domain.scheduler.ConfirmOffScheduler
-import com.sleep8.domain.scheduler.OsAlarmCreator
+import com.sleep8.domain.scheduler.AlarmScheduler
 import com.sleep8.domain.state.StateHolder
 import com.sleep8.util.TimeUtils
 import java.time.Instant
@@ -18,7 +18,7 @@ class StateMachineManager(
     private val sessionRepository: SessionRepository,
     private val alarmRepository: AlarmRepository,
     private val confirmOffScheduler: ConfirmOffScheduler,
-    private val osAlarmCreator: OsAlarmCreator
+    private val alarmScheduler: AlarmScheduler
 ) {
 
     val currentState: AppState
@@ -75,7 +75,7 @@ class StateMachineManager(
 
         val screenOffTs = stateHolder.pendingCandidateScreenOffTs.value
         if (screenOffTs > 0) {
-            osAlarmCreator.createAlarm(screenOffTs)
+            alarmScheduler.scheduleSleepAlarm(screenOffTs, System.currentTimeMillis())
         }
         stateHolder.clearPendingCandidate()
         stateHolder.setState(AppState.ARMED_ALARM_SET)
@@ -107,7 +107,7 @@ class StateMachineManager(
 
         val now = System.currentTimeMillis()
         if (now >= deadlineTs) {
-            osAlarmCreator.createAlarm(screenOffTs)
+            alarmScheduler.scheduleSleepAlarm(screenOffTs, System.currentTimeMillis())
             stateHolder.clearPendingCandidate()
             stateHolder.setState(AppState.ARMED_ALARM_SET)
             return

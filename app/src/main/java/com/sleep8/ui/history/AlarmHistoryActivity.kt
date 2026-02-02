@@ -139,7 +139,16 @@ private fun AlarmHistoryRow(alarm: AlarmRecord) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(text = "Alarm", style = MaterialTheme.typography.labelMedium, color = Color(0xFFB8C3D6))
             Text(
-                text = TimeUtils.formatAlarmTime(TimeUtils.toLocalTime(alarm.scheduledAlarmTs)),
+                text = TimeUtils.formatAlarmTime(TimeUtils.toLocalTime(alarm.triggerAt)),
+                style = MaterialTheme.typography.bodyLarge,
+                color = Color(0xFFE9EEF7)
+            )
+        }
+        Spacer(modifier = Modifier.height(6.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(text = "Status", style = MaterialTheme.typography.labelMedium, color = Color(0xFFB8C3D6))
+            Text(
+                text = alarm.status.name.lowercase().replaceFirstChar { it.uppercase() },
                 style = MaterialTheme.typography.bodyLarge,
                 color = Color(0xFFE9EEF7)
             )

@@ -1,11 +1,8 @@
 package com.sleep8.integration
 
 import android.content.Context
-import android.content.pm.PackageManager
-import android.content.pm.ResolveInfo
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
-import com.sleep8.R
 import com.sleep8.data.db.Sleep8Database
 import com.sleep8.data.preferences.AppPreferences
 import com.sleep8.data.repository.AlarmRepository
@@ -17,15 +14,19 @@ import com.sleep8.domain.model.AppState
 import com.sleep8.domain.model.ArmSource
 import com.sleep8.domain.scheduler.ConfirmOffScheduler
 import com.sleep8.domain.scheduler.NightWindowScheduler
-import com.sleep8.domain.scheduler.OsAlarmCreator
+import com.sleep8.domain.scheduler.AlarmScheduler
 import com.sleep8.domain.scheduler.WindowScheduler
 import com.sleep8.domain.state.StateHolder
 import com.sleep8.service.ServiceController
 import com.sleep8.service.notification.NotificationHelper
+import com.sleep8.util.PermissionUtils
 import com.sleep8.testutil.InMemorySharedPreferences
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkObject
+import io.mockk.unmockkObject
 import kotlinx.coroutines.test.runTest
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Before
@@ -70,18 +71,13 @@ class FullFlowIntegrationTest {
         val confirmScheduler = mockk<ConfirmOffScheduler>(relaxed = true)
         val nightWindowScheduler = mockk<NightWindowScheduler>(relaxed = true)
 
-        val packageManager = mockk<PackageManager>()
-        val fakeContext = mockk<Context>(relaxed = true) {
-            every { getString(R.string.alarm_message) } returns "Sleep8 Alarm"
-            every { this@mockk.packageManager } returns packageManager
-        }
-        every { packageManager.resolveActivity(any(), any()) } returns ResolveInfo()
+        mockkObject(PermissionUtils)
+        every { PermissionUtils.canScheduleExactAlarms(any()) } returns true
 
-        val osAlarmCreator = OsAlarmCreator(
-            fakeContext,
-            settingsRepository,
-            alarmRepository,
+        val alarmScheduler = AlarmScheduler(
+            context,
             mockk(relaxed = true),
+            alarmRepository,
             appPreferences,
             mockk<NotificationHelper>(relaxed = true)
         )
@@ -95,7 +91,12 @@ class FullFlowIntegrationTest {
             nightWindowScheduler,
             confirmScheduler
         )
-        stateMachineManager = StateMachineManager(stateHolder, settingsRepository, sessionRepository, alarmRepository, confirmScheduler, osAlarmCreator)
+        stateMachineManager = StateMachineManager(stateHolder, settingsRepository, sessionRepository, alarmRepository, confirmScheduler, alarmScheduler)
+    }
+
+    @After
+    fun teardown() {
+        unmockkObject(PermissionUtils)
     }
 
     @Test

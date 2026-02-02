@@ -61,7 +61,7 @@ class MainViewModel @Inject constructor(
         }
 
         val latestAlarmText = if (latestAlarm != null) {
-            val time = TimeUtils.toLocalTime(latestAlarm.scheduledAlarmTs)
+            val time = TimeUtils.toLocalTime(latestAlarm.triggerAt)
             "Alarm scheduled for ${TimeUtils.formatAlarmTime(time)}"
         } else {
             "No alarms scheduled yet"

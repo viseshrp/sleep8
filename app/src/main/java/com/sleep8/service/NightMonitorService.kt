@@ -8,7 +8,6 @@ import android.content.IntentFilter
 import android.os.IBinder
 import androidx.core.app.NotificationManagerCompat
 import com.sleep8.R
-import com.sleep8.data.preferences.AppPreferences
 import com.sleep8.domain.manager.StateMachineManager
 import com.sleep8.domain.model.AppState
 import com.sleep8.domain.state.StateHolder
@@ -29,7 +28,6 @@ class NightMonitorService : Service() {
     private lateinit var stateMachineManager: StateMachineManager
     private lateinit var notificationHelper: NotificationHelper
     private lateinit var stateHolder: StateHolder
-    private lateinit var appPreferences: AppPreferences
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
@@ -58,7 +56,6 @@ class NightMonitorService : Service() {
         stateMachineManager = entryPoint.stateMachineManager()
         notificationHelper = entryPoint.notificationHelper()
         stateHolder = entryPoint.stateHolder()
-        appPreferences = entryPoint.appPreferences()
         registerScreenReceiver()
         updateNotificationForState(stateHolder.state.value)
     }
@@ -106,8 +103,7 @@ class NightMonitorService : Service() {
             AppState.ARMED_ALARM_SET -> {
                 val lastOff = stateHolder.lastScreenOffTs.value
                 if (lastOff > 0) {
-                    val offsetHours = appPreferences.alarmOffsetHours
-                    val alarmTime = TimeUtils.toLocalTime(lastOff + offsetHours * 3600_000L)
+                    val alarmTime = TimeUtils.toLocalTime(lastOff + Constants.ALARM_OFFSET_HOURS * 3600_000L)
                     getString(R.string.notification_text_alarm_set, TimeUtils.formatAlarmTime(alarmTime))
                 } else {
                     getString(R.string.notification_text_idle)
@@ -127,5 +123,4 @@ interface ServiceEntryPoint {
     fun stateMachineManager(): StateMachineManager
     fun notificationHelper(): NotificationHelper
     fun stateHolder(): StateHolder
-    fun appPreferences(): AppPreferences
 }

@@ -13,10 +13,9 @@ import com.sleep8.data.repository.SettingsRepository
 import com.sleep8.data.repository.SessionRepository
 import com.sleep8.domain.manager.ArmManager
 import com.sleep8.domain.manager.StateMachineManager
-import com.sleep8.domain.scheduler.BackstopAlarmScheduler
 import com.sleep8.domain.scheduler.ConfirmOffScheduler
 import com.sleep8.domain.scheduler.NightWindowScheduler
-import com.sleep8.domain.scheduler.OsAlarmCreator
+import com.sleep8.domain.scheduler.AlarmScheduler
 import com.sleep8.domain.scheduler.WindowScheduler
 import com.sleep8.domain.state.StateHolder
 import com.sleep8.service.ServiceController
@@ -121,7 +120,7 @@ object AppModule {
         sessionRepository: SessionRepository,
         alarmRepository: AlarmRepository,
         confirmOffScheduler: ConfirmOffScheduler,
-        osAlarmCreator: OsAlarmCreator
+        alarmScheduler: AlarmScheduler
     ): StateMachineManager {
         return StateMachineManager(
             stateHolder,
@@ -129,7 +128,7 @@ object AppModule {
             sessionRepository,
             alarmRepository,
             confirmOffScheduler,
-            osAlarmCreator
+            alarmScheduler
         )
     }
 
@@ -145,28 +144,17 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideBackstopScheduler(
+    fun provideAlarmScheduler(
         @ApplicationContext context: Context,
-        alarmManager: AlarmManager
-    ): BackstopAlarmScheduler {
-        return BackstopAlarmScheduler(context, alarmManager)
-    }
-
-    @Provides
-    @Singleton
-    fun provideOsAlarmCreator(
-        @ApplicationContext context: Context,
-        settingsRepository: SettingsRepository,
+        alarmManager: AlarmManager,
         alarmRepository: AlarmRepository,
-        backstopAlarmScheduler: BackstopAlarmScheduler,
         appPreferences: AppPreferences,
         notificationHelper: NotificationHelper
-    ): OsAlarmCreator {
-        return OsAlarmCreator(
+    ): AlarmScheduler {
+        return AlarmScheduler(
             context,
-            settingsRepository,
+            alarmManager,
             alarmRepository,
-            backstopAlarmScheduler,
             appPreferences,
             notificationHelper
         )

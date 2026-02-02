@@ -135,13 +135,9 @@ private fun SettingsScreen(
 
             // Section: Alarm Behavior
             SettingsSection(title = "Alarm Behavior") {
-                OutlinedTextField(
-                    value = uiState.alarmOffsetHours,
-                    onValueChange = viewModel::updateAlarmOffset,
-                    label = { Text("Alarm lead time (hours)") },
-                    modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    supportingText = { Text("How long before 'Night end' to start checking screen status") }
+                Text(
+                    text = "Alarm duration: ${uiState.alarmOffsetHours} hours (fixed)",
+                    style = MaterialTheme.typography.bodyLarge
                 )
 
                 OutlinedTextField(
