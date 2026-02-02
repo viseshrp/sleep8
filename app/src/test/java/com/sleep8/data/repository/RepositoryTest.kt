@@ -90,4 +90,48 @@ class RepositoryTest {
         val retrieved = kotlinx.coroutines.runBlocking { alarmRepository.getRecord(id) }
         assertEquals(record.screenOffTs, retrieved?.screenOffTs)
     }
+
+    @Test
+    fun `latest alarm record returns most recent confirmed time`() {
+        val session = kotlinx.coroutines.runBlocking { sessionRepository.createSession(ArmSource.APP_BUTTON) }
+        val older = AlarmRecord(
+            id = 0,
+            sessionId = session.id,
+            screenOffTs = 1000L,
+            confirmedAt = 2000L,
+            scheduledAlarmTs = 3000L,
+            osAlarmIntentResolved = true,
+            osAlarmUiRequired = null,
+            internalBackstopScheduled = true
+        )
+        val newer = older.copy(screenOffTs = 4000L, confirmedAt = 5000L, scheduledAlarmTs = 6000L)
+        kotlinx.coroutines.runBlocking { alarmRepository.insertRecord(older) }
+        kotlinx.coroutines.runBlocking { alarmRepository.insertRecord(newer) }
+
+        val latest = kotlinx.coroutines.runBlocking { alarmRepository.getLatestRecord() }
+        assertEquals(5000L, latest?.confirmedAt)
+    }
+
+    @Test
+    fun `alarm history orders newest to oldest`() {
+        val session = kotlinx.coroutines.runBlocking { sessionRepository.createSession(ArmSource.APP_BUTTON) }
+        val first = AlarmRecord(
+            id = 0,
+            sessionId = session.id,
+            screenOffTs = 1000L,
+            confirmedAt = 2000L,
+            scheduledAlarmTs = 3000L,
+            osAlarmIntentResolved = true,
+            osAlarmUiRequired = null,
+            internalBackstopScheduled = true
+        )
+        val second = first.copy(screenOffTs = 4000L, confirmedAt = 5000L, scheduledAlarmTs = 6000L)
+        val third = first.copy(screenOffTs = 7000L, confirmedAt = 8000L, scheduledAlarmTs = 9000L)
+        kotlinx.coroutines.runBlocking { alarmRepository.insertRecord(first) }
+        kotlinx.coroutines.runBlocking { alarmRepository.insertRecord(third) }
+        kotlinx.coroutines.runBlocking { alarmRepository.insertRecord(second) }
+
+        val history = kotlinx.coroutines.runBlocking { alarmRepository.getAllRecordsNewestFirst() }
+        assertEquals(listOf(8000L, 5000L, 2000L), history.map { it.confirmedAt })
+    }
 }
