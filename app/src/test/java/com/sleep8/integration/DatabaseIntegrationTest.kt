@@ -97,8 +97,6 @@ class DatabaseIntegrationTest {
             canceledReason = null,
             firedAt = null,
             dismissedAt = null,
-            snoozedAt = null,
-            snoozedUntil = null,
             overlayUsed = false,
             activityPresented = false
         )

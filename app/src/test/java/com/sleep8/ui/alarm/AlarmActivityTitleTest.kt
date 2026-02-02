@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import androidx.test.core.app.ApplicationProvider
 import com.sleep8.R
+import com.sleep8.ui.ringing.AlarmRingingActivity
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -15,12 +16,12 @@ import org.robolectric.annotation.Config
 class AlarmActivityTitleTest {
 
     @Test
-    fun `alarm activity label uses alarm ui title`() {
+    fun `ringing activity label uses alarm ringing title`() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val info = context.packageManager.getActivityInfo(
-            android.content.ComponentName(context, AlarmActivity::class.java),
+            android.content.ComponentName(context, AlarmRingingActivity::class.java),
             PackageManager.GET_META_DATA
         )
-        assertEquals(R.string.alarm_ui_title, info.labelRes)
+        assertEquals(R.string.alarm_ringing_title, info.labelRes)
     }
 }

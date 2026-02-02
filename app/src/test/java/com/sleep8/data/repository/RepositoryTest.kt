@@ -60,7 +60,6 @@ class RepositoryTest {
             nightStart = "22:00",
             nightEnd = "08:00",
             confirmOffMinutes = 10,
-            snoozeMinutes = null,
             alarmDurationMinutes = 0,
             overlayEnabled = false,
             armedDefault = false,
@@ -113,8 +112,6 @@ class RepositoryTest {
             canceledReason = null,
             firedAt = null,
             dismissedAt = null,
-            snoozedAt = null,
-            snoozedUntil = null,
             overlayUsed = false,
             activityPresented = false
         )
@@ -141,8 +138,6 @@ class RepositoryTest {
             canceledReason = null,
             firedAt = null,
             dismissedAt = null,
-            snoozedAt = null,
-            snoozedUntil = null,
             overlayUsed = false,
             activityPresented = false
         )
@@ -179,8 +174,6 @@ class RepositoryTest {
             canceledReason = null,
             firedAt = null,
             dismissedAt = null,
-            snoozedAt = null,
-            snoozedUntil = null,
             overlayUsed = false,
             activityPresented = false
         )

@@ -2,8 +2,8 @@ package com.sleep8.util
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
-import com.sleep8.ui.alarm.AlarmActivity
 import com.sleep8.ui.alarm.AlarmListActivity
+import com.sleep8.ui.ringing.AlarmRingingActivity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Test
@@ -16,7 +16,7 @@ import org.robolectric.annotation.Config
 class AlarmUiRouterTest {
 
     @Test
-    fun `ringing routes to AlarmActivity with active id`() {
+    fun `ringing routes to AlarmRingingActivity with active id`() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val intent = AlarmUiRouter.buildIntent(
             context = context,
@@ -24,7 +24,7 @@ class AlarmUiRouterTest {
             activeAlarmId = 42L
         )
 
-        assertEquals(AlarmActivity::class.java.name, intent.component?.className)
+        assertEquals(AlarmRingingActivity::class.java.name, intent.component?.className)
         assertEquals(42L, intent.getLongExtra(Constants.EXTRA_ALARM_ID, -1L))
     }
 

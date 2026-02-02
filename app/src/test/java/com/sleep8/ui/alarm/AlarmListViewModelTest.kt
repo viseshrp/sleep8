@@ -100,8 +100,6 @@ class AlarmListViewModelTest {
             canceledReason = cancelReason,
             firedAt = null,
             dismissedAt = null,
-            snoozedAt = null,
-            snoozedUntil = null,
             overlayUsed = false,
             activityPresented = false
         )

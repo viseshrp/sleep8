@@ -55,7 +55,6 @@ class AlarmSchedulerTest {
             nightStart = "22:00",
             nightEnd = "08:00",
             confirmOffMinutes = 10,
-            snoozeMinutes = null,
             alarmDurationMinutes = 480,
             overlayEnabled = false,
             armedDefault = false,
@@ -97,7 +96,6 @@ class AlarmSchedulerTest {
             nightStart = "22:00",
             nightEnd = "08:00",
             confirmOffMinutes = 10,
-            snoozeMinutes = null,
             alarmDurationMinutes = 720,
             overlayEnabled = false,
             armedDefault = false,
@@ -122,7 +120,6 @@ class AlarmSchedulerTest {
             nightStart = "22:00",
             nightEnd = "08:00",
             confirmOffMinutes = 10,
-            snoozeMinutes = null,
             alarmDurationMinutes = 0,
             overlayEnabled = false,
             armedDefault = false,
@@ -156,70 +153,6 @@ class AlarmSchedulerTest {
     }
 
     @Test
-    fun `schedule snooze updates original and schedules new alarm`() = runTest {
-        val original = AlarmRecord(
-            id = 5L,
-            sessionId = 42L,
-            screenOffTs = 1000L,
-            confirmedAt = 2000L,
-            scheduledAt = 2500L,
-            triggerAt = 3000L,
-            durationUsedMinutes = 480,
-            alarmInstanceId = 111L,
-            requestCode = 111,
-            source = AlarmSource.SLEEP_AUTOMATION,
-            status = AlarmStatus.FIRED,
-            canceledReason = null,
-            firedAt = 3000L,
-            dismissedAt = null,
-            snoozedAt = null,
-            snoozedUntil = null,
-            overlayUsed = false,
-            activityPresented = false
-        )
-        coEvery { alarmRepository.getRecord(5L) } returns original
-        coEvery { alarmRepository.insertRecord(any()) } returns 6L
-
-        scheduler.scheduleSnooze(5L, snoozeMinutes = 10)
-
-        coVerify { alarmRepository.markSnoozed(5L, any(), any()) }
-        verify { alarmManager.setAlarmClock(any(), any()) }
-    }
-
-    @Test
-    fun `snooze replaces any scheduled alarms`() = runTest {
-        val scheduled = AlarmRecord(
-            id = 30L,
-            sessionId = 1L,
-            screenOffTs = 1000L,
-            confirmedAt = 2000L,
-            scheduledAt = 2500L,
-            triggerAt = 3000L,
-            durationUsedMinutes = 480,
-            alarmInstanceId = 300L,
-            requestCode = 300,
-            source = AlarmSource.SLEEP_AUTOMATION,
-            status = AlarmStatus.SCHEDULED,
-            canceledReason = null,
-            firedAt = null,
-            dismissedAt = null,
-            snoozedAt = null,
-            snoozedUntil = null,
-            overlayUsed = false,
-            activityPresented = false
-        )
-        val original = scheduled.copy(id = 31L, status = AlarmStatus.FIRED)
-        coEvery { alarmRepository.getScheduledRecords() } returns listOf(scheduled)
-        coEvery { alarmRepository.getRecord(31L) } returns original
-        coEvery { alarmRepository.insertRecord(any()) } returns 32L
-
-        scheduler.scheduleSnooze(31L, snoozeMinutes = 10)
-
-        coVerify { alarmRepository.markCanceled(30L, com.sleep8.domain.model.AlarmCancelReason.SNOOZE_REPLACE) }
-        coVerify { alarmRepository.markSnoozed(31L, any(), any()) }
-    }
-
-    @Test
     fun `schedule sleep alarm cancels prior scheduled alarms`() = runTest {
         val existing = AlarmRecord(
             id = 10L,
@@ -236,8 +169,6 @@ class AlarmSchedulerTest {
             canceledReason = null,
             firedAt = null,
             dismissedAt = null,
-            snoozedAt = null,
-            snoozedUntil = null,
             overlayUsed = false,
             activityPresented = false
         )
@@ -267,8 +198,6 @@ class AlarmSchedulerTest {
             canceledReason = null,
             firedAt = null,
             dismissedAt = null,
-            snoozedAt = null,
-            snoozedUntil = null,
             overlayUsed = false,
             activityPresented = false
         )

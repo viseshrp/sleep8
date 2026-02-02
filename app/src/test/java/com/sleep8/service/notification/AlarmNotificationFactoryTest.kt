@@ -34,28 +34,12 @@ class AlarmNotificationFactoryTest {
         val notification = factory.buildRingingNotification(
             alarmIntent = pendingIntent(context, 1),
             contentIntent = pendingIntent(context, 2),
-            dismissIntent = pendingIntent(context, 3),
-            snoozeIntent = null
+            dismissIntent = pendingIntent(context, 3)
         )
 
         assertEquals(Notification.CATEGORY_ALARM, notification.category)
         assertEquals(Notification.VISIBILITY_PUBLIC, notification.visibility)
         assertNotNull(notification.actions)
         assertEquals(1, notification.actions.size)
-    }
-
-    @Test
-    fun `ringing notification includes snooze action when enabled`() {
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        val factory = AlarmNotificationFactory(context)
-        val notification = factory.buildRingingNotification(
-            alarmIntent = pendingIntent(context, 4),
-            contentIntent = pendingIntent(context, 5),
-            dismissIntent = pendingIntent(context, 6),
-            snoozeIntent = pendingIntent(context, 7)
-        )
-
-        assertNotNull(notification.actions)
-        assertEquals(2, notification.actions.size)
     }
 }
