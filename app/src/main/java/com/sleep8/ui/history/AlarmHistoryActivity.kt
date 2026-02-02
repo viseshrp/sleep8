@@ -1,6 +1,7 @@
 package com.sleep8.ui.history
 
 import android.os.Bundle
+import android.provider.AlarmClock
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -31,6 +32,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.sleep8.domain.model.AlarmRecord
+import com.sleep8.util.AlarmIntents
 import com.sleep8.util.TimeUtils
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -41,6 +43,7 @@ class AlarmHistoryActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        handleIntent(intent)
         setContent {
             MaterialTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
@@ -50,6 +53,23 @@ class AlarmHistoryActivity : ComponentActivity() {
                     )
                 }
             }
+        }
+    }
+
+    override fun onNewIntent(intent: android.content.Intent?) {
+        super.onNewIntent(intent)
+        if (intent != null) {
+            handleIntent(intent)
+        }
+    }
+
+    private fun handleIntent(intent: android.content.Intent) {
+        when (intent.action) {
+            AlarmClock.ACTION_SHOW_ALARMS,
+            android.content.Intent.ACTION_VIEW -> {
+                viewModel.loadAlarm(AlarmIntents.parseAlarmId(intent.data))
+            }
+            else -> viewModel.loadAlarm(null)
         }
     }
 }
@@ -101,12 +121,38 @@ private fun AlarmHistoryScreen(
                 color = Color(0xFFB8C3D6)
             )
         } else {
+            uiState.selectedAlarm?.let { selected ->
+                AlarmDetailCard(alarm = selected)
+            }
             LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 items(uiState.alarms) { alarm ->
                     AlarmHistoryRow(alarm = alarm)
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun AlarmDetailCard(alarm: AlarmRecord) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0x1AFFFFFF), shape = MaterialTheme.shapes.medium)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Text(text = "Alarm Detail", style = MaterialTheme.typography.titleMedium, color = Color(0xFFE9EEF7))
+        Text(
+            text = "Scheduled for ${TimeUtils.formatAlarmTime(TimeUtils.toLocalTime(alarm.triggerAt))}",
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color(0xFFB8C3D6)
+        )
+        Text(
+            text = "Status: ${alarm.status.name.lowercase().replaceFirstChar { it.uppercase() }}",
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color(0xFFB8C3D6)
+        )
     }
 }
 
@@ -149,6 +195,15 @@ private fun AlarmHistoryRow(alarm: AlarmRecord) {
             Text(text = "Status", style = MaterialTheme.typography.labelMedium, color = Color(0xFFB8C3D6))
             Text(
                 text = alarm.status.name.lowercase().replaceFirstChar { it.uppercase() },
+                style = MaterialTheme.typography.bodyLarge,
+                color = Color(0xFFE9EEF7)
+            )
+        }
+        Spacer(modifier = Modifier.height(6.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(text = "Duration", style = MaterialTheme.typography.labelMedium, color = Color(0xFFB8C3D6))
+            Text(
+                text = "${alarm.durationUsedMinutes} min",
                 style = MaterialTheme.typography.bodyLarge,
                 color = Color(0xFFE9EEF7)
             )

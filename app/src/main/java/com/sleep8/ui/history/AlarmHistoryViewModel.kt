@@ -25,7 +25,18 @@ class AlarmHistoryViewModel @Inject constructor(
     fun refresh() {
         viewModelScope.launch {
             val alarms = alarmRepository.getAllRecordsNewestFirst()
-            _uiState.value = AlarmHistoryUiState(alarms = alarms)
+            _uiState.value = _uiState.value.copy(alarms = alarms)
+        }
+    }
+
+    fun loadAlarm(alarmId: Long?) {
+        if (alarmId == null || alarmId <= 0) {
+            _uiState.value = _uiState.value.copy(selectedAlarm = null)
+            return
+        }
+        viewModelScope.launch {
+            val record = alarmRepository.getRecord(alarmId)
+            _uiState.value = _uiState.value.copy(selectedAlarm = record)
         }
     }
 }

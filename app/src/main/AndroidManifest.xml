@@ -31,7 +31,24 @@
 
         <activity
             android:name=".ui.history.AlarmHistoryActivity"
-            android:exported="false" />
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.provider.AlarmClock.ACTION_SHOW_ALARMS" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="sleep8" android:host="alarms" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="sleep8" android:host="alarm" android:pathPrefix="/" />
+            </intent-filter>
+        </activity>
 
         <activity
             android:name=".ui.main.MainActivity"
