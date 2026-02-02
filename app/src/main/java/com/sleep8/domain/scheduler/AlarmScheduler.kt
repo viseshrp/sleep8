@@ -4,8 +4,8 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.util.Log
-import com.sleep8.BuildConfig
 import com.sleep8.R
 import com.sleep8.data.preferences.AppPreferences
 import com.sleep8.data.repository.AlarmRepository
@@ -206,7 +206,7 @@ class AlarmScheduler(
         )
         val alarmClockInfo = AlarmManager.AlarmClockInfo(triggerAt, showIntent)
         alarmManager.setAlarmClock(alarmClockInfo, operation)
-        if (BuildConfig.DEBUG) {
+        if (Build.TYPE != "user") {
             val next = alarmManager.nextAlarmClock
             if (next == null || next.triggerTime > triggerAt) {
                 Log.w(
