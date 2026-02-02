@@ -1,19 +1,19 @@
-# spec.md — Sleep8: Armed Screen-Off → OS Alarm (+8h)
+# spec.md — Sleep8: Owned Alarm (+8h)
 
 ## 0. One-liner
-When the user **arms** the app (button or Quick Settings tile), the app watches for **screen-off** events during a **fixed night window**; once the screen has stayed off for **10 minutes**, it schedules a **real OS alarm** for **8 hours after the original screen-off time**, and re-schedules from the **latest** screen-off event.
+When the user **arms** the app (button or Quick Settings tile), the app watches for **screen-off** events during a **fixed night window**; once the screen has stayed off for **10 minutes**, it schedules an **app-owned exact alarm** for **8 hours after the original screen-off time**, and re-schedules from the **latest** screen-off event.
 
 ---
 
 ## 1. Goals
 - **Automation**: user arms once; no further interaction needed.
-- **Accuracy**: detect screen-off and set an **actual system alarm** (Clock app) for `screen_off_time + 8 hours`.
+- **Accuracy**: detect screen-off and schedule the app’s own **exact alarm** for `screen_off_time + 8 hours`.
 - **Reliability mode**: foreground service at night + exact alarms + battery optimization guidance.
 - **Offline-only**: no network calls; local storage only.
 - **Auditability**: persist triggers/alarms in a local DB.
 
 ## 2. Non-goals
-- Being an alarm app, custom alarm UI, or custom alarm sounds.
+- Delegating alarms to the OS Clock app.
 - Sleep stage tracking, health integrations, cloud sync.
 - “Power button pressed” detection (we use screen state only).
 
@@ -24,11 +24,11 @@ When the user **arms** the app (button or Quick Settings tile), the app watches 
 - Night window: **fixed** start/end time configured by user.
 - Rescheduling: **latest screen-off wins** (keep updating the scheduled time until confirmed).
 - Confirm rule: only commit when **screen remains OFF for 10 minutes** after an OFF event.
-- Alarm integration: create an **OS/Clock app alarm**, not a custom alarm UI.
-- Snooze: configurable option in settings (applies to OS alarm if supported).
-- Multiple alarms: **allowed** (create a new one; keep both).
-- Reboot: **restore state** from DB and continue/restore scheduled alarms.
-- Storage: persist “set time” and all relevant state.
+- Alarm ownership: **app-owned** exact alarm via `AlarmManager` + receiver + full-screen activity.
+- Snooze: configurable option in settings, uses app-owned exact alarms.
+- Multiple alarms: **replace prior scheduled alarm** (one active at a time).
+- Reboot: **restore state** and reschedule alarms from DB.
+- Storage: persist “scheduled_at / trigger_at / source / status” and relevant timestamps.
 - Privacy: **strictly offline**.
 
 ---
@@ -47,7 +47,7 @@ Why:
 - User sets:
   - Night window start/end (e.g., 22:00–08:00).
   - Auto-arm schedule start/end (separate from night window; defaults to night window times).
-  - “Alarm lead time” is fixed: **+8 hours** (not user-editable in v1 unless explicitly desired later).
+  - Alarm duration is fixed: **+8 hours**.
   - Snooze option (default OFF or a chosen minutes value).
 - App shows a “Reliability checklist”:
   - Exact alarm capability (Android 12+)
@@ -72,20 +72,28 @@ Armed state shows:
 
 ### 5.4 Confirmation → alarm creation
 When the screen has remained OFF for 10 minutes since the latest OFF event:
-- Create an OS alarm for:  
+- Schedule an app-owned exact alarm for:  
   `alarm_time = latest_screen_off_time + 8 hours`
-- Persist alarm creation record in DB.
+- Persist the alarm record in DB with status `SCHEDULED`.
 
-### 5.5 Disarming
+### 5.5 Alarm firing
+- `AlarmManager` delivers to `AlarmReceiver`.
+- Receiver starts `AlarmRingingService` (foreground) and launches `AlarmActivity`.
+- Alarm UI shows over lock screen, turns screen on, and rings until dismissed.
+
+### 5.6 Dismiss / Snooze
+- **Dismiss** stops audio/vibration, stops the foreground service, records `dismissed_at` in DB.
+- **Snooze** schedules a new exact alarm (e.g., +10 minutes) and marks the original record as `SNOOZED`.
+
+### 5.7 Disarming
 - User can disarm anytime (button/tile).
 - Disarm stops monitoring service and cancels pending confirmation timer.
-- Does **not** delete already created OS alarms (we’re not the alarm app).
+- Disarm does not retroactively alter already-fired alarms.
 
-### 5.6 Alarm Observability (Local Only)
-- The app maintains a **local alarm log** in its DB (`alarm_records`) as the single source of truth for alarms it has scheduled.
-- Home screen shows the **most recently scheduled alarm** from the local DB.
+### 5.8 Alarm Observability (Local Only)
+- The app maintains a **local alarm log** in its DB (`alarm_records`).
+- Home screen shows the **most recently scheduled alarm**.
 - Alarm History screen shows the full alarm log (newest → oldest).
-- The app does **not** and **cannot** query, enumerate, or sync system Clock alarms.
 
 ---
 
@@ -106,8 +114,8 @@ When the screen has remained OFF for 10 minutes since the latest OFF event:
   - cancel countdown; candidate remains in DB as last observed but not confirmed.
 
 ### 6.3 Alarm creation
-- Create a **new OS alarm** each time confirmation succeeds.
-- Don’t attempt to dedupe/overwrite prior OS alarms.
+- Create a **new app-owned exact alarm** each time confirmation succeeds.
+- Cancel/replace any previously scheduled app-owned alarm.
 
 ### 6.4 Reboot handling
 If armed at reboot or there was a pending confirmation:
@@ -115,24 +123,19 @@ If armed at reboot or there was a pending confirmation:
 - If there was a pending candidate and the screen is currently OFF, re-evaluate confirmation using stored timestamps:
   - If `now - pending_candidate_screen_off_time >= 10 minutes` then schedule alarm immediately.
   - Else resume timer for the remaining duration.
+- If a scheduled alarm exists in DB and its `trigger_at` is in the past, schedule it to fire immediately.
 
 ---
 
-## 7. OS Alarm Integration (Clock app)
+## 7. Alarm Ownership (App)
 
 ### 7.1 Target mechanism
-Use a best-effort strategy to create an alarm in the system’s clock/alarm app:
-- Primary: `AlarmClock.ACTION_SET_ALARM` intent with extras:
-  - hour/minute derived from alarm_time (local)
-  - optional extras for message/skip UI/snooze (where supported)
+Use `AlarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP)` with an app-owned `BroadcastReceiver`.
 
-**Important constraint**: Some OEM clock apps may ignore “skip UI” or require UI confirmation. The app should:
-- Detect if the intent can resolve.
-- If UI is required by the OS clock app, show a one-time warning: “Your clock app requires confirmation”.
-
-### 7.2 Exact timing
-In addition to creating the OS alarm entry, schedule an internal exact wake trigger (for resilience and telemetry) using `AlarmManager.setExactAndAllowWhileIdle`.  
-This internal trigger is NOT the user’s alarm UI; it’s a backstop/logging hook.
+### 7.2 Alarm UI
+- `AlarmActivity` is full-screen, shows over lock screen, and turns screen on.
+- Alarm uses `AudioManager.STREAM_ALARM` semantics with looping sound and repeating vibration.
+- Foreground service runs **only while ringing**.
 
 ---
 
@@ -141,7 +144,6 @@ This internal trigger is NOT the user’s alarm UI; it’s a backstop/logging ho
 ### 8.1 Required / conditional
 - Foreground service:
   - `FOREGROUND_SERVICE`
-  - (Add foreground service type if needed by targetSdk)
 - Reboot:
   - `RECEIVE_BOOT_COMPLETED`
 - Exact alarm (Android 12+):
@@ -189,10 +191,13 @@ Tables:
 - `session_id` (fk)
 - `screen_off_ts` (timestamp)         # triggering OFF
 - `confirmed_at` (timestamp)          # after 10 min off
-- `scheduled_alarm_ts` (timestamp)    # off + 8h
-- `os_alarm_intent_resolved` (bool)
-- `os_alarm_ui_required` (bool nullable)
-- `internal_backstop_scheduled` (bool)
+- `scheduled_at` (timestamp)          # record creation time
+- `trigger_at` (timestamp)            # off + 8h or snooze time
+- `source` (enum: SLEEP_AUTOMATION | SNOOZE)
+- `status` (enum: SCHEDULED | FIRED | DISMISSED | SNOOZED)
+- `fired_at` (timestamp nullable)
+- `dismissed_at` (timestamp nullable)
+- `snoozed_until` (timestamp nullable)
 
 ### 9.2 In-memory state (single source of truth mirrored from DB)
 - `armed: bool`
@@ -215,125 +220,13 @@ Tables:
   - handles SCREEN_OFF / SCREEN_ON events
 - `ConfirmOffScheduler`
   - manages the 10-minute confirmation logic (via exact alarm or handler + persistence)
-- `OsAlarmCreator`
-  - constructs and fires `ACTION_SET_ALARM` intents
-  - determines resolvability and UI behavior when possible
-- `BackstopAlarmScheduler`
-  - uses AlarmManager exact to log/verify and to re-run flows after Doze/reboot
-- `BootReceiver`
-  - restores active session / pending confirmations
-
----
-
-## 11. State Machine
-
-States:
-- `DISARMED`
-- `ARMED_IDLE` (armed, waiting for screen-off)
-- `ARMED_PENDING_CONFIRM` (have candidate OFF + deadline)
-- `ARMED_ALARM_SET` (alarm created; still armed and can create more if new OFF+confirm occurs)
-
-Transitions:
-- DISARMED → ARMED_IDLE (arm)
-- ARMED_IDLE → ARMED_PENDING_CONFIRM (SCREEN_OFF in window)
-- ARMED_PENDING_CONFIRM → ARMED_IDLE (SCREEN_ON before deadline)
-- ARMED_PENDING_CONFIRM → ARMED_ALARM_SET (deadline reached while still OFF)
-- ARMED_ALARM_SET → ARMED_PENDING_CONFIRM (new SCREEN_OFF occurs later)
-- Any ARMED_* → DISARMED (disarm)
-
----
-
-## 12. Acceptance Criteria (must pass)
-1. When armed and within night window, a SCREEN_OFF starts a 10-minute confirmation.
-2. If the screen turns ON before 10 minutes, no OS alarm is created.
-3. If the screen remains OFF for 10 minutes, the app creates an OS alarm for `screen_off + 8 hours`.
-4. If multiple SCREEN_OFF events occur before confirmation, the latest OFF is used (latest wins).
-5. The app allows multiple OS alarms to exist; it does not delete prior alarms.
-6. After reboot, the app restores:
-   - armed state/session
-   - pending confirmation timer (remaining time)
-   - and schedules alarm if deadline already passed and screen is OFF.
-7. All events and alarm records are persisted in DB.
-8. No network traffic is performed (verified by build config + runtime checks).
-
----
-
-## 13. Known Constraints / Risks
-- Some OEM Clock apps may:
-  - ignore “skip UI”, requiring manual confirmation
-  - limit setting alarms programmatically
-- Battery optimization settings vary by OEM; provide guidance but can’t guarantee.
-- “Screen off” is not a perfect proxy for “sleep”, but confirmation delay reduces false positives.
-
----
-
-## 14. Agentic AI Implementation Plan (what the coding agent should do)
-
-### Milestone A — Project skeleton
-- Create Android app module + Room DB + settings screen.
-- Add Quick Settings Tile with arm/disarm.
-
-### Milestone B — Monitoring & confirmation
-- Foreground service with runtime receiver for screen events.
-- Implement confirmation deadline persistence + restoration.
-
-### Milestone C — Alarm creation
-- Implement OsAlarmCreator with best-effort `ACTION_SET_ALARM`.
-- Add internal backstop exact AlarmManager scheduling for confirmations.
-
-### Milestone D — Reboot + resilience
-- BootReceiver restores session and pending confirmations.
-
-### Milestone E — QA checklist
-- Manual test cases:
-  - normal flow, cancel flow, multiple OFF events, reboot mid-confirm, window crossing midnight, battery optimization enabled/disabled.
-
----
-
-## 15. Open Questions (none blocking, but document)
-- Default night window times (propose: 22:00–08:00).
-- Default snooze value when enabled (propose: 10 minutes).
-- Whether +8h should ever be configurable in settings (currently fixed).
-
-## Auto-Arming & Scheduling (2026)
-- If "Auto-arm" is enabled, the app uses WindowScheduler to arm at the auto-arm start time and disarm at the auto-arm end time.
-- Auto-arm schedule is configurable separately from the night window.
-- Auto-Arm schedules are authoritative; manual actions are immediate but temporary.
-- ArmManager supports ArmSource types: SCHEDULED, APP_BUTTON, QUICK_TILE, etc.
-- WindowScheduler replaces WindowEndScheduler and handles both triggers.
-
-## Auto-Arm
-
-### Definitions
-- **Night Window**: a time filter. Screen-off triggers are processed only if current time is within the Night Window **and** the app is armed.
-- **Auto-Arm Schedule**: a time schedule that toggles the armed state automatically at configured start/end times.
-- **Armed state**: a boolean (`armed == true/false`) that controls whether monitoring can run.
-- **Armed session**: a specific interval where `armed == true`, created either by manual arming (button/tile) or by auto-arm.
-
-### Precedence rules
-- Screen-off triggers are processed only when `armed == true` **and** current time is within the Night Window.
-- Auto-Arm only toggles `armed`. Night Window never toggles `armed`.
-- Manual actions are temporary; the next Auto-Arm boundary always applies unless Auto-Arm is disabled.
-- Manual disarm immediately turns off monitoring and cancels any pending confirmation.
-- Disable Auto-Arm to prevent scheduled changes to `armed`.
-
-### Invariants (Must Always Hold)
-- Auto-Arm schedules are authoritative while enabled.
-- Manual arm/disarm never cancels, pauses, or suppresses Auto-Arm schedules.
-- Night Window never changes `armed`.
-- Monitoring must never run unless `armed && inNightWindow`.
-- Night Window start alone must never cause monitoring to start.
-- The only way to stop scheduled arming/disarming is to disable Auto-Arm.
-
-### Mode B rule (monitoring gate)
-- Monitoring runs only when `armed && inNightWindow`.
-- Night Window beginning does **not** start monitoring unless `armed` is already true.
-- Leaving the Night Window stops monitoring even if still armed.
-
-### Boot restore rules (auto-arm)
-- After reboot, auto-arm boundaries must be restored (next auto-arm start/end).
-- If auto-arm says the app should currently be armed, persist `armed == true` and ensure an active armed session attributed to auto-arm.
-- Start monitoring only when `armed && inNightWindow`.
-- Pending confirmation restoration is gated by the same condition:
-  - If `armed && inNightWindow`, resume/complete confirmation as usual.
-  - Otherwise, do not confirm; preserve pending candidate/deadline for later.
+- `AlarmScheduler`
+  - schedules exact alarm using `AlarmManager`
+  - cancels/replaces prior alarm
+  - persists alarm record status
+- `AlarmReceiver`
+  - entrypoint for alarm firing
+- `AlarmRingingService`
+  - foreground service for active alarm sound/vibration
+- `AlarmActivity`
+  - full-screen UI for dismissal/snooze
