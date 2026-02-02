@@ -47,6 +47,11 @@
             android:foregroundServiceType="specialUse" />
 
         <service
+            android:name=".service.AlarmRingingService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
+
+        <service
             android:name=".ui.tile.Sleep8TileService"
             android:label="@string/tile_label"
             android:icon="@drawable/ic_tile"
