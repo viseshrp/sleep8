@@ -38,6 +38,7 @@ MainActivity / QS Tile ──► ArmManager ──► NightMonitorService
   - Calculates `triggerAt` using configured duration.
   - Persists metadata (`duration_used_minutes`, `alarm_instance_id`, `request_code`, `overlay_used`, `activity_presented`).
   - Schedules `AlarmManager.setExactAndAllowWhileIdle` (`RTC_WAKEUP`).
+  - Enforces **single active alarm** by canceling previously scheduled alarms and marking them `CANCELED`.
 
 - **AlarmReceiver**
   - Receives the alarm clock operation.
@@ -81,4 +82,4 @@ Android does not guarantee a third-party app can be the system default alarm app
 ## 5. Reboot Restore
 
 - Restore armed state and pending confirmation timers.
-- Reschedule latest `SCHEDULED` record; if overdue, fire immediately.
+- Reschedule latest `SCHEDULED` record; cancel extras with reason `REBOOT_CLEANUP`; if overdue, fire immediately.

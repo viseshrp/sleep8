@@ -11,6 +11,7 @@ Scope: Re-audit against updated docs/SPEC.md (authoritative), docs/ARCHITECTURE.
 | Owned exact alarm scheduling (`setExactAndAllowWhileIdle`) | `AlarmScheduler` uses `AlarmManager.setExactAndAllowWhileIdle` | PASS |
 | Alarm fires to receiver → activity → ringing service | `AlarmReceiver`, `AlarmActivity`, `AlarmRingingService` | PASS |
 | Duration configurable (default 8h) stored in record | `Settings` + `AlarmRecord.durationUsedMinutes` | PASS |
+| Single active alarm invariant | `AlarmScheduler.cancelScheduledAlarms` + DB status updates | PASS |
 | Optional overlay fallback | Settings toggle + `AlarmOverlayController` | PASS |
 | Exact alarm guidance + notification permission flow | Settings reliability section + POST_NOTIFICATIONS flow | PASS |
 | Best-effort OS integration (`ACTION_SHOW_ALARMS`, deep links) | Manifest intent-filters + `AlarmHistoryActivity` | PASS |

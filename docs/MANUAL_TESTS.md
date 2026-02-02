@@ -7,6 +7,7 @@ These tests require **physical devices** (Pixel 8 / Android 14+ recommended).
 - Alarm fires while device locked; full-screen UI shows and rings.
 - Alarm fires in Doze and after app process death.
 - Alarm fires after reboot; if overdue, fires immediately.
+- Re-arm or confirm twice → only the newest scheduled alarm remains active.
 
 ## Overlay (Optional)
 - Enable overlay toggle → if permission granted, overlay appears while alarm is ringing.

@@ -25,6 +25,7 @@ When the user **arms** the app (button or Quick Settings tile), the app watches 
 - Rescheduling: **latest screen-off wins** (keep updating the scheduled time until confirmed).
 - Confirm rule: only commit when **screen remains OFF for 10 minutes** after an OFF event.
 - Alarm ownership: **app-owned** exact alarm via `AlarmManager.setExactAndAllowWhileIdle` (`RTC_WAKEUP`) → receiver → foreground ringing service → full-screen activity (optional overlay).
+- **Single active alarm**: at most one scheduled (not fired) alarm exists at any time. New confirmed alarms and snooze replace the prior active alarm.
 - Duration: **configurable**, default **8 hours**.
 - Snooze: configurable option in settings, uses app-owned alarms.
 - Reboot: **restore state** and reschedule alarms from DB.
@@ -121,14 +122,19 @@ When the screen has remained OFF for 10 minutes since the latest OFF event:
 
 ### 6.3 Alarm creation
 - Create a **new app-owned exact alarm** each time confirmation succeeds.
-- Cancel/replace any previously scheduled app-owned alarm.
+- Cancel/replace any previously scheduled app-owned alarm and mark them `CANCELED` with reason `REPLACED_BY_NEW_ALARM`.
 
-### 6.4 Reboot handling
+### 6.4 Single active alarm invariant
+- Only one `SCHEDULED` alarm may exist at a time.
+- Snooze replaces the active alarm (original marked `SNOOZED`, any scheduled alarms canceled with reason `SNOOZE_REPLACE`).
+
+### 6.5 Reboot handling
 If armed at reboot or there was a pending confirmation:
 - Restore armed state and continue monitoring if still within night window.
 - If there was a pending candidate and the screen is currently OFF, re-evaluate confirmation using stored timestamps:
   - If `now - pending_candidate_screen_off_time >= 10 minutes` then schedule alarm immediately.
   - Else resume timer for the remaining duration.
+- If multiple scheduled alarms exist in DB, keep only the newest and cancel others with reason `REBOOT_CLEANUP`.
 - If a scheduled alarm exists in DB and its `trigger_at` is in the past, schedule it to fire immediately.
 
 ---
@@ -202,7 +208,8 @@ Tables:
 - `alarm_instance_id` (long)
 - `request_code` (int)
 - `source` (enum: SLEEP_AUTOMATION | SNOOZE)
-- `status` (enum: SCHEDULED | FIRED | DISMISSED | SNOOZED)
+- `status` (enum: SCHEDULED | FIRED | DISMISSED | SNOOZED | CANCELED)
+- `canceled_reason` (enum: REPLACED_BY_NEW_ALARM | USER_DISARM | SNOOZE_REPLACE | REBOOT_CLEANUP)
 - `fired_at` (timestamp nullable)
 - `dismissed_at` (timestamp nullable)
 - `snoozed_at` (timestamp nullable)

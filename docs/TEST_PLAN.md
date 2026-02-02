@@ -14,6 +14,10 @@ Physical device testing is required; emulators are not authoritative for exact a
 - Overlay policy logic (enabled vs permission granted).
 - Alarm ringing notification includes Dismiss/Snooze actions.
 - Alarm menu routing chooses ringing UI vs preview/history.
+- Single active alarm: scheduling a new confirmed alarm cancels prior scheduled alarms.
+- Single active alarm: snooze replaces any scheduled alarm.
+- Reboot cleanup: multiple scheduled alarms → keep newest, cancel extras.
+- Disarm cancels the active scheduled alarm.
 
 ---
 
