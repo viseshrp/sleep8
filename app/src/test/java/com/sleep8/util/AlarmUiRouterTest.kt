@@ -1,10 +1,9 @@
 package com.sleep8.util
 
 import android.content.Context
-import android.content.Intent
 import androidx.test.core.app.ApplicationProvider
 import com.sleep8.ui.alarm.AlarmActivity
-import com.sleep8.ui.history.AlarmHistoryActivity
+import com.sleep8.ui.alarm.AlarmListActivity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Test
@@ -22,8 +21,7 @@ class AlarmUiRouterTest {
         val intent = AlarmUiRouter.buildIntent(
             context = context,
             isRinging = true,
-            activeAlarmId = 42L,
-            latestAlarmId = 5L
+            activeAlarmId = 42L
         )
 
         assertEquals(AlarmActivity::class.java.name, intent.component?.className)
@@ -31,30 +29,15 @@ class AlarmUiRouterTest {
     }
 
     @Test
-    fun `not ringing routes to alarm detail when available`() {
+    fun `not ringing routes to alarm list`() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val intent = AlarmUiRouter.buildIntent(
             context = context,
             isRinging = false,
-            activeAlarmId = null,
-            latestAlarmId = 7L
-        )
-
-        assertEquals(Intent.ACTION_VIEW, intent.action)
-        assertEquals(AlarmIntents.alarmDetailUri(7L), intent.data)
-    }
-
-    @Test
-    fun `not ringing routes to history when no alarms`() {
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        val intent = AlarmUiRouter.buildIntent(
-            context = context,
-            isRinging = false,
-            activeAlarmId = null,
-            latestAlarmId = null
+            activeAlarmId = null
         )
 
         assertNotNull(intent.component)
-        assertEquals(AlarmHistoryActivity::class.java.name, intent.component?.className)
+        assertEquals(AlarmListActivity::class.java.name, intent.component?.className)
     }
 }

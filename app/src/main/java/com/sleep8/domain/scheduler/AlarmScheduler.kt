@@ -74,6 +74,33 @@ class AlarmScheduler(
         cancelScheduledAlarms(reason)
     }
 
+    suspend fun enableExisting(record: AlarmRecord): AlarmRecord {
+        cancelScheduledAlarms(AlarmCancelReason.USER_TOGGLE_OFF)
+        val scheduledAt = System.currentTimeMillis()
+        val instanceId = appPreferences.nextAlarmInstanceId()
+        val requestCode = (instanceId % Int.MAX_VALUE).toInt()
+        alarmRepository.markScheduled(record.id, scheduledAt, instanceId, requestCode)
+        val updated = record.copy(
+            scheduledAt = scheduledAt,
+            alarmInstanceId = instanceId,
+            requestCode = requestCode,
+            status = AlarmStatus.SCHEDULED,
+            canceledReason = null
+        )
+        scheduleAlarmClock(updated.triggerAt, updated.id, updated.requestCode, updated.alarmInstanceId)
+        updateActiveAlarmIdentity(updated)
+        return updated
+    }
+
+    suspend fun cancelAlarm(record: AlarmRecord, reason: AlarmCancelReason) {
+        val pendingIntent = buildAlarmPendingIntent(record.id, record.requestCode, record.alarmInstanceId)
+        alarmManager.cancel(pendingIntent)
+        alarmRepository.markCanceled(record.id, reason)
+        if (appPreferences.activeAlarmId == record.id) {
+            clearActiveAlarmIdentity()
+        }
+    }
+
     suspend fun reconcileScheduledAfterBoot(): AlarmRecord? {
         val scheduled = alarmRepository.getScheduledRecords()
         if (scheduled.isEmpty()) {

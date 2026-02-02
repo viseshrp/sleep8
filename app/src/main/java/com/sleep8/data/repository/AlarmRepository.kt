@@ -49,6 +49,16 @@ class AlarmRepository(private val alarmRecordDao: AlarmRecordDao) {
         alarmRecordDao.markCanceled(alarmId, AlarmStatus.CANCELED.name, reason?.name)
     }
 
+    suspend fun markScheduled(alarmId: Long, scheduledAt: Long, alarmInstanceId: Long, requestCode: Int) {
+        alarmRecordDao.markScheduled(
+            alarmId = alarmId,
+            status = AlarmStatus.SCHEDULED.name,
+            scheduledAt = scheduledAt,
+            alarmInstanceId = alarmInstanceId,
+            requestCode = requestCode
+        )
+    }
+
     suspend fun markSnoozed(alarmId: Long, snoozedAt: Long, snoozedUntil: Long) {
         alarmRecordDao.markSnoozed(alarmId, AlarmStatus.SNOOZED.name, snoozedAt, snoozedUntil)
     }

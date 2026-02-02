@@ -39,6 +39,18 @@ interface AlarmRecordDao {
     suspend fun markCanceled(alarmId: Long, status: String, reason: String?)
 
     @Query(
+        "UPDATE alarm_records SET status = :status, canceled_reason = NULL, scheduled_at = :scheduledAt, " +
+            "alarm_instance_id = :alarmInstanceId, request_code = :requestCode WHERE alarm_id = :alarmId"
+    )
+    suspend fun markScheduled(
+        alarmId: Long,
+        status: String,
+        scheduledAt: Long,
+        alarmInstanceId: Long,
+        requestCode: Int
+    )
+
+    @Query(
         "UPDATE alarm_records SET status = :status, snoozed_at = :snoozedAt, " +
             "snoozed_until = :snoozedUntil WHERE alarm_id = :alarmId"
     )

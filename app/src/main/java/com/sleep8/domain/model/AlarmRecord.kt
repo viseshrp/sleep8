@@ -37,6 +37,7 @@ enum class AlarmSource {
 enum class AlarmCancelReason {
     REPLACED_BY_NEW_ALARM,
     USER_DISARM,
+    USER_TOGGLE_OFF,
     SNOOZE_REPLACE,
     REBOOT_CLEANUP
 }

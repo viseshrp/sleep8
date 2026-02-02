@@ -47,7 +47,6 @@ import com.sleep8.ui.components.StatusCard
 import com.sleep8.ui.history.AlarmHistoryActivity
 import com.sleep8.ui.settings.SettingsActivity
 import com.sleep8.data.preferences.AppPreferences
-import com.sleep8.data.repository.AlarmRepository
 import com.sleep8.service.AlarmRingingService
 import com.sleep8.util.AlarmUiRouter
 import com.sleep8.util.PermissionUtils
@@ -60,7 +59,6 @@ class MainActivity : ComponentActivity() {
 
     private val viewModel: MainViewModel by viewModels()
     @Inject lateinit var appPreferences: AppPreferences
-    @Inject lateinit var alarmRepository: AlarmRepository
 
     private val notificationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -95,26 +93,12 @@ class MainActivity : ComponentActivity() {
 
     private fun openAlarmUi() {
         val isRinging = PermissionUtils.isServiceRunning(this, AlarmRingingService::class.java)
-        if (isRinging) {
-            val intent = AlarmUiRouter.buildIntent(
-                this,
-                isRinging = true,
-                activeAlarmId = appPreferences.activeAlarmId,
-                latestAlarmId = null
-            )
-            startActivity(intent)
-            return
-        }
-        lifecycleScope.launch {
-            val latest = alarmRepository.getLatestScheduledRecord() ?: alarmRepository.getLatestRecord()
-            val intent = AlarmUiRouter.buildIntent(
-                this@MainActivity,
-                isRinging = false,
-                activeAlarmId = null,
-                latestAlarmId = latest?.id
-            )
-            startActivity(intent)
-        }
+        val intent = AlarmUiRouter.buildIntent(
+            this,
+            isRinging = isRinging,
+            activeAlarmId = appPreferences.activeAlarmId
+        )
+        startActivity(intent)
     }
 }
 
