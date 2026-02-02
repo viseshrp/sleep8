@@ -22,6 +22,7 @@
         <activity
             android:name=".ui.alarm.AlarmActivity"
             android:exported="false"
+            android:label="@string/alarm_ui_title"
             android:showWhenLocked="true"
             android:turnScreenOn="true" />
 

@@ -32,6 +32,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import com.sleep8.service.AlarmRingingService
 import com.sleep8.util.Constants
 import dagger.hilt.android.AndroidEntryPoint
@@ -155,7 +156,7 @@ private fun AlarmScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "WAKE UP",
+            text = stringResource(id = com.sleep8.R.string.alarm_ui_title),
             style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.ExtraBold,
             color = Color(0xFFFFE9D2)
