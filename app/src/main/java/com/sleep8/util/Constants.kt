@@ -2,7 +2,7 @@ package com.sleep8.util
 
 object Constants {
     const val ALARM_DEFAULT_DURATION_MINUTES = 8 * 60
-    const val ALARM_MIN_DURATION_MINUTES = 30
+    const val ALARM_MIN_DURATION_MINUTES = 0
     const val ALARM_MAX_DURATION_MINUTES = 12 * 60
     const val DEFAULT_CONFIRM_MINUTES = 10
     const val DEFAULT_NIGHT_START = "22:00"

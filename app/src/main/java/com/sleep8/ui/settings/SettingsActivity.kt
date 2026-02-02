@@ -75,8 +75,6 @@ private fun SettingsScreen(
     val context = LocalContext.current
     val scrollState = rememberScrollState()
     val defaultDurationMinutes = com.sleep8.util.Constants.ALARM_DEFAULT_DURATION_MINUTES
-    val defaultDurationHours = defaultDurationMinutes / 60
-    val defaultDurationRemainder = defaultDurationMinutes % 60
     val notificationPermissionLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) {
@@ -147,38 +145,25 @@ private fun SettingsScreen(
             SettingsSection(title = "Alarm Behavior") {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        text = "Alarm duration",
+                        text = "Alarm duration (minutes)",
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Medium
                     )
-                    Row(
+                    OutlinedTextField(
+                        value = uiState.alarmDurationMinutesInput,
+                        onValueChange = viewModel::updateAlarmDurationMinutes,
+                        label = { Text("Minutes") },
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        OutlinedTextField(
-                            value = uiState.alarmDurationHours,
-                            onValueChange = viewModel::updateAlarmDurationHours,
-                            label = { Text("Hours") },
-                            modifier = Modifier.weight(1f),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                        )
-                        OutlinedTextField(
-                            value = uiState.alarmDurationMinutes,
-                            onValueChange = viewModel::updateAlarmDurationMinutes,
-                            label = { Text("Minutes") },
-                            modifier = Modifier.weight(1f),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                        )
-                    }
-                    Text(
-                        text = "Time after confirmed screen-off to ring (30–720 minutes)",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        isError = uiState.alarmDurationError != null,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        supportingText = {
+                            val message = uiState.alarmDurationError
+                                ?: "Allowed range: 0-720 minutes"
+                            Text(message)
+                        }
                     )
                     Button(onClick = {
-                        viewModel.updateAlarmDurationHours(defaultDurationHours.toString())
-                        viewModel.updateAlarmDurationMinutes(defaultDurationRemainder.toString())
+                        viewModel.updateAlarmDurationMinutes(defaultDurationMinutes.toString())
                     }) {
                         Text("Reset to default")
                     }

@@ -32,8 +32,9 @@ class AlarmScheduler(
     suspend fun scheduleSleepAlarm(screenOffTs: Long, confirmedAt: Long): AlarmRecord {
         cancelScheduledAlarms(AlarmCancelReason.REPLACED_BY_NEW_ALARM)
         val settings = settingsRepository.getSettings()
-        val durationMinutes = settings.alarmDurationMinutes
-        val triggerAt = Instant.ofEpochMilli(screenOffTs)
+        val durationMinutes = com.sleep8.util.AlarmDurationValidator.clamp(settings.alarmDurationMinutes)
+        val baseTs = if (durationMinutes == 0) confirmedAt else screenOffTs
+        val triggerAt = Instant.ofEpochMilli(baseTs)
             .plusSeconds(durationMinutes * 60L)
             .toEpochMilli()
         return scheduleAlarm(

@@ -29,15 +29,13 @@ class SettingsViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             val settings = settingsRepository.getSettings()
-            val durationHours = settings.alarmDurationMinutes / 60
-            val durationMinutes = settings.alarmDurationMinutes % 60
             _uiState.value = _uiState.value.copy(
                 nightStart = settings.nightStart,
                 nightEnd = settings.nightEnd,
                 autoArmStart = settings.autoArmStart,
                 autoArmEnd = settings.autoArmEnd,
-                alarmDurationHours = durationHours.toString(),
-                alarmDurationMinutes = durationMinutes.toString(),
+                alarmDurationMinutesInput = settings.alarmDurationMinutes.toString(),
+                alarmDurationError = null,
                 confirmOffMinutes = settings.confirmOffMinutes.toString(),
                 snoozeEnabled = settings.snoozeMinutes != null,
                 snoozeMinutes = settings.snoozeMinutes?.toString() ?: "5",
@@ -93,13 +91,11 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun updateAlarmDurationHours(value: String) {
-        _uiState.value = _uiState.value.copy(alarmDurationHours = value)
-        persist()
-    }
-
     fun updateAlarmDurationMinutes(value: String) {
-        _uiState.value = _uiState.value.copy(alarmDurationMinutes = value)
+        _uiState.value = _uiState.value.copy(
+            alarmDurationMinutesInput = value,
+            alarmDurationError = com.sleep8.util.AlarmDurationValidator.errorFor(value)
+        )
         persist()
     }
 
@@ -153,27 +149,22 @@ class SettingsViewModel @Inject constructor(
     }
 
     private fun normalizeDuration(state: SettingsUiState): SettingsUiState {
-        val hours = state.alarmDurationHours.toIntOrNull() ?: 0
-        val minutes = state.alarmDurationMinutes.toIntOrNull() ?: 0
-        val total = (hours * 60) + minutes.coerceIn(0, 59)
-        val clamped = total.coerceIn(
-            com.sleep8.util.Constants.ALARM_MIN_DURATION_MINUTES,
-            com.sleep8.util.Constants.ALARM_MAX_DURATION_MINUTES
+        val parsed = com.sleep8.util.AlarmDurationValidator.parseMinutes(state.alarmDurationMinutesInput)
+        val clamped = com.sleep8.util.AlarmDurationValidator.clamp(
+            parsed ?: com.sleep8.util.Constants.ALARM_DEFAULT_DURATION_MINUTES
         )
-        val normalizedHours = clamped / 60
-        val normalizedMinutes = clamped % 60
         return state.copy(
-            alarmDurationHours = normalizedHours.toString(),
-            alarmDurationMinutes = normalizedMinutes.toString()
+            alarmDurationMinutesInput = clamped.toString(),
+            alarmDurationError = com.sleep8.util.AlarmDurationValidator.errorFor(clamped.toString())
         )
     }
 
     private suspend fun persistSettings(state: SettingsUiState) {
         val snooze = state.snoozeMinutes.toIntOrNull()
-        val durationMinutes = normalizeDuration(state).let {
-            (it.alarmDurationHours.toIntOrNull() ?: 0) * 60 +
-                (it.alarmDurationMinutes.toIntOrNull() ?: 0)
-        }
+        val durationMinutes = com.sleep8.util.AlarmDurationValidator.clamp(
+            com.sleep8.util.AlarmDurationValidator.parseMinutes(state.alarmDurationMinutesInput)
+                ?: com.sleep8.util.Constants.ALARM_DEFAULT_DURATION_MINUTES
+        )
         val confirmOff = state.confirmOffMinutes.toIntOrNull() ?: 10
         val settings = Settings(
             nightStart = state.nightStart,

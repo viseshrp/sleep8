@@ -98,7 +98,7 @@ class AlarmSchedulerTest {
             nightEnd = "08:00",
             confirmOffMinutes = 10,
             snoozeMinutes = null,
-            alarmDurationMinutes = 360,
+            alarmDurationMinutes = 720,
             overlayEnabled = false,
             armedDefault = false,
             autoArmEnabled = true
@@ -108,10 +108,35 @@ class AlarmSchedulerTest {
 
         scheduler.scheduleSleepAlarm(screenOff, confirmedAt = 1000L)
 
-        val expectedTrigger = screenOff + 6 * 3600_000L
+        val expectedTrigger = screenOff + 720 * 60_000L
         coVerify {
             alarmRepository.insertRecord(match {
-                it.triggerAt == expectedTrigger && it.durationUsedMinutes == 360
+                it.triggerAt == expectedTrigger && it.durationUsedMinutes == 720
+            })
+        }
+    }
+
+    @Test
+    fun `duration zero schedules at confirmation time`() = runTest {
+        coEvery { settingsRepository.getSettings() } returns Settings(
+            nightStart = "22:00",
+            nightEnd = "08:00",
+            confirmOffMinutes = 10,
+            snoozeMinutes = null,
+            alarmDurationMinutes = 0,
+            overlayEnabled = false,
+            armedDefault = false,
+            autoArmEnabled = true
+        )
+        coEvery { alarmRepository.insertRecord(any()) } returns 3L
+        val screenOff = Instant.parse("2024-01-15T23:30:00Z").toEpochMilli()
+        val confirmedAt = screenOff + 600_000L
+
+        scheduler.scheduleSleepAlarm(screenOff, confirmedAt = confirmedAt)
+
+        coVerify {
+            alarmRepository.insertRecord(match {
+                it.triggerAt == confirmedAt && it.durationUsedMinutes == 0
             })
         }
     }

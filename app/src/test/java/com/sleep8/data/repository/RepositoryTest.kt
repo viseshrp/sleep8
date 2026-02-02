@@ -55,6 +55,25 @@ class RepositoryTest {
     }
 
     @Test
+    fun `update settings persists alarm duration minutes`() {
+        val updated = com.sleep8.domain.model.Settings(
+            nightStart = "22:00",
+            nightEnd = "08:00",
+            confirmOffMinutes = 10,
+            snoozeMinutes = null,
+            alarmDurationMinutes = 0,
+            overlayEnabled = false,
+            armedDefault = false,
+            autoArmEnabled = false,
+            autoArmStart = "22:00",
+            autoArmEnd = "08:00"
+        )
+        kotlinx.coroutines.runBlocking { settingsRepository.updateSettings(updated) }
+        val settings = kotlinx.coroutines.runBlocking { settingsRepository.getSettings() }
+        assertEquals(0, settings.alarmDurationMinutes)
+    }
+
+    @Test
     fun `create session generates unique id`() {
         val session1 = kotlinx.coroutines.runBlocking { sessionRepository.createSession(ArmSource.APP_BUTTON) }
         val session2 = kotlinx.coroutines.runBlocking { sessionRepository.createSession(ArmSource.QUICK_TILE) }
