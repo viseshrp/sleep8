@@ -59,10 +59,6 @@ class AlarmRepository(private val alarmRecordDao: AlarmRecordDao) {
         )
     }
 
-    suspend fun markSnoozed(alarmId: Long, snoozedAt: Long, snoozedUntil: Long) {
-        alarmRecordDao.markSnoozed(alarmId, AlarmStatus.SNOOZED.name, snoozedAt, snoozedUntil)
-    }
-
     suspend fun markOverlayUsed(alarmId: Long) {
         alarmRecordDao.markOverlayUsed(alarmId, true)
     }
@@ -88,8 +84,6 @@ private fun AlarmRecord.toEntity(): AlarmRecordEntity {
         canceledReason = canceledReason?.name,
         firedAt = firedAt,
         dismissedAt = dismissedAt,
-        snoozedAt = snoozedAt,
-        snoozedUntil = snoozedUntil,
         overlayUsed = overlayUsed,
         activityPresented = activityPresented
     )
@@ -111,8 +105,6 @@ private fun AlarmRecordEntity.toDomain(): AlarmRecord {
         canceledReason = canceledReason?.let { AlarmCancelReason.valueOf(it) },
         firedAt = firedAt,
         dismissedAt = dismissedAt,
-        snoozedAt = snoozedAt,
-        snoozedUntil = snoozedUntil,
         overlayUsed = overlayUsed,
         activityPresented = activityPresented
     )

@@ -283,7 +283,6 @@ private fun formatCancelReason(reason: AlarmCancelReason): String {
         AlarmCancelReason.REPLACED_BY_NEW_ALARM -> "Replaced by new alarm"
         AlarmCancelReason.USER_DISARM -> "Canceled on disarm"
         AlarmCancelReason.USER_TOGGLE_OFF -> "Disabled by user"
-        AlarmCancelReason.SNOOZE_REPLACE -> "Replaced by snooze"
         AlarmCancelReason.REBOOT_CLEANUP -> "Cleaned up after reboot"
     }
 }

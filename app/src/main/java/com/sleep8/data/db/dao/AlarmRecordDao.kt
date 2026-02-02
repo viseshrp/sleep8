@@ -50,12 +50,6 @@ interface AlarmRecordDao {
         requestCode: Int
     )
 
-    @Query(
-        "UPDATE alarm_records SET status = :status, snoozed_at = :snoozedAt, " +
-            "snoozed_until = :snoozedUntil WHERE alarm_id = :alarmId"
-    )
-    suspend fun markSnoozed(alarmId: Long, status: String, snoozedAt: Long, snoozedUntil: Long)
-
     @Query("UPDATE alarm_records SET overlay_used = :overlayUsed WHERE alarm_id = :alarmId")
     suspend fun markOverlayUsed(alarmId: Long, overlayUsed: Boolean)
 

@@ -18,7 +18,6 @@ object Constants {
     const val ACTION_CONFIRMATION = "com.sleep8.action.CONFIRMATION"
     const val ACTION_ALARM_RING = "com.sleep8.action.ALARM_RING"
     const val ACTION_ALARM_DISMISS = "com.sleep8.action.ALARM_DISMISS"
-    const val ACTION_ALARM_SNOOZE = "com.sleep8.action.ALARM_SNOOZE"
     const val ACTION_WINDOW_END = "com.sleep8.action.WINDOW_END"
     const val ACTION_WINDOW_START = "com.sleep8.action.WINDOW_START"
     const val ACTION_NIGHT_WINDOW_START = "com.sleep8.action.NIGHT_WINDOW_START"

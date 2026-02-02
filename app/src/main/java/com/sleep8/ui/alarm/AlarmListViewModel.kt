@@ -78,9 +78,6 @@ class AlarmListViewModel @Inject constructor(
 
     private fun buildSubtitle(record: AlarmRecord, isPast: Boolean): String {
         if (isPast) return "Past alarm"
-        return when (record.source) {
-            com.sleep8.domain.model.AlarmSource.SLEEP_AUTOMATION -> "Scheduled from screen-off"
-            com.sleep8.domain.model.AlarmSource.SNOOZE -> "Snooze alarm"
-        }
+        return "Scheduled from screen-off"
     }
 }

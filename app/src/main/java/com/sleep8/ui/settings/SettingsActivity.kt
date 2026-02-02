@@ -174,24 +174,6 @@ private fun SettingsScreen(
                     supportingText = { Text("Time allowed to confirm you're awake") }
                 )
 
-                Column {
-                    RowWithSwitch(
-                        label = "Enable snooze",
-                        checked = uiState.snoozeEnabled,
-                        onCheckedChange = { viewModel.updateSnooze(it, uiState.snoozeMinutes) }
-                    )
-                    if (uiState.snoozeEnabled) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        OutlinedTextField(
-                            value = uiState.snoozeMinutes,
-                            onValueChange = { viewModel.updateSnooze(true, it) },
-                            label = { Text("Snooze duration (minutes)") },
-                            modifier = Modifier.fillMaxWidth(),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                        )
-                    }
-                }
-
                 RowWithSwitch(
                     label = "Use overlay for alarm UI (more reliable)",
                     checked = uiState.overlayEnabled,

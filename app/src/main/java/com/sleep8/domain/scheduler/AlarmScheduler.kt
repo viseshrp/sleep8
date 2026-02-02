@@ -48,20 +48,6 @@ class AlarmScheduler(
         )
     }
 
-    suspend fun scheduleSnooze(alarmId: Long, snoozeMinutes: Int): AlarmRecord? {
-        val original = alarmRepository.getRecord(alarmId) ?: return null
-        cancelScheduledAlarms(AlarmCancelReason.SNOOZE_REPLACE)
-        val snoozedUntil = System.currentTimeMillis() + snoozeMinutes * 60_000L
-        alarmRepository.markSnoozed(alarmId, System.currentTimeMillis(), snoozedUntil)
-        return scheduleAlarm(
-            screenOffTs = original.screenOffTs,
-            confirmedAt = original.confirmedAt,
-            triggerAt = snoozedUntil,
-            durationUsedMinutes = snoozeMinutes,
-            source = AlarmSource.SNOOZE
-        )
-    }
-
     fun rescheduleExisting(record: AlarmRecord, triggerAt: Long) {
         if (!PermissionUtils.canScheduleExactAlarms(context)) {
             Log.e("AlarmScheduler", "Exact alarm permission missing; cannot reschedule alarm after reboot.")
@@ -143,8 +129,6 @@ class AlarmScheduler(
             canceledReason = null,
             firedAt = null,
             dismissedAt = null,
-            snoozedAt = null,
-            snoozedUntil = null,
             overlayUsed = false,
             activityPresented = false
         )

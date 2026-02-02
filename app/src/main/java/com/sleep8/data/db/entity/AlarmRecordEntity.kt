@@ -33,8 +33,6 @@ data class AlarmRecordEntity(
     @ColumnInfo(name = "canceled_reason") val canceledReason: String?,
     @ColumnInfo(name = "fired_at") val firedAt: Long?,
     @ColumnInfo(name = "dismissed_at") val dismissedAt: Long?,
-    @ColumnInfo(name = "snoozed_at") val snoozedAt: Long?,
-    @ColumnInfo(name = "snoozed_until") val snoozedUntil: Long?,
     @ColumnInfo(name = "overlay_used") val overlayUsed: Boolean,
     @ColumnInfo(name = "activity_presented") val activityPresented: Boolean
 )

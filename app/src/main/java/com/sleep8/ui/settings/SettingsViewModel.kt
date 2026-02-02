@@ -39,8 +39,6 @@ class SettingsViewModel @Inject constructor(
                 alarmDurationMinutesInput = minutes.toString(),
                 alarmDurationError = null,
                 confirmOffMinutes = settings.confirmOffMinutes.toString(),
-                snoozeEnabled = settings.snoozeMinutes != null,
-                snoozeMinutes = settings.snoozeMinutes?.toString() ?: "5",
                 armedDefault = settings.armedDefault,
                 autoArmEnabled = settings.autoArmEnabled,
                 overlayEnabled = settings.overlayEnabled
@@ -106,11 +104,6 @@ class SettingsViewModel @Inject constructor(
         persist()
     }
 
-    fun updateSnooze(enabled: Boolean, minutes: String) {
-        _uiState.value = _uiState.value.copy(snoozeEnabled = enabled, snoozeMinutes = minutes)
-        persist()
-    }
-
     fun updateArmedDefault(enabled: Boolean) {
         _uiState.value = _uiState.value.copy(armedDefault = enabled)
         persist()
@@ -143,7 +136,6 @@ class SettingsViewModel @Inject constructor(
     }
 
     private suspend fun persistSettings(state: SettingsUiState) {
-        val snooze = state.snoozeMinutes.toIntOrNull()
         val durationResult = com.sleep8.util.AlarmDurationValidator.normalizeInputs(
             state.alarmDurationHoursInput,
             state.alarmDurationMinutesInput
@@ -158,7 +150,6 @@ class SettingsViewModel @Inject constructor(
             nightStart = state.nightStart,
             nightEnd = state.nightEnd,
             confirmOffMinutes = confirmOff,
-            snoozeMinutes = if (state.snoozeEnabled) snooze else null,
             alarmDurationMinutes = durationMinutes,
             overlayEnabled = state.overlayEnabled,
             armedDefault = state.armedDefault,

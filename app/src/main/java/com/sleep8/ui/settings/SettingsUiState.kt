@@ -9,8 +9,6 @@ data class SettingsUiState(
     val alarmDurationMinutesInput: String = "0",
     val alarmDurationError: String? = null,
     val confirmOffMinutes: String = "10",
-    val snoozeEnabled: Boolean = false,
-    val snoozeMinutes: String = "5",
     val armedDefault: Boolean = false,
     val autoArmEnabled: Boolean = false,
     val overlayEnabled: Boolean = false,

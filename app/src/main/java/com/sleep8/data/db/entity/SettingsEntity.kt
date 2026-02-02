@@ -10,7 +10,6 @@ data class SettingsEntity(
     @ColumnInfo(name = "night_start") val nightStart: String = "22:00",
     @ColumnInfo(name = "night_end") val nightEnd: String = "08:00",
     @ColumnInfo(name = "confirm_off_minutes") val confirmOffMinutes: Int = 10,
-    @ColumnInfo(name = "snooze_minutes") val snoozeMinutes: Int? = null,
     @ColumnInfo(name = "alarm_duration_minutes") val alarmDurationMinutes: Int = 8 * 60,
     @ColumnInfo(name = "overlay_enabled") val overlayEnabled: Boolean = false,
     @ColumnInfo(name = "armed_default") val armedDefault: Boolean = false,
