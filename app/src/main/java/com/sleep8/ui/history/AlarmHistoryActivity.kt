@@ -149,10 +149,29 @@ private fun AlarmDetailCard(alarm: AlarmRecord) {
             color = Color(0xFFB8C3D6)
         )
         Text(
+            text = "Duration ${TimeUtils.formatDurationMinutes(alarm.durationUsedMinutes)}",
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color(0xFFB8C3D6)
+        )
+        Text(
             text = "Status: ${alarm.status.name.lowercase().replaceFirstChar { it.uppercase() }}",
             style = MaterialTheme.typography.bodyMedium,
             color = Color(0xFFB8C3D6)
         )
+        alarm.firedAt?.let {
+            Text(
+                text = "Fired ${TimeUtils.formatAlarmTime(TimeUtils.toLocalTime(it))}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color(0xFFB8C3D6)
+            )
+        }
+        alarm.dismissedAt?.let {
+            Text(
+                text = "Dismissed ${TimeUtils.formatAlarmTime(TimeUtils.toLocalTime(it))}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color(0xFFB8C3D6)
+            )
+        }
     }
 }
 
@@ -203,10 +222,32 @@ private fun AlarmHistoryRow(alarm: AlarmRecord) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(text = "Duration", style = MaterialTheme.typography.labelMedium, color = Color(0xFFB8C3D6))
             Text(
-                text = "${alarm.durationUsedMinutes} min",
+                text = TimeUtils.formatDurationMinutes(alarm.durationUsedMinutes),
                 style = MaterialTheme.typography.bodyLarge,
                 color = Color(0xFFE9EEF7)
             )
+        }
+        alarm.firedAt?.let {
+            Spacer(modifier = Modifier.height(6.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(text = "Fired", style = MaterialTheme.typography.labelMedium, color = Color(0xFFB8C3D6))
+                Text(
+                    text = TimeUtils.formatAlarmTime(TimeUtils.toLocalTime(it)),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = Color(0xFFE9EEF7)
+                )
+            }
+        }
+        alarm.dismissedAt?.let {
+            Spacer(modifier = Modifier.height(6.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(text = "Dismissed", style = MaterialTheme.typography.labelMedium, color = Color(0xFFB8C3D6))
+                Text(
+                    text = TimeUtils.formatAlarmTime(TimeUtils.toLocalTime(it)),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = Color(0xFFE9EEF7)
+                )
+            }
         }
     }
 }

@@ -45,6 +45,7 @@ class AlarmReceiver : BroadcastReceiver() {
         scope.launch {
             if (alarmId > 0) {
                 alarmRepository.markFired(alarmId, System.currentTimeMillis())
+                alarmRepository.markActivityPresented(alarmId)
             }
             pendingResult.finish()
         }

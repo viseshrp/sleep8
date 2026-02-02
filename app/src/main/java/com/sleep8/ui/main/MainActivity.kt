@@ -193,7 +193,6 @@ private fun MainScreen(
                     lastScreenOff = uiState.lastScreenOffText,
                     latestAlarmText = uiState.latestAlarmText,
                     latestAlarmSubtitle = uiState.latestAlarmSubtitle,
-                    systemNextAlarmText = uiState.systemNextAlarmText,
                     notificationWarningText = uiState.notificationWarningText,
                     pendingCountdown = if (uiState.showPending) uiState.pendingCountdownText else null
                 )

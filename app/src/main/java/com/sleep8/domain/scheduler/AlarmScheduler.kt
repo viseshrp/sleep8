@@ -1,7 +1,6 @@
 package com.sleep8.domain.scheduler
 
 import android.app.AlarmManager
-import android.app.AlarmManager.AlarmClockInfo
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
@@ -15,7 +14,6 @@ import com.sleep8.domain.model.AlarmSource
 import com.sleep8.domain.model.AlarmStatus
 import com.sleep8.service.notification.NotificationHelper
 import com.sleep8.service.receiver.AlarmReceiver
-import com.sleep8.util.AlarmIntents
 import com.sleep8.util.Constants
 import com.sleep8.util.PermissionUtils
 import com.sleep8.util.TimeUtils
@@ -32,7 +30,7 @@ class AlarmScheduler(
 
     suspend fun scheduleSleepAlarm(screenOffTs: Long, confirmedAt: Long): AlarmRecord {
         val settings = settingsRepository.getSettings()
-        val durationMinutes = settings.alarmOffsetHours * 60
+        val durationMinutes = settings.alarmDurationMinutes
         val triggerAt = Instant.ofEpochMilli(screenOffTs)
             .plusSeconds(durationMinutes * 60L)
             .toEpochMilli()
@@ -48,7 +46,7 @@ class AlarmScheduler(
     suspend fun scheduleSnooze(alarmId: Long, snoozeMinutes: Int): AlarmRecord? {
         val original = alarmRepository.getRecord(alarmId) ?: return null
         val snoozedUntil = System.currentTimeMillis() + snoozeMinutes * 60_000L
-        alarmRepository.markSnoozed(alarmId, snoozedUntil)
+        alarmRepository.markSnoozed(alarmId, System.currentTimeMillis(), snoozedUntil)
         return scheduleAlarm(
             screenOffTs = original.screenOffTs,
             confirmedAt = original.confirmedAt,
@@ -70,11 +68,7 @@ class AlarmScheduler(
             notificationHelper.showExactAlarmWarning()
         }
         val operation = buildAlarmPendingIntent(record.id, record.requestCode, record.alarmInstanceId)
-        val showIntent = AlarmIntents.alarmHistoryPendingIntent(
-            context,
-            Constants.PENDING_INTENT_REQUEST_ALARM_ACTION
-        )
-        alarmManager.setAlarmClock(AlarmClockInfo(triggerAt, showIntent), operation)
+        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, operation)
     }
 
     private suspend fun scheduleAlarm(
@@ -99,12 +93,14 @@ class AlarmScheduler(
             durationUsedMinutes = durationUsedMinutes,
             alarmInstanceId = instanceId,
             requestCode = requestCode,
-            scheduledViaAlarmClock = true,
             source = source,
             status = AlarmStatus.SCHEDULED,
             firedAt = null,
             dismissedAt = null,
-            snoozedUntil = null
+            snoozedAt = null,
+            snoozedUntil = null,
+            overlayUsed = false,
+            activityPresented = false
         )
         val alarmId = alarmRepository.insertRecord(record)
 
@@ -114,11 +110,7 @@ class AlarmScheduler(
         }
 
         val operation = buildAlarmPendingIntent(alarmId, requestCode, instanceId)
-        val showIntent = AlarmIntents.alarmHistoryPendingIntent(
-            context,
-            Constants.PENDING_INTENT_REQUEST_ALARM_ACTION
-        )
-        alarmManager.setAlarmClock(AlarmClockInfo(triggerAt, showIntent), operation)
+        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, operation)
 
         val scheduledText = context.getString(
             R.string.alarm_scheduled_body,
@@ -126,11 +118,7 @@ class AlarmScheduler(
         )
         notificationHelper.showAlarmScheduled(
             scheduledText,
-            AlarmIntents.alarmDetailPendingIntent(
-                context,
-                alarmId.toInt(),
-                alarmId
-            )
+            com.sleep8.util.AlarmIntents.alarmDetailPendingIntent(context, alarmId.toInt(), alarmId)
         )
 
         return record.copy(id = alarmId)

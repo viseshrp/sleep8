@@ -72,8 +72,8 @@ object TimeUtils {
         }
     }
 
-    fun calculateAlarmTime(screenOff: Instant, offsetHours: Int): Instant {
-        return screenOff.plus(Duration.ofHours(offsetHours.toLong()))
+    fun calculateAlarmTime(screenOff: Instant, durationMinutes: Int): Instant {
+        return screenOff.plus(Duration.ofMinutes(durationMinutes.toLong()))
     }
 
     fun calculateRemainingConfirmTime(screenOff: Instant, confirmMinutes: Int): Duration {
@@ -84,6 +84,17 @@ object TimeUtils {
     fun formatAlarmTime(time: LocalTime): String {
         val formatter = DateTimeFormatter.ofPattern("h:mm a", Locale.US)
         return time.format(formatter)
+    }
+
+    fun formatDurationMinutes(totalMinutes: Int): String {
+        val clamped = totalMinutes.coerceAtLeast(0)
+        val hours = clamped / 60
+        val minutes = clamped % 60
+        return when {
+            hours > 0 && minutes > 0 -> "${hours}h ${minutes}m"
+            hours > 0 -> "${hours}h"
+            else -> "${minutes}m"
+        }
     }
 
     fun formatCountdown(remaining: Duration): String {

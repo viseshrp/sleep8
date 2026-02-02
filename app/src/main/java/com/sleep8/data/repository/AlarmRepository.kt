@@ -40,8 +40,16 @@ class AlarmRepository(private val alarmRecordDao: AlarmRecordDao) {
         alarmRecordDao.markDismissed(alarmId, AlarmStatus.DISMISSED.name, dismissedAt)
     }
 
-    suspend fun markSnoozed(alarmId: Long, snoozedUntil: Long) {
-        alarmRecordDao.markSnoozed(alarmId, AlarmStatus.SNOOZED.name, snoozedUntil)
+    suspend fun markSnoozed(alarmId: Long, snoozedAt: Long, snoozedUntil: Long) {
+        alarmRecordDao.markSnoozed(alarmId, AlarmStatus.SNOOZED.name, snoozedAt, snoozedUntil)
+    }
+
+    suspend fun markOverlayUsed(alarmId: Long) {
+        alarmRecordDao.markOverlayUsed(alarmId, true)
+    }
+
+    suspend fun markActivityPresented(alarmId: Long) {
+        alarmRecordDao.markActivityPresented(alarmId, true)
     }
 }
 
@@ -56,12 +64,14 @@ private fun AlarmRecord.toEntity(): AlarmRecordEntity {
         durationUsedMinutes = durationUsedMinutes,
         alarmInstanceId = alarmInstanceId,
         requestCode = requestCode,
-        scheduledViaAlarmClock = scheduledViaAlarmClock,
         source = source.name,
         status = status.name,
         firedAt = firedAt,
         dismissedAt = dismissedAt,
-        snoozedUntil = snoozedUntil
+        snoozedAt = snoozedAt,
+        snoozedUntil = snoozedUntil,
+        overlayUsed = overlayUsed,
+        activityPresented = activityPresented
     )
 }
 
@@ -76,11 +86,13 @@ private fun AlarmRecordEntity.toDomain(): AlarmRecord {
         durationUsedMinutes = durationUsedMinutes,
         alarmInstanceId = alarmInstanceId,
         requestCode = requestCode,
-        scheduledViaAlarmClock = scheduledViaAlarmClock,
         source = AlarmSource.valueOf(source),
         status = AlarmStatus.valueOf(status),
         firedAt = firedAt,
         dismissedAt = dismissedAt,
-        snoozedUntil = snoozedUntil
+        snoozedAt = snoozedAt,
+        snoozedUntil = snoozedUntil,
+        overlayUsed = overlayUsed,
+        activityPresented = activityPresented
     )
 }

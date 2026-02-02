@@ -28,10 +28,12 @@ data class AlarmRecordEntity(
     @ColumnInfo(name = "duration_used_minutes") val durationUsedMinutes: Int,
     @ColumnInfo(name = "alarm_instance_id") val alarmInstanceId: Long,
     @ColumnInfo(name = "request_code") val requestCode: Int,
-    @ColumnInfo(name = "scheduled_via_alarm_clock") val scheduledViaAlarmClock: Boolean,
     @ColumnInfo(name = "source") val source: String,
     @ColumnInfo(name = "status") val status: String,
     @ColumnInfo(name = "fired_at") val firedAt: Long?,
     @ColumnInfo(name = "dismissed_at") val dismissedAt: Long?,
-    @ColumnInfo(name = "snoozed_until") val snoozedUntil: Long?
+    @ColumnInfo(name = "snoozed_at") val snoozedAt: Long?,
+    @ColumnInfo(name = "snoozed_until") val snoozedUntil: Long?,
+    @ColumnInfo(name = "overlay_used") val overlayUsed: Boolean,
+    @ColumnInfo(name = "activity_presented") val activityPresented: Boolean
 )

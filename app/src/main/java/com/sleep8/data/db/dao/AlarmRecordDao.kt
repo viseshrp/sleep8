@@ -32,6 +32,15 @@ interface AlarmRecordDao {
     @Query("UPDATE alarm_records SET status = :status, dismissed_at = :dismissedAt WHERE alarm_id = :alarmId")
     suspend fun markDismissed(alarmId: Long, status: String, dismissedAt: Long)
 
-    @Query("UPDATE alarm_records SET status = :status, snoozed_until = :snoozedUntil WHERE alarm_id = :alarmId")
-    suspend fun markSnoozed(alarmId: Long, status: String, snoozedUntil: Long)
+    @Query(
+        "UPDATE alarm_records SET status = :status, snoozed_at = :snoozedAt, " +
+            "snoozed_until = :snoozedUntil WHERE alarm_id = :alarmId"
+    )
+    suspend fun markSnoozed(alarmId: Long, status: String, snoozedAt: Long, snoozedUntil: Long)
+
+    @Query("UPDATE alarm_records SET overlay_used = :overlayUsed WHERE alarm_id = :alarmId")
+    suspend fun markOverlayUsed(alarmId: Long, overlayUsed: Boolean)
+
+    @Query("UPDATE alarm_records SET activity_presented = :activityPresented WHERE alarm_id = :alarmId")
+    suspend fun markActivityPresented(alarmId: Long, activityPresented: Boolean)
 }

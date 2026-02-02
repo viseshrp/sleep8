@@ -7,7 +7,6 @@ data class MainUiState(
     val lastScreenOffText: String = "",
     val latestAlarmText: String = "",
     val latestAlarmSubtitle: String = "",
-    val systemNextAlarmText: String = "",
     val notificationWarningText: String = "",
     val pendingCountdownText: String = "",
     val showPending: Boolean = false

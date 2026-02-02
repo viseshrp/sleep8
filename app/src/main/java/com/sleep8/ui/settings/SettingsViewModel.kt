@@ -29,19 +29,23 @@ class SettingsViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             val settings = settingsRepository.getSettings()
+            val durationHours = settings.alarmDurationMinutes / 60
+            val durationMinutes = settings.alarmDurationMinutes % 60
             _uiState.value = _uiState.value.copy(
                 nightStart = settings.nightStart,
                 nightEnd = settings.nightEnd,
                 autoArmStart = settings.autoArmStart,
                 autoArmEnd = settings.autoArmEnd,
-                alarmOffsetHours = settings.alarmOffsetHours.toString(),
+                alarmDurationHours = durationHours.toString(),
+                alarmDurationMinutes = durationMinutes.toString(),
                 confirmOffMinutes = settings.confirmOffMinutes.toString(),
                 snoozeEnabled = settings.snoozeMinutes != null,
                 snoozeMinutes = settings.snoozeMinutes?.toString() ?: "5",
                 armedDefault = settings.armedDefault,
-                autoArmEnabled = settings.autoArmEnabled
+                autoArmEnabled = settings.autoArmEnabled,
+                overlayEnabled = settings.overlayEnabled
             )
-            appPreferences.alarmOffsetHours = settings.alarmOffsetHours
+            appPreferences.alarmDurationMinutes = settings.alarmDurationMinutes
         }
     }
 
@@ -89,8 +93,13 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun updateAlarmOffset(value: String) {
-        _uiState.value = _uiState.value.copy(alarmOffsetHours = value)
+    fun updateAlarmDurationHours(value: String) {
+        _uiState.value = _uiState.value.copy(alarmDurationHours = value)
+        persist()
+    }
+
+    fun updateAlarmDurationMinutes(value: String) {
+        _uiState.value = _uiState.value.copy(alarmDurationMinutes = value)
         persist()
     }
 
@@ -117,36 +126,69 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun updateOverlayEnabled(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(overlayEnabled = enabled)
+        persist()
+    }
+
     private fun persist() {
         viewModelScope.launch {
-            persistSettings(_uiState.value)
+            val normalized = normalizeDuration(_uiState.value)
+            if (normalized != _uiState.value) {
+                _uiState.value = normalized
+            }
+            persistSettings(normalized)
         }
     }
 
     private fun rescheduleAutoArm() {
         viewModelScope.launch {
-            persistSettings(_uiState.value)
+            val normalized = normalizeDuration(_uiState.value)
+            if (normalized != _uiState.value) {
+                _uiState.value = normalized
+            }
+            persistSettings(normalized)
             armManager.updateAutoArmEnabled(true)
         }
     }
 
+    private fun normalizeDuration(state: SettingsUiState): SettingsUiState {
+        val hours = state.alarmDurationHours.toIntOrNull() ?: 0
+        val minutes = state.alarmDurationMinutes.toIntOrNull() ?: 0
+        val total = (hours * 60) + minutes.coerceIn(0, 59)
+        val clamped = total.coerceIn(
+            com.sleep8.util.Constants.ALARM_MIN_DURATION_MINUTES,
+            com.sleep8.util.Constants.ALARM_MAX_DURATION_MINUTES
+        )
+        val normalizedHours = clamped / 60
+        val normalizedMinutes = clamped % 60
+        return state.copy(
+            alarmDurationHours = normalizedHours.toString(),
+            alarmDurationMinutes = normalizedMinutes.toString()
+        )
+    }
+
     private suspend fun persistSettings(state: SettingsUiState) {
         val snooze = state.snoozeMinutes.toIntOrNull()
-        val offset = state.alarmOffsetHours.toIntOrNull() ?: com.sleep8.util.Constants.ALARM_OFFSET_HOURS
+        val durationMinutes = normalizeDuration(state).let {
+            (it.alarmDurationHours.toIntOrNull() ?: 0) * 60 +
+                (it.alarmDurationMinutes.toIntOrNull() ?: 0)
+        }
         val confirmOff = state.confirmOffMinutes.toIntOrNull() ?: 10
         val settings = Settings(
             nightStart = state.nightStart,
             nightEnd = state.nightEnd,
             confirmOffMinutes = confirmOff,
             snoozeMinutes = if (state.snoozeEnabled) snooze else null,
-            alarmOffsetHours = offset,
+            alarmDurationMinutes = durationMinutes,
+            overlayEnabled = state.overlayEnabled,
             armedDefault = state.armedDefault,
             autoArmEnabled = state.autoArmEnabled,
             autoArmStart = state.autoArmStart,
             autoArmEnd = state.autoArmEnd
         )
         settingsRepository.updateSettings(settings)
-        appPreferences.alarmOffsetHours = offset
+        appPreferences.alarmDurationMinutes = durationMinutes
     }
 
     fun setBatteryOptAck(ack: Boolean) {

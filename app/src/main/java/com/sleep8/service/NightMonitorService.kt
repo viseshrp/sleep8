@@ -106,7 +106,7 @@ class NightMonitorService : Service() {
             AppState.ARMED_ALARM_SET -> {
                 val lastOff = stateHolder.lastScreenOffTs.value
                 if (lastOff > 0) {
-                    val alarmTime = TimeUtils.toLocalTime(lastOff + appPreferences.alarmOffsetHours * 3600_000L)
+                    val alarmTime = TimeUtils.toLocalTime(lastOff + appPreferences.alarmDurationMinutes * 60_000L)
                     getString(R.string.notification_text_alarm_set, TimeUtils.formatAlarmTime(alarmTime))
                 } else {
                     getString(R.string.notification_text_idle)

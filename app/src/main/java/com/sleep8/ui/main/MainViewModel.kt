@@ -1,6 +1,5 @@
 package com.sleep8.ui.main
 
-import android.app.AlarmManager
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -24,7 +23,6 @@ class MainViewModel @Inject constructor(
     private val armManager: ArmManager,
     private val stateHolder: StateHolder,
     private val alarmRepository: com.sleep8.data.repository.AlarmRepository,
-    private val alarmManager: AlarmManager,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -79,11 +77,6 @@ class MainViewModel @Inject constructor(
             ""
         }
 
-        val nextAlarm = alarmManager.nextAlarmClock
-        val systemNextAlarmText = nextAlarm?.triggerTime?.takeIf { it > 0 }?.let {
-            TimeUtils.formatAlarmTime(TimeUtils.toLocalTime(it))
-        }.orEmpty()
-
         val notificationWarningText = if (!PermissionUtils.canPostNotifications(context)) {
             "Notifications disabled; lockscreen UI may be limited."
         } else {
@@ -104,7 +97,6 @@ class MainViewModel @Inject constructor(
             lastScreenOffText = lastScreenOffText,
             latestAlarmText = latestAlarmText,
             latestAlarmSubtitle = latestAlarmSubtitle,
-            systemNextAlarmText = systemNextAlarmText,
             notificationWarningText = notificationWarningText,
             pendingCountdownText = pendingText,
             showPending = pendingRemaining > 0

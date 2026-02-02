@@ -1,7 +1,9 @@
 package com.sleep8.util
 
 object Constants {
-    const val ALARM_OFFSET_HOURS = 8
+    const val ALARM_DEFAULT_DURATION_MINUTES = 8 * 60
+    const val ALARM_MIN_DURATION_MINUTES = 30
+    const val ALARM_MAX_DURATION_MINUTES = 12 * 60
     const val DEFAULT_CONFIRM_MINUTES = 10
     const val DEFAULT_NIGHT_START = "22:00"
     const val DEFAULT_NIGHT_END = "08:00"
@@ -41,7 +43,7 @@ object Constants {
     const val PREF_LAST_SCREEN_OFF_TS = "pref_last_screen_off_ts"
     const val PREF_CLOCK_UI_WARNING_SHOWN = "pref_clock_ui_warning_shown"
     const val PREF_BATTERY_OPT_ACK = "pref_battery_opt_ack"
-    const val PREF_ALARM_OFFSET_HOURS = "pref_alarm_offset_hours"
+    const val PREF_ALARM_DURATION_MINUTES = "pref_alarm_duration_minutes"
     const val PREF_NOTIFICATIONS_ASKED = "pref_notifications_asked"
     const val PREF_LAST_ALARM_INSTANCE_ID = "pref_last_alarm_instance_id"
 }

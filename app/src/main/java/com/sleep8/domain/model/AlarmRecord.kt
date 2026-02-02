@@ -10,12 +10,14 @@ data class AlarmRecord(
     val durationUsedMinutes: Int,
     val alarmInstanceId: Long,
     val requestCode: Int,
-    val scheduledViaAlarmClock: Boolean,
     val source: AlarmSource,
     val status: AlarmStatus,
     val firedAt: Long?,
     val dismissedAt: Long?,
-    val snoozedUntil: Long?
+    val snoozedAt: Long?,
+    val snoozedUntil: Long?,
+    val overlayUsed: Boolean,
+    val activityPresented: Boolean
 )
 
 enum class AlarmStatus {

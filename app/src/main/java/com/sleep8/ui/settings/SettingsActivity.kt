@@ -42,6 +42,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.sleep8.domain.overlay.AlarmOverlayPolicy
 import com.sleep8.util.PermissionUtils
 import com.sleep8.util.TimeUtils
 import dagger.hilt.android.AndroidEntryPoint
@@ -73,6 +74,9 @@ private fun SettingsScreen(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     val scrollState = rememberScrollState()
+    val defaultDurationMinutes = com.sleep8.util.Constants.ALARM_DEFAULT_DURATION_MINUTES
+    val defaultDurationHours = defaultDurationMinutes / 60
+    val defaultDurationRemainder = defaultDurationMinutes % 60
     val notificationPermissionLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) {
@@ -141,14 +145,44 @@ private fun SettingsScreen(
 
             // Section: Alarm Behavior
             SettingsSection(title = "Alarm Behavior") {
-                OutlinedTextField(
-                    value = uiState.alarmOffsetHours,
-                    onValueChange = viewModel::updateAlarmOffset,
-                    label = { Text("Alarm duration (hours)") },
-                    modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    supportingText = { Text("Time after confirmed screen-off to ring") }
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "Alarm duration",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        OutlinedTextField(
+                            value = uiState.alarmDurationHours,
+                            onValueChange = viewModel::updateAlarmDurationHours,
+                            label = { Text("Hours") },
+                            modifier = Modifier.weight(1f),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                        )
+                        OutlinedTextField(
+                            value = uiState.alarmDurationMinutes,
+                            onValueChange = viewModel::updateAlarmDurationMinutes,
+                            label = { Text("Minutes") },
+                            modifier = Modifier.weight(1f),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                        )
+                    }
+                    Text(
+                        text = "Time after confirmed screen-off to ring (30–720 minutes)",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Button(onClick = {
+                        viewModel.updateAlarmDurationHours(defaultDurationHours.toString())
+                        viewModel.updateAlarmDurationMinutes(defaultDurationRemainder.toString())
+                    }) {
+                        Text("Reset to default")
+                    }
+                }
 
                 OutlinedTextField(
                     value = uiState.confirmOffMinutes,
@@ -176,6 +210,18 @@ private fun SettingsScreen(
                         )
                     }
                 }
+
+                RowWithSwitch(
+                    label = "Use overlay for alarm UI (more reliable)",
+                    checked = uiState.overlayEnabled,
+                    onCheckedChange = { enabled ->
+                        viewModel.updateOverlayEnabled(enabled)
+                        val overlayAllowed = PermissionUtils.canDrawOverlays(context)
+                        if (AlarmOverlayPolicy.shouldPromptForPermission(enabled, overlayAllowed)) {
+                            context.startActivity(PermissionUtils.overlayIntent(context))
+                        }
+                    }
+                )
             }
 
             // Section: Reliability

@@ -36,9 +36,16 @@ class AppPreferences(private val prefs: SharedPreferences) {
         get() = prefs.getBoolean(Constants.PREF_BATTERY_OPT_ACK, false)
         set(value) = prefs.edit().putBoolean(Constants.PREF_BATTERY_OPT_ACK, value).apply()
 
-    var alarmOffsetHours: Int
-        get() = prefs.getInt(Constants.PREF_ALARM_OFFSET_HOURS, Constants.ALARM_OFFSET_HOURS)
-        set(value) = prefs.edit().putInt(Constants.PREF_ALARM_OFFSET_HOURS, value).apply()
+    var alarmDurationMinutes: Int
+        get() {
+            val current = prefs.getInt(Constants.PREF_ALARM_DURATION_MINUTES, -1)
+            if (current >= 0) return current
+            val legacyHours = prefs.getInt(LEGACY_ALARM_OFFSET_HOURS, -1)
+            val migrated = if (legacyHours > 0) legacyHours * 60 else Constants.ALARM_DEFAULT_DURATION_MINUTES
+            prefs.edit().putInt(Constants.PREF_ALARM_DURATION_MINUTES, migrated).apply()
+            return migrated
+        }
+        set(value) = prefs.edit().putInt(Constants.PREF_ALARM_DURATION_MINUTES, value).apply()
 
     var notificationsAsked: Boolean
         get() = prefs.getBoolean(Constants.PREF_NOTIFICATIONS_ASKED, false)
@@ -58,5 +65,9 @@ class AppPreferences(private val prefs: SharedPreferences) {
         val next = if (now <= lastAlarmInstanceId) lastAlarmInstanceId + 1 else now
         lastAlarmInstanceId = next
         return next
+    }
+
+    private companion object {
+        const val LEGACY_ALARM_OFFSET_HOURS = "pref_alarm_offset_hours"
     }
 }
