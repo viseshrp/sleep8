@@ -88,3 +88,6 @@ End of report.
 - Home displays latest scheduled alarm from local `alarm_records` only.
 - Alarm History screen reads from local DB only (newest → oldest).
 - No system Clock alarm querying is present.
+
+## Alarm Creation UI Verification
+- Alarm creation is verified by Clock UI appearance (no silent creation).

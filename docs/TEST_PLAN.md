@@ -305,7 +305,8 @@ fun `create alarm sets correct hour and minute`() {
     verify { 
         context.startActivity(match { intent ->
             intent.getIntExtra(AlarmClock.EXTRA_HOUR, -1) == 7 &&
-            intent.getIntExtra(AlarmClock.EXTRA_MINUTES, -1) == 30
+            intent.getIntExtra(AlarmClock.EXTRA_MINUTES, -1) == 30 &&
+            intent.getBooleanExtra(AlarmClock.EXTRA_SKIP_UI, true) == false
         })
     }
 }
@@ -340,6 +341,19 @@ fun `create alarm handles non-resolving intent`() {
     val result = creator.createAlarm(anyTime)
     
     assertTrue((result as AlarmCreationResult.Success).record.osAlarmIntentResolved == false)
+}
+
+@Test
+fun `create alarm always shows clock ui`() {
+    val creator = createOsAlarmCreator()
+
+    creator.createAlarm(anyTime)
+
+    verify {
+        context.startActivity(match { intent ->
+            intent.getBooleanExtra(AlarmClock.EXTRA_SKIP_UI, true) == false
+        })
+    }
 }
 
 @Test
@@ -1113,8 +1127,8 @@ Each test case includes:
 | Field | Value |
 |-------|-------|
 | Steps | Complete alarm creation on Samsung device |
-| Expected | Alarm appears in Samsung Clock app |
-| Known Issues | May require UI confirmation |
+| Expected | Clock UI is shown; alarm appears in Samsung Clock app |
+| Known Issues | None (UI is always shown) |
 
 #### TC-OEM-002: Xiaomi Battery Aggressive Kill
 | Field | Value |
