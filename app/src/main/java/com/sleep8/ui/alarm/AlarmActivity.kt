@@ -152,38 +152,50 @@ private fun AlarmScreen(
             .fillMaxSize()
             .background(background)
             .padding(32.dp),
-        verticalArrangement = Arrangement.Center,
+        verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = stringResource(id = com.sleep8.R.string.alarm_ui_title),
-            style = MaterialTheme.typography.headlineLarge,
-            fontWeight = FontWeight.ExtraBold,
-            color = Color(0xFFFFE9D2)
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        Text(
-            text = uiState.currentTime,
-            style = MaterialTheme.typography.displayMedium,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFFFFD7A0)
-        )
-        Spacer(modifier = Modifier.height(32.dp))
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                text = stringResource(id = com.sleep8.R.string.alarm_ui_title),
+                style = MaterialTheme.typography.headlineLarge,
+                fontWeight = FontWeight.ExtraBold,
+                color = Color(0xFFFFE9D2)
+            )
+            Text(
+                text = uiState.currentTime,
+                style = MaterialTheme.typography.displayLarge,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFFFFD7A0)
+            )
+            Text(
+                text = "Sleep8",
+                style = MaterialTheme.typography.titleMedium,
+                color = Color(0xFFFFE9D2)
+            )
+        }
 
-        Row(
+        Column(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Button(
                 onClick = onDismiss,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
             ) {
                 Text(text = "Dismiss")
             }
             if (uiState.showSnooze) {
                 Button(
                     onClick = onSnooze,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
                 ) {
                     Text(text = "Snooze")
                 }

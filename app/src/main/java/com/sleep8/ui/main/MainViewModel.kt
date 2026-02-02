@@ -45,7 +45,7 @@ class MainViewModel @Inject constructor(
         val pendingDeadline = stateHolder.pendingConfirmDeadlineTs.value
         val now = System.currentTimeMillis()
         val pendingRemaining = if (pendingDeadline > 0) pendingDeadline - now else 0L
-        val latestAlarm = alarmRepository.getLatestScheduledRecord() ?: alarmRepository.getLatestRecord()
+        val latestAlarm = alarmRepository.getLatestScheduledRecord()
 
         val armedUntilText = stateHolder.activeSession.value?.windowEndTs?.takeIf { it > 0 }?.let {
             TimeUtils.formatAlarmTime(TimeUtils.toLocalTime(it))
@@ -68,7 +68,7 @@ class MainViewModel @Inject constructor(
             val time = TimeUtils.toLocalTime(latestAlarm.triggerAt)
             "Alarm scheduled for ${TimeUtils.formatAlarmTime(time)}"
         } else {
-            "No alarms scheduled yet"
+            ""
         }
 
         val latestAlarmSubtitle = if (latestAlarm != null) {

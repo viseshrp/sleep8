@@ -7,8 +7,8 @@
     <string name="notification_text_alarm_set">Alarm set for %1$s</string>
     <string name="alarm_channel_ringing">Alarm ringing</string>
     <string name="alarm_channel_scheduled">Alarm scheduled</string>
-    <string name="alarm_ui_title">Alarm</string>
-    <string name="alarm_notification_title">Alarm</string>
+    <string name="alarm_ui_title">Wake Up</string>
+    <string name="alarm_notification_title">Wake Up</string>
     <string name="alarm_notification_text">Alarm is ringing</string>
     <string name="alarm_dismiss">Dismiss</string>
     <string name="alarm_snooze">Snooze</string>
