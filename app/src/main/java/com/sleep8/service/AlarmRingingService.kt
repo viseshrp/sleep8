@@ -13,25 +13,39 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import android.media.RingtoneManager
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.sleep8.R
+import com.sleep8.data.repository.AlarmRepository
+import com.sleep8.data.repository.SettingsRepository
+import com.sleep8.domain.scheduler.AlarmScheduler
 import com.sleep8.service.notification.NotificationHelper
 import com.sleep8.ui.alarm.AlarmActivity
+import com.sleep8.util.AlarmIntents
 import com.sleep8.util.Constants
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
 @AndroidEntryPoint
 class AlarmRingingService : Service() {
 
     @Inject lateinit var notificationHelper: NotificationHelper
+    @Inject lateinit var alarmRepository: AlarmRepository
+    @Inject lateinit var alarmScheduler: AlarmScheduler
+    @Inject lateinit var settingsRepository: SettingsRepository
 
     private var mediaPlayer: MediaPlayer? = null
     private var vibrator: Vibrator? = null
     private var audioManager: AudioManager? = null
     private var focusRequest: AudioFocusRequest? = null
     private var alarmId: Long = -1L
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -40,11 +54,13 @@ class AlarmRingingService : Service() {
         when (intent?.action) {
             Constants.ACTION_ALARM_DISMISS -> {
                 stopRinging()
+                markDismissed()
                 stopSelf()
                 return START_NOT_STICKY
             }
             Constants.ACTION_ALARM_SNOOZE -> {
                 stopRinging()
+                scheduleSnooze()
                 stopSelf()
                 return START_NOT_STICKY
             }
@@ -60,20 +76,37 @@ class AlarmRingingService : Service() {
 
     private fun startRinging() {
         val alarmIntent = AlarmActivity.pendingIntent(this, alarmId)
+        val contentIntent = AlarmIntents.alarmDetailPendingIntent(
+            this,
+            alarmId.toInt(),
+            alarmId
+        )
         val dismissIntent = createActionIntent(Constants.ACTION_ALARM_DISMISS)
-        val notification = NotificationCompat.Builder(this, Constants.ALARM_NOTIFICATION_CHANNEL_ID)
+        val snoozeEnabled = runBlocking {
+            settingsRepository.getSettings().snoozeMinutes != null
+        }
+        val snoozeIntent = if (snoozeEnabled) createActionIntent(Constants.ACTION_ALARM_SNOOZE) else null
+        val builder = NotificationCompat.Builder(this, Constants.ALARM_RINGING_CHANNEL_ID)
             .setContentTitle(getString(R.string.alarm_notification_title))
             .setContentText(getString(R.string.alarm_notification_text))
             .setSmallIcon(R.drawable.ic_tile)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setFullScreenIntent(alarmIntent, true)
+            .setContentIntent(contentIntent)
             .addAction(R.drawable.ic_tile, getString(R.string.alarm_dismiss), dismissIntent)
             .setOngoing(true)
-            .build()
+        if (snoozeIntent != null) {
+            builder.addAction(R.drawable.ic_tile, getString(R.string.alarm_snooze), snoozeIntent)
+        }
+        val notification = builder.build()
 
-        notificationHelper.ensureAlarmChannel()
-        startForeground(Constants.ALARM_NOTIFICATION_ID, notification)
+        notificationHelper.ensureAlarmRingingChannel()
+        try {
+            startForeground(Constants.ALARM_RINGING_NOTIFICATION_ID, notification)
+        } catch (exception: SecurityException) {
+            Log.e("AlarmRingingService", "Notification permission denied; running without foreground notification.", exception)
+        }
         startAudio()
         startVibration()
     }
@@ -150,9 +183,26 @@ class AlarmRingingService : Service() {
         focusRequest = null
     }
 
+    private fun markDismissed() {
+        if (alarmId <= 0) return
+        serviceScope.launch {
+            alarmRepository.markDismissed(alarmId, System.currentTimeMillis())
+        }
+    }
+
+    private fun scheduleSnooze() {
+        if (alarmId <= 0) return
+        serviceScope.launch {
+            val settings = settingsRepository.getSettings()
+            val minutes = settings.snoozeMinutes ?: return@launch
+            alarmScheduler.scheduleSnooze(alarmId, minutes)
+        }
+    }
+
     private fun createActionIntent(action: String): android.app.PendingIntent {
         val intent = Intent(this, AlarmRingingService::class.java).apply {
             this.action = action
+            putExtra(Constants.EXTRA_ALARM_ID, alarmId)
         }
         return android.app.PendingIntent.getService(
             this,

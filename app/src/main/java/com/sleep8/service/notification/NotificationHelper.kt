@@ -22,14 +22,24 @@ class NotificationHelper(private val context: Context) {
         manager.createNotificationChannel(channel)
     }
 
-    fun ensureAlarmChannel() {
+    fun ensureAlarmRingingChannel() {
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val channel = NotificationChannel(
-            Constants.ALARM_NOTIFICATION_CHANNEL_ID,
-            context.getString(R.string.alarm_channel_name),
+            Constants.ALARM_RINGING_CHANNEL_ID,
+            context.getString(R.string.alarm_channel_ringing),
             NotificationManager.IMPORTANCE_HIGH
         )
         channel.lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+        manager.createNotificationChannel(channel)
+    }
+
+    fun ensureAlarmScheduledChannel() {
+        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val channel = NotificationChannel(
+            Constants.ALARM_SCHEDULED_CHANNEL_ID,
+            context.getString(R.string.alarm_channel_scheduled),
+            NotificationManager.IMPORTANCE_LOW
+        )
         manager.createNotificationChannel(channel)
     }
 
@@ -44,6 +54,7 @@ class NotificationHelper(private val context: Context) {
     }
 
     fun showWarning(message: String) {
+        if (!PermissionUtils.canPostNotifications(context)) return
         ensureChannel()
         val notification = NotificationCompat.Builder(context, Constants.NOTIFICATION_CHANNEL_ID)
             .setContentTitle(context.getString(R.string.app_name))
@@ -56,6 +67,7 @@ class NotificationHelper(private val context: Context) {
     }
 
     fun showExactAlarmWarning() {
+        if (!PermissionUtils.canPostNotifications(context)) return
         ensureChannel()
         val intent = PermissionUtils.exactAlarmIntent(context)
         val pendingIntent = PendingIntent.getActivity(
@@ -73,5 +85,19 @@ class NotificationHelper(private val context: Context) {
             .build()
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         manager.notify(Constants.NOTIFICATION_ID + 2, notification)
+    }
+
+    fun showAlarmScheduled(contentText: String, contentIntent: PendingIntent) {
+        if (!PermissionUtils.canPostNotifications(context)) return
+        ensureAlarmScheduledChannel()
+        val notification = NotificationCompat.Builder(context, Constants.ALARM_SCHEDULED_CHANNEL_ID)
+            .setContentTitle(context.getString(R.string.alarm_scheduled_title))
+            .setContentText(contentText)
+            .setSmallIcon(R.drawable.ic_tile)
+            .setContentIntent(contentIntent)
+            .setAutoCancel(true)
+            .build()
+        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        manager.notify(Constants.ALARM_SCHEDULED_NOTIFICATION_ID, notification)
     }
 }
