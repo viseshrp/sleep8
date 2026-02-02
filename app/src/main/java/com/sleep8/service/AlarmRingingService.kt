@@ -167,6 +167,8 @@ class AlarmRingingService : Service() {
         overlayController?.dismiss()
         overlayController = null
         appPreferences.activeAlarmId = -1L
+        appPreferences.activeAlarmRequestCode = -1
+        appPreferences.activeAlarmInstanceId = -1L
         mediaPlayer?.run {
             stop()
             release()

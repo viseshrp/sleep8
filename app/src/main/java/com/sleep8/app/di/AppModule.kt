@@ -99,7 +99,8 @@ object AppModule {
         windowScheduler: WindowScheduler,
         settingsRepository: SettingsRepository,
         nightWindowScheduler: NightWindowScheduler,
-        confirmOffScheduler: ConfirmOffScheduler
+        confirmOffScheduler: ConfirmOffScheduler,
+        alarmScheduler: AlarmScheduler
     ): ArmManager {
         return ArmManager(
             sessionRepository,
@@ -108,7 +109,8 @@ object AppModule {
             windowScheduler,
             settingsRepository,
             nightWindowScheduler,
-            confirmOffScheduler
+            confirmOffScheduler,
+            alarmScheduler
         )
     }
 

@@ -6,7 +6,6 @@ import android.content.Intent
 import android.os.PowerManager
 import com.sleep8.data.repository.SettingsRepository
 import com.sleep8.data.repository.SessionRepository
-import com.sleep8.data.repository.AlarmRepository
 import com.sleep8.domain.manager.ArmManager
 import com.sleep8.domain.manager.StateMachineManager
 import com.sleep8.domain.model.AppState
@@ -29,7 +28,6 @@ class BootReceiver : BroadcastReceiver() {
 
     @Inject lateinit var sessionRepository: SessionRepository
     @Inject lateinit var settingsRepository: SettingsRepository
-    @Inject lateinit var alarmRepository: AlarmRepository
     @Inject lateinit var stateHolder: StateHolder
     @Inject lateinit var serviceController: ServiceController
     @Inject lateinit var confirmOffScheduler: ConfirmOffScheduler
@@ -133,7 +131,7 @@ class BootReceiver : BroadcastReceiver() {
                 }
             }
 
-            val scheduled = alarmRepository.getLatestScheduledRecord()
+            val scheduled = alarmScheduler.reconcileScheduledAfterBoot()
             if (scheduled != null) {
                 val nowMs = System.currentTimeMillis()
                 val triggerAt = if (scheduled.triggerAt <= nowMs) nowMs + 1_000L else scheduled.triggerAt

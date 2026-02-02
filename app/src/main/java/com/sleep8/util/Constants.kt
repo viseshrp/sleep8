@@ -47,4 +47,6 @@ object Constants {
     const val PREF_NOTIFICATIONS_ASKED = "pref_notifications_asked"
     const val PREF_LAST_ALARM_INSTANCE_ID = "pref_last_alarm_instance_id"
     const val PREF_ACTIVE_ALARM_ID = "pref_active_alarm_id"
+    const val PREF_ACTIVE_ALARM_REQUEST_CODE = "pref_active_alarm_request_code"
+    const val PREF_ACTIVE_ALARM_INSTANCE_ID = "pref_active_alarm_instance_id"
 }

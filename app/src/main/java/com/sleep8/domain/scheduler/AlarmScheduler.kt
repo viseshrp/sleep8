@@ -9,6 +9,7 @@ import com.sleep8.R
 import com.sleep8.data.preferences.AppPreferences
 import com.sleep8.data.repository.AlarmRepository
 import com.sleep8.data.repository.SettingsRepository
+import com.sleep8.domain.model.AlarmCancelReason
 import com.sleep8.domain.model.AlarmRecord
 import com.sleep8.domain.model.AlarmSource
 import com.sleep8.domain.model.AlarmStatus
@@ -29,6 +30,7 @@ class AlarmScheduler(
 ) {
 
     suspend fun scheduleSleepAlarm(screenOffTs: Long, confirmedAt: Long): AlarmRecord {
+        cancelScheduledAlarms(AlarmCancelReason.REPLACED_BY_NEW_ALARM)
         val settings = settingsRepository.getSettings()
         val durationMinutes = settings.alarmDurationMinutes
         val triggerAt = Instant.ofEpochMilli(screenOffTs)
@@ -45,6 +47,7 @@ class AlarmScheduler(
 
     suspend fun scheduleSnooze(alarmId: Long, snoozeMinutes: Int): AlarmRecord? {
         val original = alarmRepository.getRecord(alarmId) ?: return null
+        cancelScheduledAlarms(AlarmCancelReason.SNOOZE_REPLACE)
         val snoozedUntil = System.currentTimeMillis() + snoozeMinutes * 60_000L
         alarmRepository.markSnoozed(alarmId, System.currentTimeMillis(), snoozedUntil)
         return scheduleAlarm(
@@ -56,12 +59,6 @@ class AlarmScheduler(
         )
     }
 
-    suspend fun cancelScheduledAlarm() {
-        val existing = alarmRepository.getLatestScheduledRecord() ?: return
-        val pendingIntent = buildAlarmPendingIntent(existing.id, existing.requestCode, existing.alarmInstanceId)
-        alarmManager.cancel(pendingIntent)
-    }
-
     fun rescheduleExisting(record: AlarmRecord, triggerAt: Long) {
         if (!PermissionUtils.canScheduleExactAlarms(context)) {
             Log.e("AlarmScheduler", "Exact alarm permission missing; cannot reschedule alarm after reboot.")
@@ -69,6 +66,26 @@ class AlarmScheduler(
         }
         val operation = buildAlarmPendingIntent(record.id, record.requestCode, record.alarmInstanceId)
         alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, operation)
+    }
+
+    suspend fun cancelActiveAlarms(reason: AlarmCancelReason) {
+        cancelScheduledAlarms(reason)
+    }
+
+    suspend fun reconcileScheduledAfterBoot(): AlarmRecord? {
+        val scheduled = alarmRepository.getScheduledRecords()
+        if (scheduled.isEmpty()) {
+            clearActiveAlarmIdentity()
+            return null
+        }
+        val newest = scheduled.maxBy { it.scheduledAt }
+        scheduled.filter { it.id != newest.id }.forEach { record ->
+            val pendingIntent = buildAlarmPendingIntent(record.id, record.requestCode, record.alarmInstanceId)
+            alarmManager.cancel(pendingIntent)
+            alarmRepository.markCanceled(record.id, AlarmCancelReason.REBOOT_CLEANUP)
+        }
+        updateActiveAlarmIdentity(newest)
+        return newest
     }
 
     private suspend fun scheduleAlarm(
@@ -79,7 +96,6 @@ class AlarmScheduler(
         source: AlarmSource
     ): AlarmRecord {
         val scheduledAt = System.currentTimeMillis()
-        cancelScheduledAlarm()
         val instanceId = appPreferences.nextAlarmInstanceId()
         val requestCode = (instanceId % Int.MAX_VALUE).toInt()
 
@@ -95,6 +111,7 @@ class AlarmScheduler(
             requestCode = requestCode,
             source = source,
             status = AlarmStatus.SCHEDULED,
+            canceledReason = null,
             firedAt = null,
             dismissedAt = null,
             snoozedAt = null,
@@ -111,6 +128,7 @@ class AlarmScheduler(
 
         val operation = buildAlarmPendingIntent(alarmId, requestCode, instanceId)
         alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, operation)
+        updateActiveAlarmIdentity(record.copy(id = alarmId))
 
         val scheduledText = context.getString(
             R.string.alarm_scheduled_body,
@@ -122,6 +140,41 @@ class AlarmScheduler(
         )
 
         return record.copy(id = alarmId)
+    }
+
+    private suspend fun cancelScheduledAlarms(reason: AlarmCancelReason) {
+        val scheduled = alarmRepository.getScheduledRecords()
+        scheduled.forEach { record ->
+            val pendingIntent = buildAlarmPendingIntent(record.id, record.requestCode, record.alarmInstanceId)
+            alarmManager.cancel(pendingIntent)
+            alarmRepository.markCanceled(record.id, reason)
+        }
+
+        val activeId = appPreferences.activeAlarmId
+        if (activeId > 0 && scheduled.none { it.id == activeId }) {
+            cancelFromStoredIdentity()
+        }
+        clearActiveAlarmIdentity()
+    }
+
+    private fun cancelFromStoredIdentity() {
+        val requestCode = appPreferences.activeAlarmRequestCode
+        val instanceId = appPreferences.activeAlarmInstanceId
+        if (requestCode <= 0 || instanceId <= 0) return
+        val pendingIntent = buildAlarmPendingIntent(appPreferences.activeAlarmId, requestCode, instanceId)
+        alarmManager.cancel(pendingIntent)
+    }
+
+    private fun updateActiveAlarmIdentity(record: AlarmRecord) {
+        appPreferences.activeAlarmId = record.id
+        appPreferences.activeAlarmRequestCode = record.requestCode
+        appPreferences.activeAlarmInstanceId = record.alarmInstanceId
+    }
+
+    private fun clearActiveAlarmIdentity() {
+        appPreferences.activeAlarmId = -1L
+        appPreferences.activeAlarmRequestCode = -1
+        appPreferences.activeAlarmInstanceId = -1L
     }
 
     private fun buildAlarmPendingIntent(alarmId: Long, requestCode: Int, alarmInstanceId: Long): PendingIntent {
