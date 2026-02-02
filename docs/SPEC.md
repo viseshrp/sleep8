@@ -1,7 +1,7 @@
 # spec.md — Sleep8: Owned Alarm (Configurable Duration)
 
 ## 0. One-liner
-When the user **arms** the app (button or Quick Settings tile), the app watches for **screen-off** events during a **fixed night window**; once the screen has stayed off for **10 minutes**, it schedules an **app-owned exact alarm** for **screen-off + configured duration** (default **8 hours**) using `AlarmManager.setExactAndAllowWhileIdle` (`RTC_WAKEUP`), and always uses the **latest** screen-off event.
+When the user **arms** the app (button or Quick Settings tile), the app watches for **screen-off** events during a **fixed night window**; once the screen has stayed off for **10 minutes**, it schedules an **app-owned exact alarm** for **screen-off + configured duration** (default **480 minutes**, range **0-720**) using `AlarmManager.setExactAndAllowWhileIdle` (`RTC_WAKEUP`), and always uses the **latest** screen-off event. Duration **0** rings immediately at confirmation time.
 
 ---
 
@@ -26,7 +26,7 @@ When the user **arms** the app (button or Quick Settings tile), the app watches 
 - Confirm rule: only commit when **screen remains OFF for 10 minutes** after an OFF event.
 - Alarm ownership: **app-owned** exact alarm via `AlarmManager.setExactAndAllowWhileIdle` (`RTC_WAKEUP`) → receiver → foreground ringing service → full-screen activity (optional overlay).
 - **Single active alarm**: at most one scheduled (not fired) alarm exists at any time. New confirmed alarms and snooze replace the prior active alarm.
-- Duration: **configurable**, default **8 hours**.
+- Duration: **configurable**, default **480 minutes** (8 hours).
 - Snooze: configurable option in settings, uses app-owned alarms.
 - Reboot: **restore state** and reschedule alarms from DB.
 - Storage: persist `duration_used_minutes`, `alarm_instance_id`, `request_code`, `snoozed_at`, `snoozed_until`, `overlay_used`, `activity_presented`.
@@ -44,9 +44,9 @@ When the user **arms** the app (button or Quick Settings tile), the app watches 
 
 ### 5.1 First-run setup
 - User sets:
-  - Night window start/end (e.g., 22:00–08:00).
+  - Night window start/end (e.g., 22:00-08:00).
   - Auto-arm schedule start/end (separate from night window; defaults to night window times).
-  - **Alarm duration** in hours/minutes (default 8h).
+  - **Alarm duration** in minutes (0-720, default 480).
   - Snooze option (default OFF or a chosen minutes value).
 - App shows a “Reliability checklist”:
   - Exact alarm capability (Android 12+)
@@ -79,7 +79,7 @@ Navigation:
 ### 5.4 Confirmation → alarm creation
 When the screen has remained OFF for 10 minutes since the latest OFF event:
 - Schedule an app-owned **exact alarm** for:  
-  `alarm_time = latest_screen_off_time + duration`
+  `alarm_time = latest_screen_off_time + duration` (if duration = 0, ring immediately at confirmation time)
 - Persist the alarm record in DB with status `SCHEDULED` and `duration_used_minutes` snapshot.
 - Optionally show a low-importance “alarm scheduled” notification.
 
@@ -146,6 +146,7 @@ Use `AlarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, 
 
 ### 7.2 Alarm UI
 - `AlarmActivity` is full-screen, shows over lock screen, and turns screen on.
+- Screen title/label: **Alarm** (used for UI header and task switcher).
 - Alarm uses `AudioManager.STREAM_ALARM` semantics with looping sound and repeating vibration.
 - Foreground service runs **only while ringing**.
 - Optional overlay (if user-enabled + permission granted) shows a full-screen WindowManager UI while ringing.
@@ -193,7 +194,7 @@ Tables:
 - `auto_arm_enabled` (bool, default false)
 - `confirm_off_minutes` (default 10)
 - `snooze_minutes` (nullable / default null)
-- `alarm_duration_minutes` (default 480)
+- `alarm_duration_minutes` (0-720, default 480)
 - `overlay_enabled` (bool, default false)
 - `armed_default` (bool, default false)
 

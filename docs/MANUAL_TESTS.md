@@ -8,6 +8,12 @@ These tests require **physical devices** (Pixel 8 / Android 14+ recommended).
 - Alarm fires in Doze and after app process death.
 - Alarm fires after reboot; if overdue, fires immediately.
 - Re-arm or confirm twice → only the newest scheduled alarm remains active.
+- Alarm UI title displays updated label (task switcher and screen header match).
+
+## Duration Settings
+- Set duration to 0 minutes → alarm rings immediately at confirmation time.
+- Set duration to 720 minutes → alarm scheduled exactly +720 minutes.
+- Enter -1 or 721 → inline error shown; value is clamped/reset on save.
 
 ## Overlay (Optional)
 - Enable overlay toggle → if permission granted, overlay appears while alarm is ringing.

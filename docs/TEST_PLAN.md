@@ -18,6 +18,10 @@ Physical device testing is required; emulators are not authoritative for exact a
 - Single active alarm: snooze replaces any scheduled alarm.
 - Reboot cleanup: multiple scheduled alarms → keep newest, cancel extras.
 - Disarm cancels the active scheduled alarm.
+- Duration boundaries: 0, 1, 480, 720 minutes.
+- Invalid duration inputs: below 0 / above 720 are clamped or rejected (per implementation).
+- Duration 0 schedules at confirmation timestamp.
+- Alarm UI title appears in AlarmActivity label and UI header.
 
 ---
 
