@@ -3,16 +3,8 @@ package com.sleep8.service
 import android.app.Service
 import android.content.Context
 import android.content.Intent
-import android.media.AudioAttributes
-import android.media.AudioFocusRequest
-import android.media.AudioManager
-import android.media.MediaPlayer
 import android.os.Build
 import android.os.IBinder
-import android.os.VibrationEffect
-import android.os.Vibrator
-import android.os.VibratorManager
-import android.media.RingtoneManager
 import android.util.Log
 import androidx.core.content.ContextCompat
 import com.sleep8.R
@@ -45,10 +37,7 @@ class AlarmRingingService : Service() {
     @Inject lateinit var settingsRepository: SettingsRepository
     @Inject lateinit var appPreferences: AppPreferences
 
-    private var mediaPlayer: MediaPlayer? = null
-    private var vibrator: Vibrator? = null
-    private var audioManager: AudioManager? = null
-    private var focusRequest: AudioFocusRequest? = null
+    private var ringer: AlarmRinger? = null
     private var alarmId: Long = -1L
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var overlayController: AlarmOverlayController? = null
@@ -97,70 +86,17 @@ class AlarmRingingService : Service() {
         )
 
         notificationHelper.ensureAlarmRingingChannel()
-        try {
-            startForeground(Constants.ALARM_RINGING_NOTIFICATION_ID, notification)
-        } catch (exception: SecurityException) {
-            Log.e("AlarmRingingService", "Notification permission denied; running without foreground notification.", exception)
+        if (PermissionUtils.needsPostNotifications(this) && !PermissionUtils.canPostNotifications(this)) {
+            Log.w("AlarmRingingService", "Notification permission denied; skipping foreground service.")
+            stopSelf()
+            return
         }
-        startAudio()
-        startVibration()
+        startForeground(Constants.ALARM_RINGING_NOTIFICATION_ID, notification)
+        if (ringer == null) {
+            ringer = AlarmRinger(this)
+        }
+        ringer?.start()
         maybeShowOverlay(snoozeEnabled)
-    }
-
-    private fun startAudio() {
-        val audioAttributes = AudioAttributes.Builder()
-            .setUsage(AudioAttributes.USAGE_ALARM)
-            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-            .build()
-
-        audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            focusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
-                .setAudioAttributes(audioAttributes)
-                .setOnAudioFocusChangeListener { }
-                .build()
-            audioManager?.requestAudioFocus(focusRequest!!)
-        } else {
-            @Suppress("DEPRECATION")
-            audioManager?.requestAudioFocus(null, AudioManager.STREAM_ALARM, AudioManager.AUDIOFOCUS_GAIN)
-        }
-
-        val alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-        val fallbackUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-        val soundUri = alarmUri ?: fallbackUri ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
-        if (soundUri != null) {
-            try {
-                mediaPlayer = MediaPlayer().apply {
-                    @Suppress("DEPRECATION")
-                    setAudioStreamType(AudioManager.STREAM_ALARM)
-                    setAudioAttributes(audioAttributes)
-                    setDataSource(this@AlarmRingingService, soundUri)
-                    isLooping = true
-                    prepare()
-                    start()
-                }
-            } catch (_: Exception) {
-                mediaPlayer?.release()
-                mediaPlayer = null
-            }
-        }
-    }
-
-    private fun startVibration() {
-        vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            val manager = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
-            manager.defaultVibrator
-        } else {
-            @Suppress("DEPRECATION")
-            getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-        }
-        val pattern = longArrayOf(0, 1000, 1000)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            vibrator?.vibrate(VibrationEffect.createWaveform(pattern, 0))
-        } else {
-            @Suppress("DEPRECATION")
-            vibrator?.vibrate(pattern, 0)
-        }
     }
 
     private fun stopRinging() {
@@ -169,19 +105,8 @@ class AlarmRingingService : Service() {
         appPreferences.activeAlarmId = -1L
         appPreferences.activeAlarmRequestCode = -1
         appPreferences.activeAlarmInstanceId = -1L
-        mediaPlayer?.run {
-            stop()
-            release()
-        }
-        mediaPlayer = null
-        vibrator?.cancel()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            focusRequest?.let { audioManager?.abandonAudioFocusRequest(it) }
-        } else {
-            @Suppress("DEPRECATION")
-            audioManager?.abandonAudioFocus(null)
-        }
-        focusRequest = null
+        ringer?.stop()
+        ringer = null
     }
 
     private fun handleDismiss() {

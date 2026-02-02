@@ -35,6 +35,7 @@ object Constants {
 
     const val EXTRA_ALARM_ID = "extra_alarm_id"
     const val EXTRA_ALARM_INSTANCE_ID = "extra_alarm_instance_id"
+    const val EXTRA_RING_IN_ACTIVITY = "extra_ring_in_activity"
 
     const val PREFS_NAME = "sleep8_prefs"
     const val PREF_ARMED = "pref_armed"

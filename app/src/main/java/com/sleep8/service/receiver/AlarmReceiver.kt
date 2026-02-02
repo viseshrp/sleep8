@@ -8,6 +8,7 @@ import com.sleep8.domain.model.AlarmStatus
 import com.sleep8.service.AlarmRingingService
 import com.sleep8.ui.alarm.AlarmActivity
 import com.sleep8.util.Constants
+import com.sleep8.util.PermissionUtils
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -38,8 +39,13 @@ class AlarmReceiver : BroadcastReceiver() {
             return
         }
 
-        AlarmRingingService.start(context, alarmId)
-        AlarmActivity.launch(context, alarmId)
+        val notificationsAllowed = !(PermissionUtils.needsPostNotifications(context) && !PermissionUtils.canPostNotifications(context))
+        if (notificationsAllowed) {
+            AlarmRingingService.start(context, alarmId)
+            AlarmActivity.launch(context, alarmId)
+        } else {
+            AlarmActivity.launch(context, alarmId, ringInActivity = true)
+        }
 
         val pendingResult = goAsync()
         scope.launch {

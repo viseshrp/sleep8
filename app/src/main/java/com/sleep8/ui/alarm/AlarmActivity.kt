@@ -42,6 +42,8 @@ class AlarmActivity : ComponentActivity() {
 
     private val viewModel: AlarmViewModel by viewModels()
     private var alarmId: Long = -1L
+    private var ringInActivity: Boolean = false
+    private var ringer: com.sleep8.service.AlarmRinger? = null
 
     private val closeReceiver = object : android.content.BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -67,6 +69,7 @@ class AlarmActivity : ComponentActivity() {
         }
 
         alarmId = intent.getLongExtra(Constants.EXTRA_ALARM_ID, -1L)
+        ringInActivity = intent.getBooleanExtra(Constants.EXTRA_RING_IN_ACTIVITY, false)
         viewModel.setAlarmId(alarmId)
 
         setContent {
@@ -76,11 +79,13 @@ class AlarmActivity : ComponentActivity() {
                         viewModel = viewModel,
                         onDismiss = {
                             viewModel.dismiss()
+                            ringer?.stop()
                             AlarmRingingService.stop(this)
                             finish()
                         },
                         onSnooze = {
                             viewModel.snooze()
+                            ringer?.stop()
                             AlarmRingingService.stop(this)
                             finish()
                         }
@@ -97,6 +102,9 @@ class AlarmActivity : ComponentActivity() {
             addAction(Constants.ACTION_ALARM_SNOOZE)
         }
         registerReceiver(closeReceiver, filter)
+        if (ringInActivity && ringer == null) {
+            ringer = com.sleep8.service.AlarmRinger(this).also { it.start() }
+        }
     }
 
     override fun onStop() {
@@ -105,14 +113,17 @@ class AlarmActivity : ComponentActivity() {
         } catch (_: IllegalArgumentException) {
             // Receiver already unregistered
         }
+        ringer?.stop()
+        ringer = null
         super.onStop()
     }
 
     companion object {
-        fun launch(context: Context, alarmId: Long) {
+        fun launch(context: Context, alarmId: Long, ringInActivity: Boolean = false) {
             val intent = Intent(context, AlarmActivity::class.java).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
                 putExtra(Constants.EXTRA_ALARM_ID, alarmId)
+                putExtra(Constants.EXTRA_RING_IN_ACTIVITY, ringInActivity)
             }
             context.startActivity(intent)
         }
