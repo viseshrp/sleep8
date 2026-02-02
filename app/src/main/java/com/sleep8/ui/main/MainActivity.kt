@@ -2,6 +2,7 @@ package com.sleep8.ui.main
 
 import android.content.Intent
 import android.os.Bundle
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -43,13 +44,23 @@ import com.sleep8.ui.components.ArmButton
 import com.sleep8.ui.components.StatusCard
 import com.sleep8.ui.history.AlarmHistoryActivity
 import com.sleep8.ui.settings.SettingsActivity
+import com.sleep8.data.preferences.AppPreferences
+import com.sleep8.util.PermissionUtils
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     private val viewModel: MainViewModel by viewModels()
+    @Inject lateinit var appPreferences: AppPreferences
+
+    private val notificationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) {
+        appPreferences.notificationsAsked = true
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,11 +70,20 @@ class MainActivity : ComponentActivity() {
                     MainScreen(
                         viewModel = viewModel,
                         onOpenSettings = { startActivity(Intent(this, SettingsActivity::class.java)) },
-                        onOpenHistory = { startActivity(Intent(this, AlarmHistoryActivity::class.java)) }
+                        onOpenHistory = { startActivity(Intent(this, AlarmHistoryActivity::class.java)) },
+                        onToggleArmed = { handleArmToggle() }
                     )
                 }
             }
         }
+    }
+
+    private fun handleArmToggle() {
+        if (PermissionUtils.needsPostNotifications(this) && !appPreferences.notificationsAsked) {
+            appPreferences.notificationsAsked = true
+            notificationPermissionLauncher.launch(PermissionUtils.notificationsPermission())
+        }
+        viewModel.toggleArmed()
     }
 }
 
@@ -71,7 +91,8 @@ class MainActivity : ComponentActivity() {
 private fun MainScreen(
     viewModel: MainViewModel,
     onOpenSettings: () -> Unit,
-    onOpenHistory: () -> Unit
+    onOpenHistory: () -> Unit,
+    onToggleArmed: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val drawerState = androidx.compose.material3.rememberDrawerState(
@@ -172,6 +193,8 @@ private fun MainScreen(
                     lastScreenOff = uiState.lastScreenOffText,
                     latestAlarmText = uiState.latestAlarmText,
                     latestAlarmSubtitle = uiState.latestAlarmSubtitle,
+                    systemNextAlarmText = uiState.systemNextAlarmText,
+                    notificationWarningText = uiState.notificationWarningText,
                     pendingCountdown = if (uiState.showPending) uiState.pendingCountdownText else null
                 )
 
@@ -181,7 +204,7 @@ private fun MainScreen(
                 ) {
                     ArmButton(
                         armed = uiState.armed,
-                        onToggle = { viewModel.toggleArmed() },
+                        onToggle = onToggleArmed,
                         modifier = Modifier.fillMaxWidth()
                     )
                 }

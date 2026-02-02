@@ -34,14 +34,14 @@ class SettingsViewModel @Inject constructor(
                 nightEnd = settings.nightEnd,
                 autoArmStart = settings.autoArmStart,
                 autoArmEnd = settings.autoArmEnd,
-                alarmOffsetHours = com.sleep8.util.Constants.ALARM_OFFSET_HOURS.toString(),
+                alarmOffsetHours = settings.alarmOffsetHours.toString(),
                 confirmOffMinutes = settings.confirmOffMinutes.toString(),
                 snoozeEnabled = settings.snoozeMinutes != null,
                 snoozeMinutes = settings.snoozeMinutes?.toString() ?: "5",
                 armedDefault = settings.armedDefault,
                 autoArmEnabled = settings.autoArmEnabled
             )
-            appPreferences.alarmOffsetHours = com.sleep8.util.Constants.ALARM_OFFSET_HOURS
+            appPreferences.alarmOffsetHours = settings.alarmOffsetHours
         }
     }
 
@@ -49,11 +49,15 @@ class SettingsViewModel @Inject constructor(
         val exactAllowed = PermissionUtils.canScheduleExactAlarms(context)
         val batteryIgnored = PermissionUtils.isIgnoringBatteryOptimizations(context)
         val isServiceRunning = PermissionUtils.isServiceRunning(context, NightMonitorService::class.java)
+        val notificationsAllowed = PermissionUtils.canPostNotifications(context)
+        val overlayAllowed = PermissionUtils.canDrawOverlays(context)
         
         _uiState.value = _uiState.value.copy(
             exactAlarmAllowed = exactAllowed,
             batteryOptimizationsIgnored = batteryIgnored,
-            foregroundServiceActive = isServiceRunning
+            foregroundServiceActive = isServiceRunning,
+            notificationsAllowed = notificationsAllowed,
+            overlayAllowed = overlayAllowed
         )
     }
 
@@ -86,9 +90,8 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun updateAlarmOffset(value: String) {
-        _uiState.value = _uiState.value.copy(
-            alarmOffsetHours = com.sleep8.util.Constants.ALARM_OFFSET_HOURS.toString()
-        )
+        _uiState.value = _uiState.value.copy(alarmOffsetHours = value)
+        persist()
     }
 
     fun updateConfirmOffMinutes(value: String) {
@@ -129,7 +132,7 @@ class SettingsViewModel @Inject constructor(
 
     private suspend fun persistSettings(state: SettingsUiState) {
         val snooze = state.snoozeMinutes.toIntOrNull()
-        val offset = com.sleep8.util.Constants.ALARM_OFFSET_HOURS
+        val offset = state.alarmOffsetHours.toIntOrNull() ?: com.sleep8.util.Constants.ALARM_OFFSET_HOURS
         val confirmOff = state.confirmOffMinutes.toIntOrNull() ?: 10
         val settings = Settings(
             nightStart = state.nightStart,
@@ -148,5 +151,9 @@ class SettingsViewModel @Inject constructor(
 
     fun setBatteryOptAck(ack: Boolean) {
         appPreferences.batteryOptOutAck = ack
+    }
+
+    fun setNotificationsAsked() {
+        appPreferences.notificationsAsked = true
     }
 }

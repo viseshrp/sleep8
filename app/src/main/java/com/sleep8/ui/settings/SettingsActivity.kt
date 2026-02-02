@@ -2,6 +2,7 @@ package com.sleep8.ui.settings
 
 import android.app.TimePickerDialog
 import android.os.Bundle
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -72,6 +73,11 @@ private fun SettingsScreen(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     val scrollState = rememberScrollState()
+    val notificationPermissionLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) {
+        viewModel.refreshReliability(context)
+    }
 
     LaunchedEffect(Unit) {
         viewModel.refreshReliability(context)
@@ -135,9 +141,13 @@ private fun SettingsScreen(
 
             // Section: Alarm Behavior
             SettingsSection(title = "Alarm Behavior") {
-                Text(
-                    text = "Alarm duration: ${uiState.alarmOffsetHours} hours (fixed)",
-                    style = MaterialTheme.typography.bodyLarge
+                OutlinedTextField(
+                    value = uiState.alarmOffsetHours,
+                    onValueChange = viewModel::updateAlarmOffset,
+                    label = { Text("Alarm duration (hours)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    supportingText = { Text("Time after confirmed screen-off to ring") }
                 )
 
                 OutlinedTextField(
@@ -181,6 +191,19 @@ private fun SettingsScreen(
                 )
 
                 ChecklistRow(
+                    label = "Notifications",
+                    ok = uiState.notificationsAllowed,
+                    actionText = "Enable",
+                    description = "Needed for alarm notifications and lockscreen UI.",
+                    onAction = {
+                        if (PermissionUtils.needsPostNotifications(context)) {
+                            viewModel.setNotificationsAsked()
+                            notificationPermissionLauncher.launch(PermissionUtils.notificationsPermission())
+                        }
+                    }
+                )
+
+                ChecklistRow(
                     label = "Battery optimization",
                     ok = uiState.batteryOptimizationsIgnored,
                     actionText = "Request exclusion",
@@ -188,6 +211,16 @@ private fun SettingsScreen(
                     onAction = {
                         context.startActivity(PermissionUtils.batteryOptimizationIntent(context))
                         viewModel.setBatteryOptAck(true)
+                    }
+                )
+
+                ChecklistRow(
+                    label = "Draw over other apps (optional)",
+                    ok = uiState.overlayAllowed,
+                    actionText = "Allow",
+                    description = "Optional overlay support when alarm is ringing.",
+                    onAction = {
+                        context.startActivity(PermissionUtils.overlayIntent(context))
                     }
                 )
 

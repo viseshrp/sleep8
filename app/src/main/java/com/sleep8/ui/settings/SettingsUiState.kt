@@ -13,5 +13,7 @@ data class SettingsUiState(
     val autoArmEnabled: Boolean = false,
     val exactAlarmAllowed: Boolean = false,
     val batteryOptimizationsIgnored: Boolean = false,
-    val foregroundServiceActive: Boolean = false
+    val foregroundServiceActive: Boolean = false,
+    val notificationsAllowed: Boolean = false,
+    val overlayAllowed: Boolean = false
 )

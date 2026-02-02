@@ -22,6 +22,8 @@ fun StatusCard(
     lastScreenOff: String,
     latestAlarmText: String,
     latestAlarmSubtitle: String,
+    systemNextAlarmText: String,
+    notificationWarningText: String,
     pendingCountdown: String?
 ) {
     Card(colors = CardDefaults.cardColors(containerColor = Color(0x1AFFFFFF))) {
@@ -54,6 +56,19 @@ fun StatusCard(
                 if (latestAlarmSubtitle.isNotBlank()) {
                     Text(text = latestAlarmSubtitle, style = MaterialTheme.typography.bodySmall, color = Color(0xFF93A4BC))
                 }
+            }
+            if (systemNextAlarmText.isNotBlank()) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(text = "System next alarm", style = MaterialTheme.typography.labelMedium, color = Color(0xFFB8C3D6))
+                    Text(text = systemNextAlarmText, style = MaterialTheme.typography.bodyLarge, color = Color(0xFFE9EEF7))
+                }
+            }
+            if (notificationWarningText.isNotBlank()) {
+                Text(
+                    text = notificationWarningText,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFFFBBF24)
+                )
             }
             if (!pendingCountdown.isNullOrBlank()) {
                 Spacer(modifier = Modifier.height(4.dp))
