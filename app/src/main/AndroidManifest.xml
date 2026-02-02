@@ -19,6 +19,12 @@
         android:usesCleartextTraffic="false">
 
         <activity
+            android:name=".ui.alarm.AlarmActivity"
+            android:exported="false"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true" />
+
+        <activity
             android:name=".ui.settings.SettingsActivity"
             android:exported="false" />
 
@@ -64,7 +70,7 @@
             android:exported="false" />
 
         <receiver
-            android:name=".service.receiver.BackstopAlarmReceiver"
+            android:name=".service.receiver.AlarmReceiver"
             android:exported="false" />
 
         <receiver
