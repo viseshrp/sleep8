@@ -3,6 +3,7 @@ package com.sleep8.ui.alarm
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.os.Build
 import android.os.Bundle
 import android.view.WindowManager
@@ -39,6 +40,17 @@ import dagger.hilt.android.AndroidEntryPoint
 class AlarmActivity : ComponentActivity() {
 
     private val viewModel: AlarmViewModel by viewModels()
+    private var alarmId: Long = -1L
+
+    private val closeReceiver = object : android.content.BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            val action = intent?.action ?: return
+            if (action != Constants.ACTION_ALARM_DISMISS && action != Constants.ACTION_ALARM_SNOOZE) return
+            val targetId = intent.getLongExtra(Constants.EXTRA_ALARM_ID, -1L)
+            if (alarmId > 0 && targetId > 0 && targetId != alarmId) return
+            finish()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,7 +65,7 @@ class AlarmActivity : ComponentActivity() {
             )
         }
 
-        val alarmId = intent.getLongExtra(Constants.EXTRA_ALARM_ID, -1L)
+        alarmId = intent.getLongExtra(Constants.EXTRA_ALARM_ID, -1L)
         viewModel.setAlarmId(alarmId)
 
         setContent {
@@ -75,6 +87,24 @@ class AlarmActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        val filter = IntentFilter().apply {
+            addAction(Constants.ACTION_ALARM_DISMISS)
+            addAction(Constants.ACTION_ALARM_SNOOZE)
+        }
+        registerReceiver(closeReceiver, filter)
+    }
+
+    override fun onStop() {
+        try {
+            unregisterReceiver(closeReceiver)
+        } catch (_: IllegalArgumentException) {
+            // Receiver already unregistered
+        }
+        super.onStop()
     }
 
     companion object {

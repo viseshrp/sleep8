@@ -14,16 +14,19 @@ import android.os.Vibrator
 import android.os.VibratorManager
 import android.media.RingtoneManager
 import android.util.Log
-import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.sleep8.R
 import com.sleep8.data.repository.AlarmRepository
 import com.sleep8.data.repository.SettingsRepository
 import com.sleep8.domain.scheduler.AlarmScheduler
+import com.sleep8.domain.overlay.AlarmOverlayPolicy
+import com.sleep8.service.notification.AlarmNotificationFactory
 import com.sleep8.service.notification.NotificationHelper
+import com.sleep8.service.overlay.AlarmOverlayController
 import com.sleep8.ui.alarm.AlarmActivity
 import com.sleep8.util.AlarmIntents
 import com.sleep8.util.Constants
+import com.sleep8.util.PermissionUtils
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -46,6 +49,7 @@ class AlarmRingingService : Service() {
     private var focusRequest: AudioFocusRequest? = null
     private var alarmId: Long = -1L
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private var overlayController: AlarmOverlayController? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -53,15 +57,11 @@ class AlarmRingingService : Service() {
         alarmId = intent?.getLongExtra(Constants.EXTRA_ALARM_ID, -1L) ?: -1L
         when (intent?.action) {
             Constants.ACTION_ALARM_DISMISS -> {
-                stopRinging()
-                markDismissed()
-                stopSelf()
+                handleDismiss()
                 return START_NOT_STICKY
             }
             Constants.ACTION_ALARM_SNOOZE -> {
-                stopRinging()
-                scheduleSnooze()
-                stopSelf()
+                handleSnooze()
                 return START_NOT_STICKY
             }
             else -> startRinging()
@@ -86,20 +86,12 @@ class AlarmRingingService : Service() {
             settingsRepository.getSettings().snoozeMinutes != null
         }
         val snoozeIntent = if (snoozeEnabled) createActionIntent(Constants.ACTION_ALARM_SNOOZE) else null
-        val builder = NotificationCompat.Builder(this, Constants.ALARM_RINGING_CHANNEL_ID)
-            .setContentTitle(getString(R.string.alarm_notification_title))
-            .setContentText(getString(R.string.alarm_notification_text))
-            .setSmallIcon(R.drawable.ic_tile)
-            .setCategory(NotificationCompat.CATEGORY_ALARM)
-            .setPriority(NotificationCompat.PRIORITY_MAX)
-            .setFullScreenIntent(alarmIntent, true)
-            .setContentIntent(contentIntent)
-            .addAction(R.drawable.ic_tile, getString(R.string.alarm_dismiss), dismissIntent)
-            .setOngoing(true)
-        if (snoozeIntent != null) {
-            builder.addAction(R.drawable.ic_tile, getString(R.string.alarm_snooze), snoozeIntent)
-        }
-        val notification = builder.build()
+        val notification = AlarmNotificationFactory(this).buildRingingNotification(
+            alarmIntent = alarmIntent,
+            contentIntent = contentIntent,
+            dismissIntent = dismissIntent,
+            snoozeIntent = snoozeIntent
+        )
 
         notificationHelper.ensureAlarmRingingChannel()
         try {
@@ -109,6 +101,7 @@ class AlarmRingingService : Service() {
         }
         startAudio()
         startVibration()
+        maybeShowOverlay(snoozeEnabled)
     }
 
     private fun startAudio() {
@@ -168,6 +161,8 @@ class AlarmRingingService : Service() {
     }
 
     private fun stopRinging() {
+        overlayController?.dismiss()
+        overlayController = null
         mediaPlayer?.run {
             stop()
             release()
@@ -183,6 +178,20 @@ class AlarmRingingService : Service() {
         focusRequest = null
     }
 
+    private fun handleDismiss() {
+        stopRinging()
+        markDismissed()
+        broadcastAlarmAction(Constants.ACTION_ALARM_DISMISS)
+        stopSelf()
+    }
+
+    private fun handleSnooze() {
+        stopRinging()
+        scheduleSnooze()
+        broadcastAlarmAction(Constants.ACTION_ALARM_SNOOZE)
+        stopSelf()
+    }
+
     private fun markDismissed() {
         if (alarmId <= 0) return
         serviceScope.launch {
@@ -196,6 +205,30 @@ class AlarmRingingService : Service() {
             val settings = settingsRepository.getSettings()
             val minutes = settings.snoozeMinutes ?: return@launch
             alarmScheduler.scheduleSnooze(alarmId, minutes)
+        }
+    }
+
+    private fun broadcastAlarmAction(action: String) {
+        val intent = Intent(action).apply {
+            putExtra(Constants.EXTRA_ALARM_ID, alarmId)
+        }
+        sendBroadcast(intent)
+    }
+
+    private fun maybeShowOverlay(showSnooze: Boolean) {
+        if (alarmId <= 0) return
+        val settings = runBlocking { settingsRepository.getSettings() }
+        val overlayAllowed = PermissionUtils.canDrawOverlays(this)
+        if (!AlarmOverlayPolicy.shouldShowOverlay(settings.overlayEnabled, overlayAllowed)) return
+        overlayController = AlarmOverlayController(this).also { controller ->
+            controller.show(
+                showSnooze = showSnooze,
+                onDismiss = { handleDismiss() },
+                onSnooze = { handleSnooze() }
+            )
+        }
+        serviceScope.launch {
+            alarmRepository.markOverlayUsed(alarmId)
         }
     }
 
