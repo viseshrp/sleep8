@@ -6,11 +6,12 @@ import android.content.Intent
 import android.os.PowerManager
 import com.sleep8.data.repository.SettingsRepository
 import com.sleep8.data.repository.SessionRepository
+import com.sleep8.data.repository.AlarmRepository
 import com.sleep8.domain.manager.ArmManager
 import com.sleep8.domain.manager.StateMachineManager
 import com.sleep8.domain.model.AppState
 import com.sleep8.domain.scheduler.ConfirmOffScheduler
-import com.sleep8.domain.scheduler.OsAlarmCreator
+import com.sleep8.domain.scheduler.AlarmScheduler
 import com.sleep8.domain.scheduler.WindowScheduler
 import com.sleep8.domain.state.StateHolder
 import com.sleep8.service.ServiceController
@@ -28,10 +29,11 @@ class BootReceiver : BroadcastReceiver() {
 
     @Inject lateinit var sessionRepository: SessionRepository
     @Inject lateinit var settingsRepository: SettingsRepository
+    @Inject lateinit var alarmRepository: AlarmRepository
     @Inject lateinit var stateHolder: StateHolder
     @Inject lateinit var serviceController: ServiceController
     @Inject lateinit var confirmOffScheduler: ConfirmOffScheduler
-    @Inject lateinit var osAlarmCreator: OsAlarmCreator
+    @Inject lateinit var alarmScheduler: AlarmScheduler
     @Inject lateinit var windowScheduler: WindowScheduler
     @Inject lateinit var stateMachineManager: StateMachineManager
     @Inject lateinit var armManager: ArmManager
@@ -119,7 +121,7 @@ class BootReceiver : BroadcastReceiver() {
                 if (screenOff) {
                     val nowMs = System.currentTimeMillis()
                     if (nowMs >= pendingDeadlineTs) {
-                        osAlarmCreator.createAlarm(pendingScreenOffTs)
+                        alarmScheduler.scheduleSleepAlarm(pendingScreenOffTs, System.currentTimeMillis())
                         stateHolder.clearPendingCandidate()
                         stateHolder.setState(AppState.ARMED_ALARM_SET)
                     } else {
@@ -129,6 +131,13 @@ class BootReceiver : BroadcastReceiver() {
                 } else {
                     stateMachineManager.onScreenOn()
                 }
+            }
+
+            val scheduled = alarmRepository.getLatestScheduledRecord()
+            if (scheduled != null) {
+                val nowMs = System.currentTimeMillis()
+                val triggerAt = if (scheduled.triggerAt <= nowMs) nowMs + 1_000L else scheduled.triggerAt
+                alarmScheduler.scheduleImmediate(scheduled.id, triggerAt)
             }
             pendingResult.finish()
         }
