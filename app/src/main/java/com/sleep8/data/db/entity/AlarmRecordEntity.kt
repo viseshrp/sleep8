@@ -30,6 +30,7 @@ data class AlarmRecordEntity(
     @ColumnInfo(name = "request_code") val requestCode: Int,
     @ColumnInfo(name = "source") val source: String,
     @ColumnInfo(name = "status") val status: String,
+    @ColumnInfo(name = "canceled_reason") val canceledReason: String?,
     @ColumnInfo(name = "fired_at") val firedAt: Long?,
     @ColumnInfo(name = "dismissed_at") val dismissedAt: Long?,
     @ColumnInfo(name = "snoozed_at") val snoozedAt: Long?,

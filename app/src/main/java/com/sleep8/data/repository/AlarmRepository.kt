@@ -3,6 +3,7 @@ package com.sleep8.data.repository
 import com.sleep8.data.db.dao.AlarmRecordDao
 import com.sleep8.data.db.entity.AlarmRecordEntity
 import com.sleep8.domain.model.AlarmRecord
+import com.sleep8.domain.model.AlarmCancelReason
 import com.sleep8.domain.model.AlarmSource
 import com.sleep8.domain.model.AlarmStatus
 
@@ -32,12 +33,20 @@ class AlarmRepository(private val alarmRecordDao: AlarmRecordDao) {
         return alarmRecordDao.getLatestByStatus(AlarmStatus.SCHEDULED.name)?.toDomain()
     }
 
+    suspend fun getScheduledRecords(): List<AlarmRecord> {
+        return alarmRecordDao.getRecordsByStatus(AlarmStatus.SCHEDULED.name).map { it.toDomain() }
+    }
+
     suspend fun markFired(alarmId: Long, firedAt: Long) {
         alarmRecordDao.markFired(alarmId, AlarmStatus.FIRED.name, firedAt)
     }
 
     suspend fun markDismissed(alarmId: Long, dismissedAt: Long) {
         alarmRecordDao.markDismissed(alarmId, AlarmStatus.DISMISSED.name, dismissedAt)
+    }
+
+    suspend fun markCanceled(alarmId: Long, reason: AlarmCancelReason?) {
+        alarmRecordDao.markCanceled(alarmId, AlarmStatus.CANCELED.name, reason?.name)
     }
 
     suspend fun markSnoozed(alarmId: Long, snoozedAt: Long, snoozedUntil: Long) {
@@ -66,6 +75,7 @@ private fun AlarmRecord.toEntity(): AlarmRecordEntity {
         requestCode = requestCode,
         source = source.name,
         status = status.name,
+        canceledReason = canceledReason?.name,
         firedAt = firedAt,
         dismissedAt = dismissedAt,
         snoozedAt = snoozedAt,
@@ -88,6 +98,7 @@ private fun AlarmRecordEntity.toDomain(): AlarmRecord {
         requestCode = requestCode,
         source = AlarmSource.valueOf(source),
         status = AlarmStatus.valueOf(status),
+        canceledReason = canceledReason?.let { AlarmCancelReason.valueOf(it) },
         firedAt = firedAt,
         dismissedAt = dismissedAt,
         snoozedAt = snoozedAt,

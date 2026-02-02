@@ -31,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.sleep8.domain.model.AlarmCancelReason
 import com.sleep8.domain.model.AlarmRecord
 import com.sleep8.util.AlarmIntents
 import com.sleep8.util.TimeUtils
@@ -158,6 +159,13 @@ private fun AlarmDetailCard(alarm: AlarmRecord) {
             style = MaterialTheme.typography.bodyMedium,
             color = Color(0xFFB8C3D6)
         )
+        alarm.canceledReason?.let {
+            Text(
+                text = "Canceled: ${formatCancelReason(it)}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color(0xFFB8C3D6)
+            )
+        }
         alarm.firedAt?.let {
             Text(
                 text = "Fired ${TimeUtils.formatAlarmTime(TimeUtils.toLocalTime(it))}",
@@ -218,6 +226,17 @@ private fun AlarmHistoryRow(alarm: AlarmRecord) {
                 color = Color(0xFFE9EEF7)
             )
         }
+        alarm.canceledReason?.let {
+            Spacer(modifier = Modifier.height(6.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(text = "Canceled", style = MaterialTheme.typography.labelMedium, color = Color(0xFFB8C3D6))
+                Text(
+                    text = formatCancelReason(it),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = Color(0xFFE9EEF7)
+                )
+            }
+        }
         Spacer(modifier = Modifier.height(6.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(text = "Duration", style = MaterialTheme.typography.labelMedium, color = Color(0xFFB8C3D6))
@@ -249,5 +268,14 @@ private fun AlarmHistoryRow(alarm: AlarmRecord) {
                 )
             }
         }
+    }
+}
+
+private fun formatCancelReason(reason: AlarmCancelReason): String {
+    return when (reason) {
+        AlarmCancelReason.REPLACED_BY_NEW_ALARM -> "Replaced by new alarm"
+        AlarmCancelReason.USER_DISARM -> "Canceled on disarm"
+        AlarmCancelReason.SNOOZE_REPLACE -> "Replaced by snooze"
+        AlarmCancelReason.REBOOT_CLEANUP -> "Cleaned up after reboot"
     }
 }

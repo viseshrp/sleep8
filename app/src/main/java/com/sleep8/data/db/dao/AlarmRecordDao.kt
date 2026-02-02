@@ -26,11 +26,17 @@ interface AlarmRecordDao {
     @Query("SELECT * FROM alarm_records WHERE status = :status ORDER BY trigger_at DESC LIMIT 1")
     suspend fun getLatestByStatus(status: String): AlarmRecordEntity?
 
+    @Query("SELECT * FROM alarm_records WHERE status = :status ORDER BY scheduled_at DESC")
+    suspend fun getRecordsByStatus(status: String): List<AlarmRecordEntity>
+
     @Query("UPDATE alarm_records SET status = :status, fired_at = :firedAt WHERE alarm_id = :alarmId")
     suspend fun markFired(alarmId: Long, status: String, firedAt: Long)
 
     @Query("UPDATE alarm_records SET status = :status, dismissed_at = :dismissedAt WHERE alarm_id = :alarmId")
     suspend fun markDismissed(alarmId: Long, status: String, dismissedAt: Long)
+
+    @Query("UPDATE alarm_records SET status = :status, canceled_reason = :reason WHERE alarm_id = :alarmId")
+    suspend fun markCanceled(alarmId: Long, status: String, reason: String?)
 
     @Query(
         "UPDATE alarm_records SET status = :status, snoozed_at = :snoozedAt, " +

@@ -12,6 +12,7 @@ data class AlarmRecord(
     val requestCode: Int,
     val source: AlarmSource,
     val status: AlarmStatus,
+    val canceledReason: AlarmCancelReason?,
     val firedAt: Long?,
     val dismissedAt: Long?,
     val snoozedAt: Long?,
@@ -24,10 +25,18 @@ enum class AlarmStatus {
     SCHEDULED,
     FIRED,
     DISMISSED,
-    SNOOZED
+    SNOOZED,
+    CANCELED
 }
 
 enum class AlarmSource {
     SLEEP_AUTOMATION,
     SNOOZE
+}
+
+enum class AlarmCancelReason {
+    REPLACED_BY_NEW_ALARM,
+    USER_DISARM,
+    SNOOZE_REPLACE,
+    REBOOT_CLEANUP
 }
