@@ -46,7 +46,7 @@ Physical device testing is required; emulators are not authoritative for exact a
 - Theme toggle switches dark/light mode state from Settings.
 - Alarm list content (empty state, toggles).
 - Alarm history page and back navigation.
-- Ringing UI (Dismiss-only, no top app bar/back/menu).
+- Ringing UI (alarm info visible, sticky Dismiss, no top app bar/back/menu).
 - Main navigation drawer flows (hamburger/menu selections).
 - Navigation remains functional across Home → Alarm/History/Settings.
 
@@ -59,6 +59,7 @@ Physical device testing is required; emulators are not authoritative for exact a
 - Alarm fires and displays full-screen UI on lockscreen.
 - Overlay toggle on: overlay appears while ringing (permission granted).
 - Overlay toggle on, permission denied: alarm still rings; overlay not shown.
+- Overlay toggle off: alarm always shows full-screen ringing activity (no overlay).
 - Notification permission requested on first arm; deny → alarm still rings without FGS notification.
 - ACTION_SHOW_ALARMS opens Alarm History screen.
 - Deep links:

@@ -1,5 +1,5 @@
 package com.sleep8.testutil
 
-import androidx.activity.ComponentActivity
+import androidx.appcompat.app.AppCompatActivity
 
-class TestActivity : ComponentActivity()
+class TestActivity : AppCompatActivity()

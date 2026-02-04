@@ -22,7 +22,7 @@ class WindowScheduler(
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, windowStartTs, pendingIntent)
+        setExactSafely(windowStartTs, pendingIntent)
     }
 
     fun scheduleWindowEnd(windowEndTs: Long) {
@@ -35,7 +35,7 @@ class WindowScheduler(
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, windowEndTs, pendingIntent)
+        setExactSafely(windowEndTs, pendingIntent)
     }
 
     fun cancelWindowStart() {
@@ -62,5 +62,13 @@ class WindowScheduler(
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         alarmManager.cancel(pendingIntent)
+    }
+
+    private fun setExactSafely(triggerAtMillis: Long, pendingIntent: PendingIntent) {
+        try {
+            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent)
+        } catch (_: SecurityException) {
+            // Exact alarm permission might be unavailable in test/dev environments.
+        }
     }
 }

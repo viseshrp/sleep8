@@ -22,6 +22,7 @@ Automated unit, integration, and Compose UI tests cover most logic and UI flows;
 - Contrast remains readable in dark and light themes.
 - Toggle dark mode in Settings and verify every screen updates immediately.
 - Ringing UI presents AOSP-like layout (large centered time, subtle label, dismiss-only).
+- Ringing UI shows alarm info text and a sticky red dismiss button at bottom.
 - Ringing dismiss action stops audio/vibration and closes UI instantly.
 - Icon checks on emulator/device:
   - launcher/home screen icon
@@ -36,9 +37,9 @@ Automated unit, integration, and Compose UI tests cover most logic and UI flows;
 - Duration inputs are always Hours + Minutes fields.
 
 ## Overlay (Optional)
-- Enable overlay toggle → if permission granted, overlay appears while alarm is ringing.
+- Enable overlay toggle + grant permission → overlay appears while alarm is ringing.
 - Enable overlay toggle without permission → permission screen opens; overlay does not show until granted.
-- Disable overlay toggle → only AlarmRingingActivity is shown.
+- Disable overlay toggle (even with permission granted) → only AlarmRingingActivity is shown.
 
 ## Notifications / Permission
 - Deny POST_NOTIFICATIONS → alarm still rings; UI shows warning about limited lockscreen UX.
