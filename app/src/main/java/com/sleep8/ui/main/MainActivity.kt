@@ -2,33 +2,37 @@ package com.sleep8.ui.main
 
 import android.content.Intent
 import android.os.Bundle
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.NavigationDrawerItemDefaults
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -37,18 +41,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import com.sleep8.data.preferences.AppPreferences
+import com.sleep8.service.AlarmRingingService
 import com.sleep8.ui.components.ArmButton
 import com.sleep8.ui.components.StatusCard
 import com.sleep8.ui.history.AlarmHistoryActivity
 import com.sleep8.ui.settings.SettingsActivity
 import com.sleep8.ui.theme.Sleep8Theme
-import com.sleep8.data.preferences.AppPreferences
-import com.sleep8.service.AlarmRingingService
 import com.sleep8.util.AlarmUiRouter
 import com.sleep8.util.PermissionUtils
 import dagger.hilt.android.AndroidEntryPoint
@@ -59,7 +61,9 @@ import javax.inject.Inject
 class MainActivity : ComponentActivity() {
 
     private val viewModel: MainViewModel by viewModels()
-    @Inject lateinit var appPreferences: AppPreferences
+
+    @Inject
+    lateinit var appPreferences: AppPreferences
 
     private val notificationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -71,6 +75,7 @@ class MainActivity : ComponentActivity() {
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
         splashScreen.setKeepOnScreenCondition { !viewModel.startupReady.value }
+
         setContent {
             Sleep8Theme {
                 Surface(modifier = Modifier.fillMaxSize()) {
@@ -123,6 +128,13 @@ private fun MainScreen(
     )
 }
 
+private data class HomeAction(
+    val title: String,
+    val subtitle: String,
+    val onClick: () -> Unit
+)
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun MainContent(
     uiState: MainUiState,
@@ -135,11 +147,16 @@ internal fun MainContent(
         initialValue = androidx.compose.material3.DrawerValue.Closed
     )
     val scope = rememberCoroutineScope()
-    val background = Brush.linearGradient(
-        colors = listOf(
-            Color(0xFF0B1020),
-            Color(0xFF101C2E),
-            Color(0xFF12283A)
+    val actions = listOf(
+        HomeAction(
+            title = "Alarm list",
+            subtitle = "Manage scheduled alarms",
+            onClick = onOpenAlarm
+        ),
+        HomeAction(
+            title = "Alarm history",
+            subtitle = "Review recent alarm events",
+            onClick = onOpenHistory
         )
     )
 
@@ -149,8 +166,8 @@ internal fun MainContent(
             ModalDrawerSheet {
                 Text(
                     text = "Sleep8",
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(20.dp)
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 20.dp)
                 )
                 NavigationDrawerItem(
                     label = { Text("Home") },
@@ -177,6 +194,7 @@ internal fun MainContent(
                     modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                 )
                 NavigationDrawerItem(
+                    icon = { Icon(Icons.Default.Settings, contentDescription = null) },
                     label = { Text("Settings") },
                     selected = false,
                     onClick = {
@@ -188,75 +206,103 @@ internal fun MainContent(
             }
         }
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(background)
-                .padding(24.dp)
-        ) {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.SpaceBetween,
-                horizontalAlignment = Alignment.CenterHorizontally
+        Scaffold(
+            topBar = {
+                CenterAlignedTopAppBar(
+                    title = { Text(text = "Sleep8") },
+                    navigationIcon = {
+                        IconButton(
+                            onClick = { scope.launch { drawerState.open() } },
+                            modifier = Modifier.testTag("main-menu")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Menu,
+                                contentDescription = "Open menu"
+                            )
+                        }
+                    }
+                )
+            }
+        ) { paddingValues ->
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .statusBarsPadding()
-                        .padding(start = 4.dp),
-                    horizontalArrangement = Arrangement.Start,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(
-                        onClick = { scope.launch { drawerState.open() } },
-                        modifier = Modifier.size(48.dp)
+                item {
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                        shape = MaterialTheme.shapes.large
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Menu,
-                            contentDescription = "Open menu",
-                            tint = Color(0xFFE9EEF7)
-                        )
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp, vertical = 24.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(text = "Tonight", style = MaterialTheme.typography.titleLarge)
+                            Text(
+                                text = "Sleep8 monitors screen-off activity and schedules your wake alarm automatically.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 }
 
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Image(
-                        painter = painterResource(id = com.sleep8.R.mipmap.ic_launcher_foreground),
-                        contentDescription = "Sleep8",
-                        modifier = Modifier
-                            .clip(MaterialTheme.shapes.large)
-                            .size(96.dp)
-                    )
-                    Text(
-                        text = "Sleep8",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = Color(0xFFE9EEF7)
+                item {
+                    StatusCard(
+                        status = uiState.statusText,
+                        armedUntil = uiState.armedUntilText,
+                        lastScreenOff = uiState.lastScreenOffText,
+                        latestAlarmText = uiState.latestAlarmText,
+                        latestAlarmSubtitle = uiState.latestAlarmSubtitle,
+                        notificationWarningText = uiState.notificationWarningText,
+                        pendingCountdown = if (uiState.showPending) uiState.pendingCountdownText else null
                     )
                 }
 
-                StatusCard(
-                    status = uiState.statusText,
-                    armedUntil = uiState.armedUntilText,
-                    lastScreenOff = uiState.lastScreenOffText,
-                    latestAlarmText = uiState.latestAlarmText,
-                    latestAlarmSubtitle = uiState.latestAlarmSubtitle,
-                    notificationWarningText = uiState.notificationWarningText,
-                    pendingCountdown = if (uiState.showPending) uiState.pendingCountdownText else null
-                )
-
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
+                item {
                     ArmButton(
                         armed = uiState.armed,
                         onToggle = onToggleArmed,
                         modifier = Modifier.fillMaxWidth()
                     )
+                }
+
+                item {
+                    Text(
+                        text = "Quick access",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(top = 8.dp, start = 4.dp)
+                    )
+                }
+
+                items(actions) { action ->
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                        shape = MaterialTheme.shapes.medium,
+                        onClick = action.onClick
+                    ) {
+                        ListItem(
+                            headlineContent = { Text(action.title) },
+                            supportingContent = { Text(action.subtitle) },
+                            trailingContent = {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
+                        )
+                    }
                 }
             }
         }
