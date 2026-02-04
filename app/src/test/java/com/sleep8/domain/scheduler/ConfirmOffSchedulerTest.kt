@@ -6,6 +6,7 @@ import androidx.test.core.app.ApplicationProvider
 import com.sleep8.data.preferences.AppPreferences
 import com.sleep8.testutil.InMemorySharedPreferences
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -35,7 +36,8 @@ class ConfirmOffSchedulerTest {
 
         val shadowAlarmManager = shadowOf(alarmManager)
         val scheduled = shadowAlarmManager.nextScheduledAlarm
-        assertTrue(scheduled.triggerAtTime in (screenOffTime + 600_000L - 1_000L)..(screenOffTime + 600_000L + 1_000L))
+        assertNotNull(scheduled)
+        assertTrue(scheduled!!.triggerAtTime in (screenOffTime + 600_000L - 1_000L)..(screenOffTime + 600_000L + 1_000L))
     }
 
     @Test
@@ -47,7 +49,8 @@ class ConfirmOffSchedulerTest {
 
         val shadowAlarmManager = shadowOf(alarmManager)
         val scheduled = shadowAlarmManager.nextScheduledAlarm
-        assertEquals(secondOff + 600_000L, scheduled.triggerAtTime)
+        assertNotNull(scheduled)
+        assertEquals(secondOff + 600_000L, scheduled!!.triggerAtTime)
     }
 
     @Test
@@ -67,6 +70,7 @@ class ConfirmOffSchedulerTest {
 
         val shadowAlarmManager = shadowOf(alarmManager)
         val scheduled = shadowAlarmManager.nextScheduledAlarm
-        assertEquals(screenOffTime + 300_000L, scheduled.triggerAtTime)
+        assertNotNull(scheduled)
+        assertEquals(screenOffTime + 300_000L, scheduled!!.triggerAtTime)
     }
 }

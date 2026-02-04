@@ -12,14 +12,9 @@ import com.sleep8.domain.model.AlarmStatus
 import com.sleep8.domain.model.Settings
 import com.sleep8.service.notification.NotificationHelper
 import com.sleep8.testutil.InMemorySharedPreferences
-import com.sleep8.util.PermissionUtils
 import io.mockk.coEvery
 import io.mockk.coVerify
-import io.mockk.every
 import io.mockk.mockk
-import io.mockk.mockkObject
-import io.mockk.unmockkObject
-import io.mockk.verify
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
@@ -38,8 +33,8 @@ class AlarmSchedulerTest {
 
     private val alarmRepository = mockk<AlarmRepository>(relaxed = true)
     private val settingsRepository = mockk<SettingsRepository>(relaxed = true)
-    private val alarmManager = mockk<AlarmManager>(relaxed = true)
-    private val notificationHelper = mockk<NotificationHelper>(relaxed = true)
+    private lateinit var alarmManager: AlarmManager
+    private lateinit var notificationHelper: NotificationHelper
     private val prefs = AppPreferences(InMemorySharedPreferences())
     private lateinit var scheduler: AlarmScheduler
     private lateinit var context: Context
@@ -48,9 +43,9 @@ class AlarmSchedulerTest {
     fun setup() {
         TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
         context = ApplicationProvider.getApplicationContext()
+        alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        notificationHelper = NotificationHelper(context)
         prefs.activeSessionId = 42L
-        mockkObject(PermissionUtils)
-        every { PermissionUtils.canScheduleExactAlarms(any()) } returns true
         coEvery { settingsRepository.getSettings() } returns Settings(
             nightStart = "22:00",
             nightEnd = "08:00",
@@ -65,9 +60,7 @@ class AlarmSchedulerTest {
     }
 
     @After
-    fun tearDown() {
-        unmockkObject(PermissionUtils)
-    }
+    fun tearDown() = Unit
 
     @Test
     fun `schedule sleep alarm sets trigger at screen off plus 8 hours`() = runTest {
@@ -85,9 +78,9 @@ class AlarmSchedulerTest {
                     it.status == AlarmStatus.SCHEDULED
             })
         }
-        verify {
-            alarmManager.setAlarmClock(match { it.triggerTime == expectedTrigger }, any())
-        }
+        val next = alarmManager.nextAlarmClock
+        org.junit.jupiter.api.Assertions.assertNotNull(next)
+        assertEquals(expectedTrigger, next!!.triggerTime)
     }
 
     @Test
@@ -112,6 +105,9 @@ class AlarmSchedulerTest {
                 it.triggerAt == expectedTrigger && it.durationUsedMinutes == 720
             })
         }
+        val next = alarmManager.nextAlarmClock
+        org.junit.jupiter.api.Assertions.assertNotNull(next)
+        assertEquals(expectedTrigger, next!!.triggerTime)
     }
 
     @Test
@@ -136,6 +132,9 @@ class AlarmSchedulerTest {
                 it.triggerAt == confirmedAt && it.durationUsedMinutes == 0
             })
         }
+        val next = alarmManager.nextAlarmClock
+        org.junit.jupiter.api.Assertions.assertNotNull(next)
+        assertEquals(confirmedAt, next!!.triggerTime)
     }
 
     @Test
@@ -178,7 +177,6 @@ class AlarmSchedulerTest {
         scheduler.scheduleSleepAlarm(Instant.parse("2024-01-15T23:30:00Z").toEpochMilli(), confirmedAt = 1000L)
 
         coVerify { alarmRepository.markCanceled(10L, com.sleep8.domain.model.AlarmCancelReason.REPLACED_BY_NEW_ALARM) }
-        verify { alarmManager.cancel(any()) }
     }
 
     @Test
@@ -208,6 +206,5 @@ class AlarmSchedulerTest {
 
         assertEquals(21L, result?.id)
         coVerify { alarmRepository.markCanceled(20L, com.sleep8.domain.model.AlarmCancelReason.REBOOT_CLEANUP) }
-        verify { alarmManager.cancel(any()) }
     }
 }

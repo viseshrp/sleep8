@@ -2,18 +2,21 @@ package com.sleep8.integration
 
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.sleep8.data.db.Sleep8Database
 import com.sleep8.data.db.entity.AlarmRecordEntity
 import com.sleep8.data.db.entity.ArmSessionEntity
 import com.sleep8.data.db.entity.ScreenEventEntity
+import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
-@RunWith(AndroidJUnit4::class)
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [31])
 class DatabaseIntegrationTest {
 
     private lateinit var db: Sleep8Database
@@ -32,7 +35,7 @@ class DatabaseIntegrationTest {
     }
 
     @Test
-    fun `screen events linked to session`() {
+    fun `screen events linked to session`() = runTest {
         val sessionId = db.armSessionDao().insert(createSessionEntity())
         val eventId = db.screenEventDao().insert(
             createScreenEventEntity(sessionId = sessionId)
@@ -44,7 +47,7 @@ class DatabaseIntegrationTest {
     }
 
     @Test
-    fun `alarm records linked to session`() {
+    fun `alarm records linked to session`() = runTest {
         val sessionId = db.armSessionDao().insert(createSessionEntity())
         db.alarmRecordDao().insert(createAlarmRecordEntity(sessionId = sessionId))
 
@@ -53,7 +56,7 @@ class DatabaseIntegrationTest {
     }
 
     @Test
-    fun `cascade delete removes related records`() {
+    fun `cascade delete removes related records`() = runTest {
         val sessionId = db.armSessionDao().insert(createSessionEntity())
         db.screenEventDao().insert(createScreenEventEntity(sessionId = sessionId))
         db.alarmRecordDao().insert(createAlarmRecordEntity(sessionId = sessionId))

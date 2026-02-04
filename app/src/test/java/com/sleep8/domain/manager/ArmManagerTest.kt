@@ -18,6 +18,7 @@ import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import java.time.LocalTime
 
 class ArmManagerTest {
 
@@ -44,8 +45,8 @@ class ArmManagerTest {
     @Test
     fun `arm creates session with correct source`() = runTest {
         val settings = Settings(
-            nightStart = "22:00",
-            nightEnd = "08:00",
+            nightStart = "00:00",
+            nightEnd = "23:59",
             confirmOffMinutes = 10,
             alarmDurationMinutes = 480,
             overlayEnabled = false,
@@ -64,9 +65,12 @@ class ArmManagerTest {
 
     @Test
     fun `arm starts foreground service`() = runTest {
+        val now = LocalTime.now()
+        val start = now.minusMinutes(1)
+        val end = now.plusMinutes(1)
         val settings = Settings(
-            nightStart = "22:00",
-            nightEnd = "08:00",
+            nightStart = start.toString().substring(0, 5),
+            nightEnd = end.toString().substring(0, 5),
             confirmOffMinutes = 10,
             alarmDurationMinutes = 480,
             overlayEnabled = false,

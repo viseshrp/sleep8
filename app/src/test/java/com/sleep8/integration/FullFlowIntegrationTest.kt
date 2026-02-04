@@ -19,12 +19,8 @@ import com.sleep8.domain.scheduler.WindowScheduler
 import com.sleep8.domain.state.StateHolder
 import com.sleep8.service.ServiceController
 import com.sleep8.service.notification.NotificationHelper
-import com.sleep8.util.PermissionUtils
 import com.sleep8.testutil.InMemorySharedPreferences
-import io.mockk.every
 import io.mockk.mockk
-import io.mockk.mockkObject
-import io.mockk.unmockkObject
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -72,16 +68,13 @@ class FullFlowIntegrationTest {
         val confirmScheduler = mockk<ConfirmOffScheduler>(relaxed = true)
         val nightWindowScheduler = mockk<NightWindowScheduler>(relaxed = true)
 
-        mockkObject(PermissionUtils)
-        every { PermissionUtils.canScheduleExactAlarms(any()) } returns true
-
         alarmScheduler = AlarmScheduler(
             context,
-            mockk(relaxed = true),
+            context.getSystemService(Context.ALARM_SERVICE) as android.app.AlarmManager,
             alarmRepository,
             settingsRepository,
             appPreferences,
-            mockk<NotificationHelper>(relaxed = true)
+            NotificationHelper(context)
         )
 
         armManager = ArmManager(
@@ -98,7 +91,6 @@ class FullFlowIntegrationTest {
 
     @After
     fun teardown() {
-        unmockkObject(PermissionUtils)
     }
 
     @Test

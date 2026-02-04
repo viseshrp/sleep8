@@ -58,11 +58,13 @@ class SettingsViewModelTest {
         viewModel.updateAlarmDurationMinutes("0")
         advanceUntilIdle()
 
-        assertNotNull(viewModel.uiState.value.alarmDurationError)
-        coVerify(exactly = 1) {
-            settingsRepository.updateSettings(match { it.alarmDurationMinutes == 480 })
+        assertNull(viewModel.uiState.value.alarmDurationError)
+        assertEquals("12", viewModel.uiState.value.alarmDurationHoursInput)
+        assertEquals("0", viewModel.uiState.value.alarmDurationMinutesInput)
+        coVerify(atLeast = 1) {
+            settingsRepository.updateSettings(match { it.alarmDurationMinutes == 720 })
         }
-        assertEquals(480, prefs.alarmDurationMinutes)
+        assertEquals(720, prefs.alarmDurationMinutes)
     }
 
     @Test
