@@ -8,8 +8,6 @@ import com.sleep8.domain.scheduler.ConfirmOffScheduler
 import com.sleep8.domain.state.StateHolder
 import com.sleep8.domain.scheduler.NightWindowScheduler
 import com.sleep8.domain.scheduler.WindowScheduler
-import com.sleep8.domain.scheduler.AlarmScheduler
-import com.sleep8.domain.model.AlarmCancelReason
 import com.sleep8.service.ServiceController
 import com.sleep8.util.TimeUtils
 import kotlinx.coroutines.CoroutineScope
@@ -29,8 +27,7 @@ class ArmManager(
     private val windowScheduler: WindowScheduler,
     private val settingsRepository: SettingsRepository,
     private val nightWindowScheduler: NightWindowScheduler,
-    private val confirmOffScheduler: ConfirmOffScheduler,
-    private val alarmScheduler: AlarmScheduler
+    private val confirmOffScheduler: ConfirmOffScheduler
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -63,13 +60,8 @@ class ArmManager(
         stateHolder.setActiveSession(null)
         // Ring-style: manual disarm never cancels Auto-Arm scheduling.
         stateHolder.setArmed(false)
-        if (source != ArmSource.SCHEDULED) {
-            stateHolder.clearPendingCandidate()
-            confirmOffScheduler.cancelConfirmation()
-        } else {
-            confirmOffScheduler.cancelConfirmationTimerOnly()
-        }
-        alarmScheduler.cancelActiveAlarms(AlarmCancelReason.USER_DISARM)
+        stateHolder.clearPendingCandidate()
+        confirmOffScheduler.cancelConfirmation()
         serviceController.stopNightMonitorService()
         nightWindowScheduler.cancelWindowStart()
         nightWindowScheduler.cancelWindowEnd()
