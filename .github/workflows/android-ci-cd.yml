@@ -178,17 +178,6 @@ jobs:
           fail_ci_if_error: true
           verbose: true
 
-      - name: Cancel workflow on failure
-        if: ${{ failure() }}
-        uses: actions/github-script@v7
-        with:
-          script: |
-            await github.rest.actions.cancelWorkflowRun({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              run_id: context.runId
-            });
-
   ui_tests:
     name: UI Tests (Espresso)
     runs-on: ubuntu-latest
@@ -260,33 +249,6 @@ jobs:
           path: app/build/outputs/androidTest-results/connected/**/*.xml
           reporter: java-junit
           fail-on-error: false
-
-      - name: Cancel workflow on failure
-        if: ${{ failure() }}
-        uses: actions/github-script@v7
-        with:
-          script: |
-            await github.rest.actions.cancelWorkflowRun({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              run_id: context.runId
-            });
-
-  quality_cancel:
-    name: Cancel On Quality Failure
-    runs-on: ubuntu-latest
-    needs: [quality]
-    if: ${{ failure() }}
-    steps:
-      - name: Cancel workflow on failure
-        uses: actions/github-script@v7
-        with:
-          script: |
-            await github.rest.actions.cancelWorkflowRun({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              run_id: context.runId
-            });
 
   build_release:
     name: Build / Package
