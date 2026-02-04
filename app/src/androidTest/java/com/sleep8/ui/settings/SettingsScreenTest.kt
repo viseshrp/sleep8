@@ -3,6 +3,7 @@ package com.sleep8.ui.settings
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performScrollTo
 import com.sleep8.data.preferences.AppPreferences
 import com.sleep8.data.repository.SettingsRepository
 import com.sleep8.domain.manager.ArmManager
@@ -46,12 +47,12 @@ class SettingsScreenTest {
         composeRule.onNodeWithText("Appearance").assertExists()
         composeRule.onNodeWithText("Dark mode").assertExists()
         composeRule.onNodeWithText("Auto-arm Schedule").assertExists()
-        composeRule.onNodeWithText("Alarm Behavior").assertExists()
-        composeRule.onNodeWithText("System Reliability").assertExists()
+        composeRule.onNodeWithText("Alarm Behavior").performScrollTo().assertExists()
+        composeRule.onNodeWithText("System Reliability").performScrollTo().assertExists()
 
-        composeRule.onNodeWithText("Exact alarms").assertExists()
-        composeRule.onNodeWithText("Notifications").assertExists()
-        composeRule.onNodeWithText("Battery optimization").assertExists()
-        composeRule.onNodeWithText("Draw over other apps (optional)").assertExists()
+        composeRule.onNodeWithText("Exact alarms").performScrollTo().assertExists()
+        composeRule.onNodeWithText("Notifications").performScrollTo().assertExists()
+        composeRule.onNodeWithText("Battery optimization").performScrollTo().assertExists()
+        composeRule.onNodeWithText("Draw over other apps (optional)").performScrollTo().assertExists()
     }
 }
