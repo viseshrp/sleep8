@@ -246,7 +246,7 @@ jobs:
         uses: dorny/test-reporter@v1
         with:
           name: Instrumentation Tests
-          path: app/build/outputs/androidTest-results/connected/*.xml
+          path: app/build/outputs/androidTest-results/connected/**/*.xml
           reporter: java-junit
           fail-on-error: false
 
