@@ -26,6 +26,7 @@ on:
     - cron: "0 2 * * *"
 
 permissions:
+  actions: write
   contents: read
   checks: write
   pull-requests: write
@@ -96,7 +97,6 @@ jobs:
   tests:
     name: Unit + Integration + Coverage
     runs-on: ubuntu-latest
-    needs: [quality]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -178,10 +178,20 @@ jobs:
           fail_ci_if_error: true
           verbose: true
 
+      - name: Cancel workflow on failure
+        if: ${{ failure() }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.actions.cancelWorkflowRun({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: context.runId
+            });
+
   ui_tests:
     name: UI Tests (Espresso)
     runs-on: ubuntu-latest
-    needs: [tests]
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.run_ui_tests == 'true' }}
     steps:
       - name: Checkout
@@ -251,10 +261,37 @@ jobs:
           reporter: java-junit
           fail-on-error: false
 
+      - name: Cancel workflow on failure
+        if: ${{ failure() }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.actions.cancelWorkflowRun({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: context.runId
+            });
+
+  quality_cancel:
+    name: Cancel On Quality Failure
+    runs-on: ubuntu-latest
+    needs: [quality]
+    if: ${{ failure() }}
+    steps:
+      - name: Cancel workflow on failure
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.actions.cancelWorkflowRun({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: context.runId
+            });
+
   build_release:
     name: Build / Package
     runs-on: ubuntu-latest
-    needs: [ui_tests]
+    needs: [quality, tests, ui_tests]
     if: ${{ github.event_name != 'pull_request' }}
     steps:
       - name: Checkout
