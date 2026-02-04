@@ -5,13 +5,13 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.sleep8.data.repository.AlarmRepository
 import com.sleep8.domain.model.AlarmRecord
 import com.sleep8.domain.model.AlarmSource
 import com.sleep8.domain.model.AlarmStatus
 import io.mockk.coEvery
 import io.mockk.mockk
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -60,6 +60,9 @@ class AlarmHistoryScreenTest {
 
         composeRule.onNodeWithText("Alarm History").assertExists()
         composeRule.onNodeWithText("Alarm Detail").assertExists()
+        composeRule.onNodeWithText("Clear").performClick()
+        composeRule.onNodeWithText("Clear alarm history?").assertExists()
+        composeRule.onNodeWithText("Cancel").performClick()
         composeRule.onNodeWithContentDescription("Back").performClick()
         composeRule.runOnIdle { org.junit.Assert.assertTrue(backPressed) }
     }

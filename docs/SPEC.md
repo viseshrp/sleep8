@@ -116,6 +116,7 @@ When the screen has remained OFF for 20 minutes since the latest OFF event:
 - The app maintains a **local alarm log** in its DB (`alarm_records`).
 - Home screen shows the **most recently scheduled alarm**.
 - Alarm History screen shows the full alarm log (newest → oldest).
+- Alarm History includes a **Clear** action with a confirmation dialog to delete all history records.
 
 ### 5.9 Alarm List (AOSP-style)
 - A separate **Alarm** page shows a list of **current alarms** (not history).

@@ -19,7 +19,7 @@ Default duration is 8h 0m, and valid duration range is 0-720 minutes.
 - Enforces a single active scheduled alarm at a time.
 - Provides:
   - Alarm list (toggle enabled/disabled for existing records).
-  - Alarm history (full local audit trail).
+  - Alarm history (full local audit trail, with clear-all action).
   - Full-screen ringing UI and optional overlay ringing UI.
 - Restores state and reconciles alarms after reboot.
 - Works offline only (no `INTERNET` permission).

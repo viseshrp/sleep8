@@ -47,6 +47,10 @@ Automated unit, integration, and Compose UI tests cover most logic and UI flows;
 
 ## OS Integration
 - ACTION_SHOW_ALARMS opens Alarm History screen.
+- Alarm History clear flow:
+  - Tap **Clear** and verify confirmation dialog appears.
+  - Tap **Cancel** and verify history remains.
+  - Tap **Clear** in the dialog and verify history becomes empty.
 - Deep links:
   - `sleep8://alarms` opens history
   - `sleep8://alarm/<id>` opens history with selected record

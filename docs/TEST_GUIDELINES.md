@@ -17,7 +17,7 @@ Target coverage threshold: **90% line coverage** (unit tests via JaCoCo).
 ### UI tests (`app/src/androidTest/java`)
 - Settings screen sections and reliability checklist.
 - Alarm list content and toggles.
-- Alarm history screen and back navigation.
+- Alarm history screen, clear confirmation dialog, and back navigation.
 - Main navigation drawer flows.
 - Ringing UI content (Dismiss-only).
 

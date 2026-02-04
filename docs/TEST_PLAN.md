@@ -45,7 +45,7 @@ Physical device testing is required; emulators are not authoritative for exact a
 - Settings screen sections and reliability checklist.
 - Theme toggle switches dark/light mode state from Settings.
 - Alarm list content (empty state, toggles).
-- Alarm history page and back navigation.
+- Alarm history page, clear confirmation dialog, and back navigation.
 - Ringing UI (alarm info visible, sticky Dismiss, no top app bar/back/menu).
 - Main navigation drawer flows (hamburger/menu selections).
 - Navigation remains functional across Home → Alarm/History/Settings.
