@@ -15,6 +15,20 @@ Automated unit, integration, and Compose UI tests cover most logic and UI flows;
 - On Home, Alarm History, and Settings: tap the top-left icon 20x; no missed taps.
 - Ensure taps do not accidentally open the notification shade.
 
+## Visual Regression Checklist
+- Home, Alarm list, History, and Settings use consistent Material top app bars and spacing rhythm (8/12/16/24dp feel).
+- Home uses card-based grouping and clear hierarchy; Alarm list/History use list-row/card patterns.
+- Interactive controls meet touch-target expectations and are easy to tap.
+- Contrast remains readable in dark and light themes.
+- Toggle dark mode in Settings and verify every screen updates immediately.
+- Ringing UI presents AOSP-like layout (large centered time, subtle label, dismiss-only).
+- Ringing dismiss action stops audio/vibration and closes UI instantly.
+- Icon checks on emulator/device:
+  - launcher/home screen icon
+  - app info/settings icon
+  - recents/task switcher icon
+  - ringing notification small icon
+
 ## Duration Settings
 - Set duration to 0 minutes → alarm rings immediately at confirmation time.
 - Set duration to 720 minutes → alarm scheduled exactly +720 minutes.
