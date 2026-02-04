@@ -53,6 +53,7 @@ class AlarmReceiver : BroadcastReceiver() {
         val notificationsAllowed = !(PermissionUtils.needsPostNotifications(context) && !PermissionUtils.canPostNotifications(context))
         if (notificationsAllowed) {
             AlarmRingingService.start(context, alarmId)
+            AlarmRingingActivity.launch(context, alarmId)
         } else {
             AlarmRingingActivity.launch(context, alarmId, ringInActivity = true)
         }
