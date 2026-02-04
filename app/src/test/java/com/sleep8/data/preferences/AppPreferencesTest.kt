@@ -1,6 +1,7 @@
 package com.sleep8.data.preferences
 
 import com.sleep8.testutil.InMemorySharedPreferences
+import com.sleep8.ui.theme.AppThemeMode
 import com.sleep8.util.Constants
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -26,5 +27,15 @@ class AppPreferencesTest {
 
         assertEquals(7 * 60, minutes)
         assertEquals(7 * 60, shared.getInt(Constants.PREF_ALARM_DURATION_MINUTES, -1))
+    }
+
+    @Test
+    fun `theme mode defaults to dark and persists updates`() {
+        val prefs = AppPreferences(InMemorySharedPreferences())
+        assertEquals(AppThemeMode.DARK, prefs.themeMode)
+
+        prefs.themeMode = AppThemeMode.LIGHT
+
+        assertEquals(AppThemeMode.LIGHT, prefs.themeMode)
     }
 }

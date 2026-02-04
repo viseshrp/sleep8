@@ -46,6 +46,7 @@ import com.sleep8.ui.components.ArmButton
 import com.sleep8.ui.components.StatusCard
 import com.sleep8.ui.history.AlarmHistoryActivity
 import com.sleep8.ui.settings.SettingsActivity
+import com.sleep8.ui.theme.Sleep8Theme
 import com.sleep8.data.preferences.AppPreferences
 import com.sleep8.service.AlarmRingingService
 import com.sleep8.util.AlarmUiRouter
@@ -69,7 +70,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MaterialTheme {
+            Sleep8Theme {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     MainScreen(
                         viewModel = viewModel,

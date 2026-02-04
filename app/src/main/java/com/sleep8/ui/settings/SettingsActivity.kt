@@ -47,6 +47,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.sleep8.domain.overlay.AlarmOverlayPolicy
+import com.sleep8.ui.theme.Sleep8Theme
 import com.sleep8.util.PermissionUtils
 import com.sleep8.util.TimeUtils
 import dagger.hilt.android.AndroidEntryPoint
@@ -59,7 +60,7 @@ class SettingsActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MaterialTheme {
+            Sleep8Theme {
                 SettingsScreen(
                     viewModel = viewModel,
                     onBack = { finish() }
@@ -117,6 +118,14 @@ internal fun SettingsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
+            SettingsSection(title = "Appearance") {
+                RowWithSwitch(
+                    label = "Dark mode",
+                    checked = uiState.darkModeEnabled,
+                    onCheckedChange = viewModel::updateDarkModeEnabled
+                )
+            }
+
             // Section: Night Window
             SettingsSection(title = "Night Window") {
                 TimePickerRow(

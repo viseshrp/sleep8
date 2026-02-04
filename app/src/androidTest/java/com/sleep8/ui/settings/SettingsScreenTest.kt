@@ -41,6 +41,8 @@ class SettingsScreenTest {
         }
 
         composeRule.onNodeWithText("Night Window").assertExists()
+        composeRule.onNodeWithText("Appearance").assertExists()
+        composeRule.onNodeWithText("Dark mode").assertExists()
         composeRule.onNodeWithText("Auto-arm Schedule").assertExists()
         composeRule.onNodeWithText("Alarm Behavior").assertExists()
         composeRule.onNodeWithText("System Reliability").assertExists()

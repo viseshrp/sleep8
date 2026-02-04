@@ -36,6 +36,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.sleep8.domain.model.AlarmCancelReason
 import com.sleep8.domain.model.AlarmRecord
+import com.sleep8.ui.theme.Sleep8Theme
 import com.sleep8.util.AlarmIntents
 import com.sleep8.util.TimeUtils
 import dagger.hilt.android.AndroidEntryPoint
@@ -49,7 +50,7 @@ class AlarmHistoryActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         handleIntent(intent)
         setContent {
-            MaterialTheme {
+            Sleep8Theme {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     AlarmHistoryScreen(
                         viewModel = viewModel,

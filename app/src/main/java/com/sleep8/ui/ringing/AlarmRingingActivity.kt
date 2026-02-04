@@ -9,12 +9,12 @@ import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.fillMaxSize
 import com.sleep8.service.AlarmRinger
 import com.sleep8.service.AlarmRingingService
+import com.sleep8.ui.theme.Sleep8Theme
 import com.sleep8.util.Constants
 
 class AlarmRingingActivity : ComponentActivity() {
@@ -54,7 +54,7 @@ class AlarmRingingActivity : ComponentActivity() {
         }
 
         setContent {
-            MaterialTheme {
+            Sleep8Theme {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     AlarmRingingContent(
                         label = getString(com.sleep8.R.string.alarm_ringing_title),

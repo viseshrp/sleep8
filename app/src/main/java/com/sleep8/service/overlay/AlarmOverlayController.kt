@@ -6,10 +6,10 @@ import android.os.Build
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import com.sleep8.ui.ringing.AlarmRingingContent
+import com.sleep8.ui.theme.Sleep8Theme
 
 class AlarmOverlayController(
     private val context: Context
@@ -23,7 +23,7 @@ class AlarmOverlayController(
         val view = ComposeView(context).apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindow)
             setContent {
-                MaterialTheme {
+                Sleep8Theme {
                     AlarmRingingContent(
                         label = context.getString(com.sleep8.R.string.alarm_ringing_title),
                         onDismiss = onDismiss

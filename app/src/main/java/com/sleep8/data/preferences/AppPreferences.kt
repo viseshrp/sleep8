@@ -1,6 +1,7 @@
 package com.sleep8.data.preferences
 
 import android.content.SharedPreferences
+import com.sleep8.ui.theme.AppThemeMode
 import com.sleep8.util.Constants
 
 /**
@@ -62,6 +63,10 @@ class AppPreferences(private val prefs: SharedPreferences) {
     var activeAlarmInstanceId: Long
         get() = prefs.getLong(Constants.PREF_ACTIVE_ALARM_INSTANCE_ID, -1L)
         set(value) = prefs.edit().putLong(Constants.PREF_ACTIVE_ALARM_INSTANCE_ID, value).apply()
+
+    var themeMode: AppThemeMode
+        get() = AppThemeMode.fromPref(prefs.getString(Constants.PREF_THEME_MODE, AppThemeMode.DEFAULT.prefValue))
+        set(value) = prefs.edit().putString(Constants.PREF_THEME_MODE, value.prefValue).apply()
 
     private var lastAlarmInstanceId: Long
         get() = prefs.getLong(Constants.PREF_LAST_ALARM_INSTANCE_ID, 0L)
