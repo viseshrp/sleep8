@@ -210,7 +210,7 @@ jobs:
 
       - name: Install SDK packages
         run: |
-          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0" "emulator" "system-images;android-36;google_apis;x86_64"
+          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0" "emulator" "system-images;android-34;google_apis;x86_64"
           yes | sdkmanager --licenses
 
       - name: Verify Gradle wrapper
@@ -222,14 +222,15 @@ jobs:
       - name: UI tests (emulator)
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 36
+          api-level: 34
           target: google_apis
           arch: x86_64
-          profile: pixel_5
+          profile: Nexus 6
           disable-animations: true
           cache: false
-          emulator-options: -no-snapshot -no-snapshot-save -wipe-data -no-boot-anim
-          script: make test-ui
+          emulator-boot-timeout: 900
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot -no-snapshot-save -wipe-data
+          script: adb devices && make test-ui
 
       - name: Upload UI test reports
         if: always()
