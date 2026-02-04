@@ -40,6 +40,11 @@ env:
   ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
   ANDROID_HOME: /usr/local/lib/android/sdk
   GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dkotlin.incremental=false"
+  ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+  ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+  ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+  ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+  GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
 
 jobs:
   quality:
@@ -150,15 +155,12 @@ jobs:
           fail-on-error: false
 
       - name: Upload coverage to Codecov
-        if: ${{ secrets.CODECOV_TOKEN != '' }}
         uses: codecov/codecov-action@v5
         with:
           files: app/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml
           flags: unittests
           fail_ci_if_error: true
           verbose: true
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   ui_tests:
     name: UI Tests (Espresso)
@@ -259,54 +261,27 @@ jobs:
           yes | sdkmanager --licenses
 
       - name: Decode Keystore
-        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        if: ${{ env.ANDROID_KEYSTORE_BASE64 != '' }}
         run: |
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > release.keystore
+          echo "${{ env.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > release.keystore
 
       - name: Build Release AAB/APK
-        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        if: ${{ env.ANDROID_KEYSTORE_BASE64 != '' }}
         env:
           KEYSTORE_PATH: release.keystore
-          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          KEYSTORE_PASSWORD: ${{ env.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ env.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ env.ANDROID_KEY_PASSWORD }}
         run: ./gradlew bundleRelease assembleRelease
 
       - name: Upload Release Artifacts
-        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        if: ${{ env.ANDROID_KEYSTORE_BASE64 != '' }}
         uses: actions/upload-artifact@v4
         with:
           name: release-artifacts
           path: |
             app/build/outputs/**/*.aab
             app/build/outputs/**/*.apk
-
-  deploy_internal:
-    name: Deploy Internal (Firebase App Distribution)
-    runs-on: ubuntu-latest
-    needs: [build_release]
-    if: >
-      github.event_name == 'push' ||
-      (github.event_name == 'workflow_dispatch' && inputs.environment == 'internal')
-    environment: internal
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Download Release Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: release-artifacts
-          path: dist
-
-      - name: Distribute to Firebase
-        if: ${{ secrets.FIREBASE_APP_ID != '' }}
-        uses: wzieba/Firebase-Distribution-Github-Action@v1
-        with:
-          appId: ${{ secrets.FIREBASE_APP_ID }}
-          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
-          groups: testers
-          file: dist/app-release.apk
 
   deploy_play:
     name: Deploy Google Play (Beta/Production)
@@ -325,10 +300,10 @@ jobs:
           path: dist
 
       - name: Upload to Google Play
-        if: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON != '' }}
+        if: ${{ env.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON != '' }}
         uses: r0adkll/upload-google-play@v1
         with:
-          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          serviceAccountJsonPlainText: ${{ env.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: com.example.app
           releaseFiles: dist/**/*.aab
           track: ${{ inputs.environment }}
