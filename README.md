@@ -153,7 +153,8 @@ Coverage artifacts:
 - `app/build/reports/jacoco/jacocoTestReport/html/index.html`
 - `app/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml`
 
-Coverage verification target is 90% line coverage.
+Coverage verification enforces >=90% on production-critical automation packages
+(`domain.manager`, `domain.state`, `domain.overlay`, `domain.validator`, and core time/duration utils).
 
 ## CI/CD
 Workflow: `.github/workflows/android-ci-cd.yml`

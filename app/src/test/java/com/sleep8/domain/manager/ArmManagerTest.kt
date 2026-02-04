@@ -234,4 +234,73 @@ class ArmManagerTest {
         armManager.arm(ArmSource.APP_BUTTON)
         coVerify(exactly = 0) { sessionRepository.createSession(any(), any(), any(), ArmSource.APP_BUTTON) }
     }
+
+    @Test
+    fun `refresh night window while disarmed stops monitor and cancels night schedulers`() = runTest {
+        stateHolder.setArmed(false)
+
+        armManager.refreshNightWindowBoundariesIfArmed()
+
+        coVerify { serviceController.stopNightMonitorService() }
+        coVerify { nightWindowScheduler.cancelWindowStart() }
+        coVerify { nightWindowScheduler.cancelWindowEnd() }
+    }
+
+    @Test
+    fun `disable auto arm cancels scheduled auto-arm boundaries`() = runTest {
+        armManager.updateAutoArmEnabled(false)
+
+        coVerify { windowScheduler.cancelWindowStart() }
+        coVerify { windowScheduler.cancelWindowEnd() }
+    }
+
+    @Test
+    fun `handle auto arm arms immediately when current time is inside auto window`() = runTest {
+        val now = LocalTime.now()
+        val settings = Settings(
+            nightStart = "22:00",
+            nightEnd = "08:00",
+            confirmOffMinutes = 10,
+            alarmDurationMinutes = 480,
+            overlayEnabled = false,
+            armedDefault = false,
+            autoArmEnabled = true,
+            autoArmStart = now.minusMinutes(1).toString().substring(0, 5),
+            autoArmEnd = now.plusMinutes(1).toString().substring(0, 5)
+        )
+        coEvery { settingsRepository.getSettings() } returns settings
+        coEvery { sessionRepository.createSession(any(), any(), any(), any()) } returns
+            ArmSession(50L, 0L, null, 0L, 0L, ArmSource.SCHEDULED)
+
+        armManager.handleAutoArm()
+
+        coVerify { sessionRepository.createSession(any(), any(), any(), ArmSource.SCHEDULED) }
+    }
+
+    @Test
+    fun `handle auto arm exits early when feature disabled`() = runTest {
+        val settings = Settings(
+            nightStart = "22:00",
+            nightEnd = "08:00",
+            confirmOffMinutes = 10,
+            alarmDurationMinutes = 480,
+            overlayEnabled = false,
+            armedDefault = false,
+            autoArmEnabled = false
+        )
+        coEvery { settingsRepository.getSettings() } returns settings
+
+        armManager.handleAutoArm()
+
+        coVerify(exactly = 0) { windowScheduler.scheduleWindowStart(any()) }
+        coVerify(exactly = 0) { windowScheduler.scheduleWindowEnd(any()) }
+    }
+
+    @Test
+    fun `unknown scheduled event type does nothing`() {
+        armManager.onScheduledEvent("noop")
+
+        coVerify(exactly = 0) { sessionRepository.createSession(any(), any(), any(), any()) }
+        coVerify(exactly = 0) { sessionRepository.endSession(any(), any()) }
+    }
 }
