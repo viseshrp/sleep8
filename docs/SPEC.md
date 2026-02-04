@@ -96,6 +96,7 @@ When the screen has remained OFF for 10 minutes since the latest OFF event:
 ### 5.7 Disarming
 - User can disarm anytime (button/tile).
 - Disarm stops monitoring service and cancels pending confirmation timer.
+- Manual disarm and auto-disarm do not cancel existing alarms; they only prevent new alarms and clear pending confirmation.
 - Disarm does not retroactively alter already-fired alarms.
 
 ### 5.8 Alarm Observability (Local Only)
