@@ -197,6 +197,16 @@ internal fun SettingsScreen(
             )
 
             ChecklistRow(
+                label = "Full-screen alarm UI",
+                ok = uiState.fullScreenIntentAllowed,
+                actionText = "Allow",
+                description = "Allows Sleep8 to open the alarm screen over the lock screen.",
+                onAction = {
+                    context.startActivity(PermissionUtils.fullScreenIntentSettingsIntent(context))
+                }
+            )
+
+            ChecklistRow(
                 label = "Battery optimization",
                 ok = uiState.batteryOptimizationsIgnored,
                 actionText = "Request exclusion",

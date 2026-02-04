@@ -19,5 +19,6 @@ data class SettingsUiState(
     val batteryOptimizationsIgnored: Boolean = false,
     val foregroundServiceActive: Boolean = false,
     val notificationsAllowed: Boolean = false,
+    val fullScreenIntentAllowed: Boolean = false,
     val overlayAllowed: Boolean = false
 )

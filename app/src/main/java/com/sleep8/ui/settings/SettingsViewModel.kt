@@ -56,6 +56,7 @@ class SettingsViewModel @Inject constructor(
         val batteryIgnored = PermissionUtils.isIgnoringBatteryOptimizations(context)
         val isServiceRunning = PermissionUtils.isServiceRunning(context, NightMonitorService::class.java)
         val notificationsAllowed = PermissionUtils.canPostNotifications(context)
+        val fullScreenIntentAllowed = PermissionUtils.canUseFullScreenIntent(context)
         val overlayAllowed = PermissionUtils.canDrawOverlays(context)
         
         _uiState.value = _uiState.value.copy(
@@ -63,6 +64,7 @@ class SettingsViewModel @Inject constructor(
             batteryOptimizationsIgnored = batteryIgnored,
             foregroundServiceActive = isServiceRunning,
             notificationsAllowed = notificationsAllowed,
+            fullScreenIntentAllowed = fullScreenIntentAllowed,
             overlayAllowed = overlayAllowed
         )
     }
