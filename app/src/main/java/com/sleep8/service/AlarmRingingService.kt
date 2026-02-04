@@ -119,6 +119,7 @@ class AlarmRingingService : Service() {
 
     private fun broadcastAlarmAction(action: String) {
         val intent = Intent(action).apply {
+            `package` = packageName
             putExtra(Constants.EXTRA_ALARM_ID, alarmId)
         }
         sendBroadcast(intent)

@@ -12,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.core.content.ContextCompat
 import com.sleep8.service.AlarmRinger
 import com.sleep8.service.AlarmRingingService
 import com.sleep8.ui.theme.Sleep8Theme
@@ -78,7 +79,12 @@ class AlarmRingingActivity : AppCompatActivity() {
         val filter = IntentFilter().apply {
             addAction(Constants.ACTION_ALARM_DISMISS)
         }
-        registerReceiver(closeReceiver, filter)
+        ContextCompat.registerReceiver(
+            this,
+            closeReceiver,
+            filter,
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
         if (ringInActivity && ringer == null) {
             ringer = AlarmRinger(this).also { it.start() }
         }
