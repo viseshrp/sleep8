@@ -29,6 +29,7 @@ import java.time.ZoneId
 import java.util.TimeZone
 import java.util.concurrent.TimeUnit
 
+@Suppress("DEPRECATION")
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [31])
 class NightWindowReceiversTest {

@@ -15,6 +15,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 import java.time.Instant
 
+@Suppress("DEPRECATION")
 @RunWith(RobolectricTestRunner::class)
 class ConfirmOffSchedulerTest {
 
