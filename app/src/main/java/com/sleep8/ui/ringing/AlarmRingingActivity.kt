@@ -7,8 +7,8 @@ import android.content.IntentFilter
 import android.os.Build
 import android.os.Bundle
 import android.view.WindowManager
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,7 +17,7 @@ import com.sleep8.service.AlarmRingingService
 import com.sleep8.ui.theme.Sleep8Theme
 import com.sleep8.util.Constants
 
-class AlarmRingingActivity : ComponentActivity() {
+class AlarmRingingActivity : AppCompatActivity() {
 
     private var alarmId: Long = -1L
     private var ringInActivity: Boolean = false

@@ -1,9 +1,9 @@
 package com.sleep8.ui.alarm
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -35,7 +35,7 @@ import com.sleep8.ui.theme.Sleep8Theme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
-class AlarmListActivity : ComponentActivity() {
+class AlarmListActivity : AppCompatActivity() {
 
     private val viewModel: AlarmListViewModel by viewModels()
 

@@ -2,7 +2,6 @@ package com.sleep8.ui.main
 
 import android.content.Intent
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
@@ -44,6 +43,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.appcompat.app.AppCompatActivity
 import com.sleep8.data.preferences.AppPreferences
 import com.sleep8.service.AlarmRingingService
 import com.sleep8.ui.components.ArmButton
@@ -58,7 +58,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
 
     private val viewModel: MainViewModel by viewModels()
 
@@ -222,13 +222,24 @@ internal fun MainContent(
                         }
                     }
                 )
+            },
+            bottomBar = {
+                Surface(tonalElevation = 2.dp) {
+                    ArmButton(
+                        armed = uiState.armed,
+                        onToggle = onToggleArmed,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 12.dp)
+                    )
+                }
             }
         ) { paddingValues ->
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues),
-                contentPadding = PaddingValues(16.dp),
+                contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 item {
@@ -261,14 +272,6 @@ internal fun MainContent(
                         latestAlarmSubtitle = uiState.latestAlarmSubtitle,
                         notificationWarningText = uiState.notificationWarningText,
                         pendingCountdown = if (uiState.showPending) uiState.pendingCountdownText else null
-                    )
-                }
-
-                item {
-                    ArmButton(
-                        armed = uiState.armed,
-                        onToggle = onToggleArmed,
-                        modifier = Modifier.fillMaxWidth()
                     )
                 }
 

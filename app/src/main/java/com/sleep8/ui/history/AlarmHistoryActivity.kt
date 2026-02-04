@@ -3,9 +3,9 @@ package com.sleep8.ui.history
 import android.content.Intent
 import android.os.Bundle
 import android.provider.AlarmClock
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -40,7 +40,7 @@ import com.sleep8.util.TimeUtils
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
-class AlarmHistoryActivity : ComponentActivity() {
+class AlarmHistoryActivity : AppCompatActivity() {
 
     private val viewModel: AlarmHistoryViewModel by viewModels()
 

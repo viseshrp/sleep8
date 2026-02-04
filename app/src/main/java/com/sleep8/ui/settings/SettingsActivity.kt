@@ -2,11 +2,11 @@ package com.sleep8.ui.settings
 
 import android.app.TimePickerDialog
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -54,7 +54,7 @@ import com.sleep8.util.TimeUtils
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
-class SettingsActivity : ComponentActivity() {
+class SettingsActivity : AppCompatActivity() {
 
     private val viewModel: SettingsViewModel by viewModels()
 
@@ -64,7 +64,8 @@ class SettingsActivity : ComponentActivity() {
             Sleep8Theme {
                 SettingsScreen(
                     viewModel = viewModel,
-                    onBack = { finish() }
+                    onBack = { finish() },
+                    onThemeChanged = { recreate() }
                 )
             }
         }
@@ -80,7 +81,8 @@ private data class SettingsSectionModel(
 @Composable
 internal fun SettingsScreen(
     viewModel: SettingsViewModel,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onThemeChanged: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
@@ -100,7 +102,10 @@ internal fun SettingsScreen(
             RowWithSwitch(
                 label = "Dark mode",
                 checked = uiState.darkModeEnabled,
-                onCheckedChange = viewModel::updateDarkModeEnabled
+                onCheckedChange = {
+                    viewModel.updateDarkModeEnabled(it)
+                    onThemeChanged()
+                }
             )
         },
         SettingsSectionModel(title = "Night Window") {
