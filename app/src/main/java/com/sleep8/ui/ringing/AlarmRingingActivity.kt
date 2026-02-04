@@ -30,7 +30,7 @@ class AlarmRingingActivity : AppCompatActivity() {
             val action = intent?.action ?: return
             if (action != Constants.ACTION_ALARM_DISMISS) return
             val targetId = intent.getLongExtra(Constants.EXTRA_ALARM_ID, -1L)
-            if (alarmId > 0 && targetId > 0 && targetId != alarmId) return
+            if (alarmId > 0 && targetId != alarmId) return
             finish()
         }
     }

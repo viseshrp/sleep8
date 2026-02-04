@@ -41,15 +41,22 @@ class AlarmRingingService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        val action = intent?.action
         alarmId = intent?.getLongExtra(Constants.EXTRA_ALARM_ID, -1L) ?: -1L
-        when (intent?.action) {
+        when (action) {
             Constants.ACTION_ALARM_DISMISS -> {
                 handleDismiss()
                 return START_NOT_STICKY
             }
-            else -> startRinging()
+            else -> {
+                if (alarmId <= 0L) {
+                    stopSelf()
+                    return START_NOT_STICKY
+                }
+                startRinging()
+            }
         }
-        return START_STICKY
+        return START_NOT_STICKY
     }
 
     override fun onDestroy() {
