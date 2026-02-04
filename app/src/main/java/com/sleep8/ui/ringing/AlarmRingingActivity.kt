@@ -59,10 +59,9 @@ class AlarmRingingActivity : AppCompatActivity() {
         setContent {
             Sleep8Theme {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    val alarmLabel = if (alarmId > 0) "Alarm #$alarmId" else "Alarm"
                     AlarmRingingContent(
                         label = getString(com.sleep8.R.string.alarm_ringing_title),
-                        alarmInfo = "$alarmLabel • ${TimeUtils.formatAlarmTime(LocalTime.now())}",
+                        alarmInfo = "${TimeUtils.formatAlarmTime(LocalTime.now())}",
                         onDismiss = {
                             ringer?.stop()
                             AlarmRingingService.stop(this, alarmId)

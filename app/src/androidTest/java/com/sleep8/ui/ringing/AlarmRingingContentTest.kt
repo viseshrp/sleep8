@@ -27,6 +27,7 @@ class AlarmRingingContentTest {
         composeRule.onNodeWithText("Dismiss").assertExists()
         composeRule.onNodeWithTag("ringing-dismiss").assertExists()
         composeRule.onNodeWithText("Alarm #123").assertExists()
+        composeRule.onNodeWithContentDescription("Sleep8").assertExists()
         composeRule.onNodeWithText("Snooze").assertDoesNotExist()
         composeRule.onNodeWithContentDescription("Back").assertDoesNotExist()
         composeRule.onNodeWithContentDescription("Open menu").assertDoesNotExist()
