@@ -18,8 +18,9 @@ fun ArmButton(
     onToggle: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val container = if (armed) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.primaryContainer
-    val content = if (armed) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onPrimaryContainer
+    val accent = if (armed) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+    val container = MaterialTheme.colorScheme.surfaceContainerHigh
+    val content = MaterialTheme.colorScheme.onSurface
     val label = if (armed) "Disarm" else "Arm Tonight"
     val sub = if (armed) "Stop monitoring" else "Start monitoring for tonight"
     FilledTonalButton(
@@ -37,7 +38,11 @@ fun ArmButton(
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(text = label, style = MaterialTheme.typography.titleLarge)
-            Text(text = sub, style = MaterialTheme.typography.labelMedium)
+            Text(
+                text = sub,
+                style = MaterialTheme.typography.labelMedium,
+                color = accent
+            )
         }
     }
 }
