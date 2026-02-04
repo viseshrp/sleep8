@@ -46,8 +46,8 @@ class NightWindowReceiversTest {
 
         val repo = mockk<SettingsRepository>()
         coEvery { repo.getSettings() } returns Settings(
-            nightStart = "21:00",
-            nightEnd = "04:00",
+            nightStart = "00:00",
+            nightEnd = "23:59",
             confirmOffMinutes = 10,
             alarmDurationMinutes = 480,
             overlayEnabled = false,
