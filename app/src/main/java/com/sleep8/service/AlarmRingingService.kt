@@ -150,9 +150,12 @@ class AlarmRingingService : Service() {
             ContextCompat.startForegroundService(context, intent)
         }
 
-        fun stop(context: Context) {
+        fun stop(context: Context, alarmId: Long = -1L) {
             val intent = Intent(context, AlarmRingingService::class.java).apply {
                 action = Constants.ACTION_ALARM_DISMISS
+                if (alarmId > 0) {
+                    putExtra(Constants.EXTRA_ALARM_ID, alarmId)
+                }
             }
             ContextCompat.startForegroundService(context, intent)
         }

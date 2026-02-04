@@ -60,7 +60,7 @@ class AlarmRingingActivity : ComponentActivity() {
                         label = getString(com.sleep8.R.string.alarm_ringing_title),
                         onDismiss = {
                             ringer?.stop()
-                            AlarmRingingService.stop(this)
+                            AlarmRingingService.stop(this, alarmId)
                             finish()
                         }
                     )
