@@ -90,6 +90,7 @@ dependencies {
     // Testing
     testImplementation("org.junit.jupiter:junit-jupiter:5.11.3")
     testImplementation("org.junit.vintage:junit-vintage-engine:5.11.3")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.11.3")
     testImplementation("io.mockk:mockk:1.13.13")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
     testImplementation("androidx.test:core:1.6.1")
