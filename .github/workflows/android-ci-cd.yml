@@ -2,7 +2,7 @@ name: Android CI/CD
 
 on:
   pull_request:
-    branches: ["main", "release/*"]
+    branches: ["main", "develop", "release/*"]
   push:
     branches: ["main", "release/*"]
   workflow_dispatch:
@@ -10,8 +10,10 @@ on:
       environment:
         description: "Deploy target"
         required: true
+        default: "internal"
         type: choice
         options:
+          - internal
           - beta
           - production
       run_ui_tests:
@@ -38,6 +40,11 @@ env:
   ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
   ANDROID_HOME: /usr/local/lib/android/sdk
   GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dkotlin.incremental=false"
+  ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+  ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+  ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+  ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+  GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
 
 jobs:
   quality:
@@ -243,12 +250,11 @@ jobs:
           reporter: java-junit
           fail-on-error: false
 
-  internal_deploy:
-    name: Internal Artifact Deployment
+  build_release:
+    name: Build / Package
     runs-on: ubuntu-latest
     needs: [ui_tests]
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-    environment: internal
+    if: ${{ github.event_name != 'pull_request' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -286,18 +292,51 @@ jobs:
           file gradle/wrapper/gradle-wrapper.jar
           chmod +x ./gradlew
 
-      - name: Build versioned APK
+      - name: Decode Keystore
+        if: ${{ env.ANDROID_KEYSTORE_BASE64 != '' }}
         run: |
-          SHORT_SHA="${GITHUB_SHA::7}"
-          VERSION_NAME="$(./gradlew -q printVersionName -PciVersionSuffix="${SHORT_SHA}" | tail -n 1)"
-          ./gradlew assembleDebug -PciVersionSuffix="${SHORT_SHA}"
-          ARTIFACT_NAME="sleep8-${VERSION_NAME}.apk"
-          cp app/build/outputs/apk/debug/app-debug.apk "${ARTIFACT_NAME}"
-          echo "ARTIFACT_NAME=${ARTIFACT_NAME}" >> "$GITHUB_ENV"
+          echo "${{ env.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > release.keystore
 
-      - name: Upload internal APK
+      - name: Build Release AAB/APK
+        if: ${{ env.ANDROID_KEYSTORE_BASE64 != '' }}
+        env:
+          KEYSTORE_PATH: release.keystore
+          KEYSTORE_PASSWORD: ${{ env.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ env.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ env.ANDROID_KEY_PASSWORD }}
+        run: ./gradlew bundleRelease assembleRelease
+
+      - name: Upload Release Artifacts
+        if: ${{ env.ANDROID_KEYSTORE_BASE64 != '' }}
         uses: actions/upload-artifact@v4
         with:
-          name: internal-apk-${{ github.sha }}
-          path: ${{ env.ARTIFACT_NAME }}
-          if-no-files-found: error
+          name: release-artifacts
+          path: |
+            app/build/outputs/**/*.aab
+            app/build/outputs/**/*.apk
+
+  deploy_play:
+    name: Deploy Google Play (Beta/Production)
+    runs-on: ubuntu-latest
+    needs: [build_release]
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.environment != 'internal' }}
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download Release Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-artifacts
+          path: dist
+
+      - name: Upload to Google Play
+        if: ${{ env.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON != '' }}
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ env.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.example.app
+          releaseFiles: dist/**/*.aab
+          track: ${{ inputs.environment }}
+          status: completed

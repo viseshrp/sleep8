@@ -1,0 +1,58 @@
+name: Internal Artifact Deployment
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  internal_deploy:
+    name: Build Internal APK
+    runs-on: ubuntu-latest
+    environment: internal
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install SDK packages
+        run: |
+          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+          yes | sdkmanager --licenses
+
+      - name: Build versioned debug APK
+        run: |
+          chmod +x ./gradlew
+          SHORT_SHA="${GITHUB_SHA::7}"
+          BASE_VERSION=$(./gradlew -q :app:properties | sed -n "s/^versionName: //p" | head -n 1)
+          FINAL_VERSION="${BASE_VERSION}-${SHORT_SHA}"
+
+          ./gradlew assembleDebug -Pandroid.injected.version.name="${FINAL_VERSION}"
+
+          APK_NAME="sleep8-${FINAL_VERSION}.apk"
+          cp app/build/outputs/apk/debug/app-debug.apk "${APK_NAME}"
+
+          echo "APK_NAME=${APK_NAME}" >> "$GITHUB_ENV"
+          echo "FINAL_VERSION=${FINAL_VERSION}" >> "$GITHUB_ENV"
+
+      - name: Upload internal artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: internal-apk-${{ env.FINAL_VERSION }}
+          path: ${{ env.APK_NAME }}
+          if-no-files-found: error

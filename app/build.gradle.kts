@@ -16,21 +16,12 @@ android {
     namespace = "com.sleep8"
     compileSdk = 35
 
-    val baseVersionName = "1.0"
-    val ciVersionSuffix = (project.findProperty("ciVersionSuffix") as String?)
-        ?.trim()
-        ?.takeIf { it.isNotEmpty() }
-
     defaultConfig {
         applicationId = "com.sleep8"
         minSdk = 31
         targetSdk = 35
         versionCode = 1
-        versionName = if (ciVersionSuffix == null) {
-            baseVersionName
-        } else {
-            "$baseVersionName-$ciVersionSuffix"
-        }
+        versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -190,11 +181,5 @@ tasks.register<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
                 minimum = "0.90".toBigDecimal()
             }
         }
-    }
-}
-
-tasks.register("printVersionName") {
-    doLast {
-        println(android.defaultConfig.versionName)
     }
 }
