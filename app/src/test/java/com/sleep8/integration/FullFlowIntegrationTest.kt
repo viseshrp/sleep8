@@ -54,6 +54,7 @@ class FullFlowIntegrationTest {
     private lateinit var armManager: ArmManager
     private lateinit var stateMachineManager: StateMachineManager
     private lateinit var appPreferences: AppPreferences
+    private lateinit var alarmScheduler: AlarmScheduler
 
     @Before
     fun setup() {
@@ -74,7 +75,7 @@ class FullFlowIntegrationTest {
         mockkObject(PermissionUtils)
         every { PermissionUtils.canScheduleExactAlarms(any()) } returns true
 
-        val alarmScheduler = AlarmScheduler(
+        alarmScheduler = AlarmScheduler(
             context,
             mockk(relaxed = true),
             alarmRepository,
@@ -118,5 +119,41 @@ class FullFlowIntegrationTest {
         assertNotNull(session)
         val alarms = alarmRepository.getAlarmsForSession(session!!.id)
         assertEquals(1, alarms.size)
+    }
+
+    @Test
+    fun `manual disarm preserves existing alarm and clears pending confirmation`() = runTest {
+        armManager.arm(ArmSource.APP_BUTTON)
+        val record = alarmScheduler.scheduleSleepAlarm(
+            screenOffTs = System.currentTimeMillis() - 60_000L,
+            confirmedAt = System.currentTimeMillis()
+        )
+        stateHolder.setPendingCandidate(123L, 456L)
+
+        armManager.disarm(ArmSource.APP_BUTTON)
+
+        val scheduled = alarmRepository.getScheduledRecords()
+        assertEquals(1, scheduled.size)
+        assertEquals(record.id, scheduled.first().id)
+        assertEquals(-1L, stateHolder.pendingCandidateScreenOffTs.value)
+        assertEquals(-1L, stateHolder.pendingConfirmDeadlineTs.value)
+    }
+
+    @Test
+    fun `auto-disarm preserves existing alarm and clears pending confirmation`() = runTest {
+        armManager.arm(ArmSource.APP_BUTTON)
+        val record = alarmScheduler.scheduleSleepAlarm(
+            screenOffTs = System.currentTimeMillis() - 120_000L,
+            confirmedAt = System.currentTimeMillis()
+        )
+        stateHolder.setPendingCandidate(321L, 654L)
+
+        armManager.disarm(ArmSource.SCHEDULED)
+
+        val scheduled = alarmRepository.getScheduledRecords()
+        assertEquals(1, scheduled.size)
+        assertEquals(record.id, scheduled.first().id)
+        assertEquals(-1L, stateHolder.pendingCandidateScreenOffTs.value)
+        assertEquals(-1L, stateHolder.pendingConfirmDeadlineTs.value)
     }
 }

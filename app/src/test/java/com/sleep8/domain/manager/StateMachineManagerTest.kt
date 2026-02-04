@@ -143,4 +143,15 @@ class StateMachineManagerTest {
         manager.disarm()
         coVerify { confirmScheduler.cancelConfirmation() }
     }
+
+    @Test
+    fun `pending confirmation disarm prevents alarm creation`() = runTest {
+        setupSession()
+        manager.onScreenOff(Instant.parse("2024-01-15T23:00:00Z"))
+        manager.disarm()
+
+        manager.onConfirmationTimerExpired(screenStillOff = true)
+
+        coVerify(exactly = 0) { alarmScheduler.scheduleSleepAlarm(any(), any()) }
+    }
 }
