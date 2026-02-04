@@ -1,17 +1,18 @@
 package com.sleep8.ui.main
 
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import com.sleep8.testutil.TestActivity
 import org.junit.Rule
 import org.junit.Test
 
 class MainContentTest {
 
     @get:Rule
-    val composeRule = createComposeRule()
+    val composeRule = createAndroidComposeRule<TestActivity>()
 
     @Test
     fun navigationDrawerItemsTriggerCallbacks() {

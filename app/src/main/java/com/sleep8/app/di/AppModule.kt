@@ -3,6 +3,8 @@ package com.sleep8.app.di
 import android.app.AlarmManager
 import android.content.Context
 import android.content.SharedPreferences
+import android.os.Build
+import android.os.UserManager
 import com.sleep8.data.db.dao.AlarmRecordDao
 import com.sleep8.data.db.dao.ArmSessionDao
 import com.sleep8.data.db.dao.ScreenEventDao
@@ -63,7 +65,17 @@ object AppModule {
     @Provides
     @Singleton
     fun provideSharedPreferences(@ApplicationContext context: Context): SharedPreferences {
-        return context.getSharedPreferences(Constants.PREFS_NAME, Context.MODE_PRIVATE)
+        val prefsContext = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            val userManager = context.getSystemService(UserManager::class.java)
+            if (userManager != null && !userManager.isUserUnlocked) {
+                context.createDeviceProtectedStorageContext()
+            } else {
+                context
+            }
+        } else {
+            context
+        }
+        return prefsContext.getSharedPreferences(Constants.PREFS_NAME, Context.MODE_PRIVATE)
     }
 
     @Provides

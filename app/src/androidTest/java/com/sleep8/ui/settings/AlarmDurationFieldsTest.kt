@@ -1,15 +1,16 @@
 package com.sleep8.ui.settings
 
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import com.sleep8.testutil.TestActivity
 import org.junit.Rule
 import org.junit.Test
 
 class AlarmDurationFieldsTest {
 
     @get:Rule
-    val composeRule = createComposeRule()
+    val composeRule = createAndroidComposeRule<TestActivity>()
 
     @Test
     fun durationInputsExposeHoursAndMinutes() {
