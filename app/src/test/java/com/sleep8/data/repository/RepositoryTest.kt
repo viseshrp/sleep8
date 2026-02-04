@@ -44,8 +44,11 @@ class RepositoryTest {
     @Test
     fun `get settings returns default when empty`() {
         val settings = kotlinx.coroutines.runBlocking { settingsRepository.getSettings() }
-        assertEquals("21:00", settings.nightStart)
+        assertEquals("22:30", settings.nightStart)
         assertEquals("04:00", settings.nightEnd)
+        assertEquals("22:00", settings.autoArmStart)
+        assertEquals("05:00", settings.autoArmEnd)
+        assertEquals(20, settings.confirmOffMinutes)
         assertEquals(com.sleep8.util.Constants.ALARM_DEFAULT_DURATION_MINUTES, settings.alarmDurationMinutes)
     }
 

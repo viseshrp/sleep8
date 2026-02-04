@@ -4,7 +4,7 @@
 
 Sleep8 is a lightweight, offline-first Android app that helps users set an alarm automatically based on when they actually go to sleep.
 
-When the user arms the app (in-app button or Quick Settings tile) and the device is inside the configured night window, Sleep8 watches for screen-off events. If the screen stays off for the configured confirmation period (default 10 minutes), Sleep8 requests the OS clock app to create an alarm for `screen_off_time + 8 hours`. The latest screen-off before confirmation wins; multiple alarms per session are allowed.
+When the user arms the app (in-app button or Quick Settings tile) and the device is inside the configured night window, Sleep8 watches for screen-off events. If the screen stays off for the configured confirmation period (default 20 minutes), Sleep8 requests the OS clock app to create an alarm for `screen_off_time + 8 hours`. The latest screen-off before confirmation wins; multiple alarms per session are allowed.
 
 Key goals
 - Automation: arm once and let the app handle setting the alarm.
@@ -35,7 +35,7 @@ Highlights
 Features
 - Arm/disarm via app UI and Quick Settings tile
 - Foreground `NightMonitorService` while armed inside the night window
-- Detect `SCREEN_OFF` events and run a confirmation timer (default 10 minutes)
+- Detect `SCREEN_OFF` events and run a confirmation timer (default 20 minutes)
 - Create an OS Clock alarm at `screen_off_time + 8 hours` when confirmation succeeds
 - Auto-arm schedule with its own start/end times (separate from the night window)
 - Internal backstop exact alarm for resilience and telemetry
@@ -90,7 +90,7 @@ Behavior rules (concise)
 - After reboot, active session and pending confirmations are restored from DB and resumed when within the night window.
 
 Data model (high level)
-- `settings` — night window, confirm minutes (default 10), snooze, defaults
+- `settings` — night window, confirm minutes (default 20), snooze, defaults
 - `arm_sessions` — session lifecycle (armed_at, disarmed_at, source)
 - `screen_events` — recorded SCREEN_OFF / SCREEN_ON events per session
 - `alarm_records` — persisted alarm metadata (screen_off_ts, confirmed_at, scheduled_alarm_ts, os_alarm_intent_resolved, backstop)

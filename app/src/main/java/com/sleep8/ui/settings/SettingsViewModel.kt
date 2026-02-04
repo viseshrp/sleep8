@@ -8,6 +8,7 @@ import com.sleep8.data.repository.SettingsRepository
 import com.sleep8.domain.manager.ArmManager
 import com.sleep8.domain.model.Settings
 import com.sleep8.service.NightMonitorService
+import com.sleep8.util.Constants
 import com.sleep8.util.PermissionUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -145,7 +146,7 @@ class SettingsViewModel @Inject constructor(
         } else {
             appPreferences.alarmDurationMinutes
         }
-        val confirmOff = state.confirmOffMinutes.toIntOrNull() ?: 10
+        val confirmOff = state.confirmOffMinutes.toIntOrNull() ?: Constants.DEFAULT_CONFIRM_MINUTES
         val settings = Settings(
             nightStart = state.nightStart,
             nightEnd = state.nightEnd,

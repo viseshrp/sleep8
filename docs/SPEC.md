@@ -1,7 +1,7 @@
 # spec.md — Sleep8: Owned Alarm (Configurable Duration)
 
 ## 0. One-liner
-When the user **arms** the app (button or Quick Settings tile), the app watches for **screen-off** events during a **fixed night window**; once the screen has stayed off for **10 minutes**, it schedules an **app-owned exact alarm** for **screen-off + configured duration** (default **8h 0m**, range **0-720 minutes**) using `AlarmManager.setAlarmClock` (so the system “next alarm” UI reflects it), and always uses the **latest** screen-off event. Duration **0** rings immediately at confirmation time.
+When the user **arms** the app (button or Quick Settings tile), the app watches for **screen-off** events during a **fixed night window**; once the screen has stayed off for **20 minutes**, it schedules an **app-owned exact alarm** for **screen-off + configured duration** (default **8h 0m**, range **0-720 minutes**) using `AlarmManager.setAlarmClock` (so the system “next alarm” UI reflects it), and always uses the **latest** screen-off event. Duration **0** rings immediately at confirmation time.
 
 ---
 
@@ -23,7 +23,7 @@ When the user **arms** the app (button or Quick Settings tile), the app watches 
 - Arming: **only when armed** (in-app button + Quick Settings tile).
 - Night window: **fixed** start/end time configured by user.
 - Rescheduling: **latest screen-off wins** (keep updating the scheduled time until confirmed).
-- Confirm rule: only commit when **screen remains OFF for 10 minutes** after an OFF event.
+- Confirm rule: only commit when **screen remains OFF for 20 minutes** after an OFF event.
 - Alarm ownership: **app-owned** exact alarm via `AlarmManager.setAlarmClock` → receiver → foreground ringing service → full-screen activity (optional overlay).
 - **Single active alarm**: at most one scheduled (not fired) alarm exists at any time.
 - Duration: **configurable**, default **8h 0m** (480 minutes).
@@ -47,8 +47,8 @@ When the user **arms** the app (button or Quick Settings tile), the app watches 
 
 ### 5.1 First-run setup
 - User sets:
-  - Night window start/end (default **21:00–04:00**).
-  - Auto-arm schedule start/end (default **20:00–04:00**).
+  - Night window start/end (default **22:30–04:00**).
+  - Auto-arm schedule start/end (default **22:00–05:00**).
   - **Alarm duration** in hours + minutes (0-720 total, default 8h 0m).
 - App shows a “Reliability checklist”:
   - Exact alarm capability (Android 12+)
@@ -64,7 +64,7 @@ Two entry points:
 Armed state shows:
 - “Armed until: end of night window”
 - Last screen-off detected time (if any)
-- Pending confirmation timer (10 min) or confirmed alarm schedule time
+- Pending confirmation timer (20 min) or confirmed alarm schedule time
 
 Navigation:
 - Hamburger menu includes **Alarm** entry:
@@ -74,12 +74,12 @@ Navigation:
 
 ### 5.3 During the night window
 - Foreground service runs (persistent notification: “Sleep8 armed”).
-- On `SCREEN_OFF`, store event and start/refresh a **10-minute confirmation timer**.
+- On `SCREEN_OFF`, store event and start/refresh a **20-minute confirmation timer**.
 - If another `SCREEN_OFF` occurs before confirmation, **replace** the pending candidate (latest wins) and restart confirmation timer.
 - If screen turns on before confirmation, cancel confirmation timer; keep armed.
 
 ### 5.4 Confirmation → alarm creation
-When the screen has remained OFF for 10 minutes since the latest OFF event:
+When the screen has remained OFF for 20 minutes since the latest OFF event:
 - Schedule an app-owned **exact alarm** for:  
   `alarm_time = latest_screen_off_time + duration` (if duration = 0, ring immediately at confirmation time)
 - Persist the alarm record in DB with status `SCHEDULED` and `duration_used_minutes` snapshot.
@@ -125,7 +125,7 @@ When the screen has remained OFF for 10 minutes since the latest OFF event:
 - Maintain a `pending_candidate_screen_off_time`.
 - On every `SCREEN_OFF` within window:
   - set `pending_candidate_screen_off_time = now`
-  - start/restart 10-minute confirmation countdown.
+  - start/restart 20-minute confirmation countdown.
 - On `SCREEN_ON`:
   - cancel countdown; candidate remains in DB as last observed but not confirmed.
 
@@ -140,7 +140,7 @@ When the screen has remained OFF for 10 minutes since the latest OFF event:
 If armed at reboot or there was a pending confirmation:
 - Restore armed state and continue monitoring if still within night window.
 - If there was a pending candidate and the screen is currently OFF, re-evaluate confirmation using stored timestamps:
-  - If `now - pending_candidate_screen_off_time >= 10 minutes` then schedule alarm immediately.
+  - If `now - pending_candidate_screen_off_time >= 20 minutes` then schedule alarm immediately.
   - Else resume timer for the remaining duration.
 - If multiple scheduled alarms exist in DB, keep only the newest and cancel others with reason `REBOOT_CLEANUP`.
 - If a scheduled alarm exists in DB and its `trigger_at` is in the past, schedule it to fire immediately.
@@ -195,12 +195,12 @@ Tables:
 
 #### `settings`
 - `id` (singleton)
-- `night_start` (HH:MM, default 21:00)
+- `night_start` (HH:MM, default 22:30)
 - `night_end` (HH:MM, default 04:00)
-- `auto_arm_start` (HH:MM, default 20:00)
-- `auto_arm_end` (HH:MM, default 04:00)
+- `auto_arm_start` (HH:MM, default 22:00)
+- `auto_arm_end` (HH:MM, default 05:00)
 - `auto_arm_enabled` (bool, default false)
-- `confirm_off_minutes` (default 10)
+- `confirm_off_minutes` (default 20)
 - `alarm_duration_minutes` (0-720, default 480)
 - `overlay_enabled` (bool, default false)
 - `armed_default` (bool, default false)
@@ -209,7 +209,7 @@ Tables:
 - `alarm_id` (pk)
 - `session_id` (fk)
 - `screen_off_ts` (timestamp)         # triggering OFF
-- `confirmed_at` (timestamp)          # after 10 min off
+- `confirmed_at` (timestamp)          # after 20 min off
 - `scheduled_at` (timestamp)          # record creation time
 - `trigger_at` (timestamp)            # off + duration
 - `duration_used_minutes` (int)
