@@ -1,0 +1,260 @@
+name: Android CI/CD
+
+on:
+  pull_request:
+    branches: [ "main", "develop", "release/*" ]
+  push:
+    branches: [ "release/*" ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Deploy target"
+        required: true
+        default: "internal"
+        type: choice
+        options:
+          - internal
+          - beta
+          - production
+      run_ui_tests:
+        description: "Run UI (Espresso) tests"
+        required: true
+        default: "true"
+        type: choice
+        options: [ "true", "false" ]
+  schedule:
+    # Nightly build (UTC)
+    - cron: "0 2 * * *"
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: android-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  JAVA_VERSION: "17"
+  GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx3g -Dkotlin.daemon.jvm.options=-Xmx2g"
+
+jobs:
+  quality:
+    name: Quality / Static Checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: "gradle"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      # Lint + formatting checks (detekt/ktlint via Gradle)
+      - name: Detekt + KtLint + Lint
+        run: ./gradlew detekt ktlintCheck lint
+
+      # Optional: SonarQube Cloud scan (requires SONAR_TOKEN + SONAR_HOST_URL)
+      - name: SonarQube Cloud Scan (optional)
+        if: ${{ secrets.SONAR_TOKEN != '' }}
+        uses: SonarSource/sonarqube-scan-action@v6
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+  smoke:
+    name: Smoke Build / Compile
+    runs-on: ubuntu-latest
+    needs: [quality]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: "gradle"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      # Quick sanity checks: fast compile + lint on PRs
+      - name: Assemble Debug
+        run: ./gradlew assembleDebug
+
+  unit_tests:
+    name: Unit Tests (JVM)
+    runs-on: ubuntu-latest
+    needs: [smoke]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: "gradle"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Run Unit Tests
+        run: ./gradlew testDebugUnitTest
+
+      - name: Upload Unit Test Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-results
+          path: "**/build/test-results/**"
+
+  ui_tests:
+    name: UI Tests (Espresso)
+    runs-on: ubuntu-latest
+    needs: [unit_tests]
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.run_ui_tests == 'true' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        api-level: [ 30 ]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: "gradle"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run Instrumented Tests
+        uses: ReactiveCircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api-level }}
+          target: default
+          arch: x86_64
+          disable-animations: true
+          script: ./gradlew connectedDebugAndroidTest
+
+      - name: Upload UI Test Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-test-results-api${{ matrix.api-level }}
+          path: "**/build/reports/androidTests/**"
+
+  build_release:
+    name: Build / Package
+    runs-on: ubuntu-latest
+    needs: [ui_tests]
+    if: ${{ github.event_name != 'pull_request' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: "gradle"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      # Decode signing keys from GitHub Secrets
+      - name: Decode Keystore
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > release.keystore
+
+      - name: Build Release AAB/APK
+        env:
+          KEYSTORE_PATH: release.keystore
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: ./gradlew bundleRelease assembleRelease
+
+      - name: Upload Release Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-artifacts
+          path: |
+            app/build/outputs/**/*.aab
+            app/build/outputs/**/*.apk
+
+  deploy_internal:
+    name: Deploy Internal (Firebase App Distribution)
+    runs-on: ubuntu-latest
+    needs: [build_release]
+    if: >
+      github.event_name == 'push' ||
+      (github.event_name == 'workflow_dispatch' && inputs.environment == 'internal')
+    environment: internal
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Download Release Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-artifacts
+          path: dist
+
+      - name: Distribute to Firebase
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: ${{ secrets.FIREBASE_APP_ID }}
+          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+          groups: testers
+          file: dist/app-release.apk
+
+  deploy_play:
+    name: Deploy Google Play (Beta/Production)
+    runs-on: ubuntu-latest
+    needs: [build_release]
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.environment != 'internal' }}
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Download Release Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-artifacts
+          path: dist
+
+      - name: Upload to Google Play
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.example.app
+          releaseFiles: dist/**/*.aab
+          track: ${{ inputs.environment }}
+          status: completed
+
+# Acceptance criteria:
+# 1) PR gating behavior: PRs to main/develop/release/* must run quality → smoke → unit_tests → ui_tests and block merge on failure.
+# 2) Artifact generation: release/* pushes or workflow_dispatch must publish AAB/APK to release-artifacts.
+# 3) Internal deploy: release/* pushes (or manual env=internal) must deliver to Firebase App Distribution.
+# 4) Store deploy: manual env=beta/production must upload AAB to Google Play on selected track.
+# 5) Manual approval: production environment can enforce required reviewers before Play deploy.

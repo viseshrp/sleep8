@@ -1,4 +1,6 @@
 # Sleep8
+[![CI](https://github.com/<OWNER>/<REPO>/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/<OWNER>/<REPO>/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/<OWNER>/<REPO>/branch/main/graph/badge.svg?token=<CODECOV_TOKEN>)](https://codecov.io/gh/<OWNER>/<REPO>)
 
 Sleep8 is a lightweight, offline-first Android app that helps users set an alarm automatically based on when they actually go to sleep.
 
@@ -105,6 +107,20 @@ Testing
 - Unit tests: JUnit 5 + MockK (see `app/src/test`) — logic for `NightWindowValidator`, `TimeUtils`, `StateMachineManager`, etc.
 - Integration: Robolectric for service + DB integration tests
 - Manual tests: `docs/MANUAL_TESTS.md` contains detailed P0/P1 test cases (reboot flows, OEM clock behavior, window crossing, etc.)
+
+Coverage (local)
+```bash
+make coverage
+```
+Coverage reports are written to `app/build/reports/jacoco/jacocoTestReport/`:
+- `html/index.html` for human-readable coverage
+- `jacocoTestReport.xml` for CI/Codecov upload
+
+CI/CD
+- GitHub Actions runs on pull requests and on pushes to `main` and `release/**`.
+- CI uses the Makefile targets for lint, unit, integration, UI tests, and coverage.
+- Codecov uploads require `CODECOV_TOKEN` in GitHub Secrets.
+- Coverage configuration lives in `codecov.yml`.
 
 Where to read more
 - Architecture and design rationale: `docs/ARCHITECTURE.md`

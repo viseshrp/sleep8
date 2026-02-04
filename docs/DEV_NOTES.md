@@ -17,6 +17,10 @@
 - From Android Studio: Run > Run 'All Tests in androidTest'.
 - Or from terminal: ./gradlew connectedDebugAndroidTest
 
+## CI/CD
+- GitHub Actions runs lint, unit, integration, UI tests, and coverage via Makefile targets.
+- Local coverage: `make coverage` (HTML report in `app/build/reports/jacoco/jacocoTestReport/html/index.html`).
+
 ## Manual Tests (Physical Device)
 - Follow the test cases in docs/MANUAL_TESTS.md.
 - Focus on P0/P1 cases first, especially screen on/off flows, reboot recovery, and OEM clock app behavior.
