@@ -23,7 +23,7 @@
 
 ## Manual Tests (Physical Device)
 - Follow the test cases in docs/MANUAL_TESTS.md.
-- Focus on P0/P1 cases first, especially screen on/off flows, reboot recovery, and OEM clock app behavior.
+- Focus on P0/P1 cases first, especially screen on/off flows, reboot recovery, and lockscreen/full-screen alarm behavior.
 
 ## New Features (2026)
 - Auto-arm schedule: Enable in settings to automatically arm/disarm at auto-arm schedule boundaries (separate from night window).

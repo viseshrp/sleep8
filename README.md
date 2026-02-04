@@ -2,147 +2,185 @@
 [![CI](https://github.com/viseshrp/sleep8/actions/workflows/android-ci-cd.yml/badge.svg?branch=main)](https://github.com/viseshrp/sleep8/actions/workflows/android-ci-cd.yml)
 [![codecov](https://codecov.io/gh/viseshrp/sleep8/branch/main/graph/badge.svg)](https://codecov.io/gh/viseshrp/sleep8)
 
-Sleep8 is a lightweight, offline-first Android app that helps users set an alarm automatically based on when they actually go to sleep.
+Sleep8 is an offline Android alarm app that schedules a wake alarm based on when you actually fall asleep.
 
-When the user arms the app (in-app button or Quick Settings tile) and the device is inside the configured night window, Sleep8 watches for screen-off events. If the screen stays off for the configured confirmation period (default 20 minutes), Sleep8 requests the OS clock app to create an alarm for `screen_off_time + 8 hours`. The latest screen-off before confirmation wins; multiple alarms per session are allowed.
+When armed (from the app or Quick Settings tile), Sleep8 monitors screen on/off events only during the configured night window. If the screen remains off for the confirmation period (default 20 minutes), it schedules an app-owned exact alarm for:
 
-Key goals
-- Automation: arm once and let the app handle setting the alarm.
-- Reliability: foreground monitoring during the night window, exact alarm scheduling and an internal backstop.
-- Privacy: strictly offline — no network activity.
+`trigger_at = screen_off_time + configured_duration`
 
-Highlights
-- Min SDK: 31 (Android 12+)
-- Kotlin + Jetpack Compose
-- DI: Hilt
-- Persistence: Room
-- Scheduling: AlarmManager + OS Clock intent (`AlarmClock.ACTION_SET_ALARM`)
+Default duration is 8h 0m, and valid duration range is 0-720 minutes.
 
----
+## What the app does
+- Arms/disarms manually from Home and Quick Settings tile.
+- Supports auto-arm start/end schedule (separate from night window).
+- Runs `NightMonitorService` only while armed and inside the night window.
+- Tracks screen-off confirmation with an exact timer (`setExactAndAllowWhileIdle`).
+- Schedules alarms with `AlarmManager.setAlarmClock` (app-owned alarms, no OS clock delegation).
+- Enforces a single active scheduled alarm at a time.
+- Provides:
+  - Alarm list (toggle enabled/disabled for existing records).
+  - Alarm history (full local audit trail).
+  - Full-screen ringing UI and optional overlay ringing UI.
+- Restores state and reconciles alarms after reboot.
+- Works offline only (no `INTERNET` permission).
 
-**Contents**
-- Features
-- Quickstart (build & run)
-- Architecture overview
-- Data model & behavior rules
-- Permissions & reliability notes
-- Testing & manual test plan
-- Contributing
-- License
+## Product behavior
+1. User arms Sleep8.
+2. If current local time is inside night window, monitoring is active.
+3. On each `SCREEN_OFF` event in-window:
+   - candidate screen-off timestamp is updated
+   - 20-minute confirmation timer is (re)started
+4. If `SCREEN_ON` occurs before confirmation, timer is cancelled.
+5. If confirmation expires while still off:
+   - new alarm record is created (`SCHEDULED`)
+   - previous scheduled alarms are cancelled (`REPLACED_BY_NEW_ALARM`)
+   - exact alarm is scheduled with `setAlarmClock`
+6. At trigger time, receiver launches ringing flow (service + full-screen activity).
+7. User dismisses alarm; record moves to `DISMISSED`.
 
----
+Notes:
+- "Latest screen-off wins" before confirmation.
+- Duration `0` means ring immediately at confirmation time.
+- Manual disarm and scheduled disarm stop monitoring and pending confirmation, but do not cancel already scheduled alarms.
 
-Features
-- Arm/disarm via app UI and Quick Settings tile
-- Foreground `NightMonitorService` while armed inside the night window
-- Detect `SCREEN_OFF` events and run a confirmation timer (default 20 minutes)
-- Create an OS Clock alarm at `screen_off_time + 8 hours` when confirmation succeeds
-- Auto-arm schedule with its own start/end times (separate from the night window)
-- Internal backstop exact alarm for resilience and telemetry
-- Persistent audit log of arm sessions, screen events, and alarm records (Room DB)
+## Architecture summary
+Code is split into `ui`, `domain`, `service`, `data`, and `util`.
 
-Quickstart
-Prerequisites
-- Android Studio (Giraffe or later) or command-line Gradle
-- Java 17 / Kotlin 1.9+
-- Device or emulator running Android 12+ (minSdk 31)
+- UI layer:
+  - `MainActivity`, `SettingsActivity`, `AlarmListActivity`, `AlarmHistoryActivity`, `AlarmRingingActivity`
+  - Compose screens and Quick Settings tile (`Sleep8TileService`)
+- Domain layer:
+  - `ArmManager` (arming lifecycle and scheduling boundaries)
+  - `StateMachineManager` (screen events/confirmation transitions)
+  - `AlarmScheduler`, `ConfirmOffScheduler`, `WindowScheduler`, `NightWindowScheduler`
+- Service/receiver layer:
+  - `NightMonitorService`, `AlarmRingingService`
+  - receivers for alarm firing, boot restore, confirmation, and window boundaries
+- Data layer:
+  - Room DB + repositories for settings, sessions, and alarm records
+  - SharedPreferences (`AppPreferences`) for runtime state and IDs
 
-Build & run (terminal)
+State machine:
+- `DISARMED`
+- `ARMED_IDLE`
+- `ARMED_PENDING_CONFIRM`
+- `ARMED_ALARM_SET`
+
+## Data model
+Room database: `Sleep8Database` (version 10)
+
+- `settings`
+  - night window, auto-arm window, confirmation minutes
+  - alarm duration, overlay enabled, armed default
+- `arm_sessions`
+  - arm/disarm lifecycle and source (`APP_BUTTON`, `QUICK_TILE`, `SCHEDULED`)
+- `screen_events`
+  - `SCREEN_OFF` / `SCREEN_ON` audit trail per session
+- `alarm_records`
+  - trigger and lifecycle fields, including:
+    - `duration_used_minutes`
+    - `alarm_instance_id`
+    - `request_code`
+    - `status` (`SCHEDULED` / `FIRED` / `DISMISSED` / `CANCELED`)
+    - `canceled_reason`
+    - `overlay_used`, `activity_presented`
+
+## Permissions and reliability checklist
+Manifest permissions include:
+- `SCHEDULE_EXACT_ALARM`
+- `POST_NOTIFICATIONS`
+- `USE_FULL_SCREEN_INTENT`
+- `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`
+- `SYSTEM_ALERT_WINDOW` (optional overlay)
+- `RECEIVE_BOOT_COMPLETED`
+- Foreground service permissions
+
+Settings includes a reliability section to verify/request:
+- exact alarms
+- notifications
+- full-screen alarm UI capability
+- battery optimization exclusion
+- overlay permission (optional)
+
+## Tech stack
+- Kotlin, Jetpack Compose, Material 3
+- Hilt dependency injection
+- Room persistence
+- AlarmManager (`setExactAndAllowWhileIdle`, `setAlarmClock`)
+- JUnit5 + MockK + Robolectric + Compose UI tests
+
+SDK/toolchain:
+- `minSdk = 31`
+- `targetSdk = 35`
+- `compileSdk = 35`
+- Java 17
+- Kotlin 2.0.21
+
+## Build and run
+Prerequisites:
+- Android Studio (or Gradle CLI)
+- Android SDK for API 31+
+- Java 17
+
+Commands:
 ```bash
 ./gradlew assembleDebug
 ./gradlew installDebug
 ```
 
-Run unit tests
+## Test and coverage
+Local commands:
 ```bash
-./gradlew testDebugUnitTest
-```
-
-Run instrumentation tests (device/emulator)
-```bash
-./gradlew connectedDebugAndroidTest
-```
-
-Project layout (short)
-- `app/` — Android application module
-- `docs/` — design docs, implementation plan, test plans
-- `app/src/main/...` — Kotlin source split by `ui`, `domain`, `service`, `data`, `util`
-- `app/build.gradle.kts` — compileSdk=35, minSdk=31, Kotlin + Hilt + Room + Compose
-
-Architecture overview
-Sleep8 follows a layered design (Presentation → Domain → Service → Data):
-- Presentation: `MainActivity`, `SettingsActivity`, Compose UI, Quick Settings Tile
-- Domain: `ArmManager`, `StateMachineManager`, `ConfirmOffScheduler`, `OsAlarmCreator`
-- Service: `NightMonitorService` (foreground), `ScreenStateReceiver`, `BootReceiver`
-- Data: Room database with `settings`, `arm_sessions`, `screen_events`, `alarm_records`
-
-State machine summary
-- `DISARMED` → `ARMED_IDLE` (arm)
-- `ARMED_IDLE` → `ARMED_PENDING_CONFIRM` on `SCREEN_OFF` inside night window
-- `ARMED_PENDING_CONFIRM` → `ARMED_ALARM_SET` if confirmation timer elapses while screen remains off
-- `ARMED_PENDING_CONFIRM` → `ARMED_IDLE` if screen turns on before confirmation
-- Any armed state → `DISARMED` on disarm
-
-Behavior rules (concise)
-- Night window enforces when screen events are considered; handles windows across midnight.
-- Latest screen-off before confirmation wins; the confirmation timer restarts on a new screen-off.
-- Alarm created via `AlarmClock.ACTION_SET_ALARM`; also schedule an internal exact backstop using `AlarmManager.setExactAndAllowWhileIdle`.
-- After reboot, active session and pending confirmations are restored from DB and resumed when within the night window.
-
-Data model (high level)
-- `settings` — night window, confirm minutes (default 20), snooze, defaults
-- `arm_sessions` — session lifecycle (armed_at, disarmed_at, source)
-- `screen_events` — recorded SCREEN_OFF / SCREEN_ON events per session
-- `alarm_records` — persisted alarm metadata (screen_off_ts, confirmed_at, scheduled_alarm_ts, os_alarm_intent_resolved, backstop)
-
-Permissions & reliability
-- Foreground service permissions (auto-granted); `RECEIVE_BOOT_COMPLETED` for reboot restore
-- `SCHEDULE_EXACT_ALARM` may be required for exact alarm behavior on some platforms
-- Battery-optimization guidance is shown; users may need to exclude the app on some OEMs for maximum reliability
-
-OEM notes
-- Some OEM clock apps ignore the `EXTRA_SKIP_UI` behavior or require manual confirmation. Sleep8 detects whether the clock intent resolves and records whether UI confirmation is required; it also schedules an internal backstop alarm.
-
-Testing
-- Unit tests: JUnit 5 + MockK (see `app/src/test`) — logic for `NightWindowValidator`, `TimeUtils`, `StateMachineManager`, etc.
-- Integration: Robolectric for service + DB integration tests
-- Manual tests: `docs/MANUAL_TESTS.md` contains detailed P0/P1 test cases (reboot flows, OEM clock behavior, window crossing, etc.)
-
-Coverage (local)
-```bash
+make check
+make test-unit
+make test-integration
+make test-ui
 make coverage
 ```
-Coverage reports are written to `app/build/reports/jacoco/jacocoTestReport/`:
-- `html/index.html` for human-readable coverage
-- `jacocoTestReport.xml` for CI/Codecov upload
 
-CI/CD
-- GitHub Actions runs on pull requests and on pushes to `main` and `release/**`.
-- CI uses the Makefile targets for lint, unit, integration, UI tests, and coverage.
-- Codecov uploads require `CODECOV_TOKEN` in GitHub Secrets.
-- Coverage configuration lives in `codecov.yml`.
+Equivalent Gradle examples:
+```bash
+./gradlew testDebugUnitTest
+./gradlew connectedDebugAndroidTest
+./gradlew jacocoTestReport jacocoTestCoverageVerification
+```
 
-Where to read more
-- Architecture and design rationale: `docs/ARCHITECTURE.md`
-- Implementation plan and milestone breakdown: `docs/IMPLEMENTATION_PLAN.md`
-- Full spec: `docs/SPEC.md`
-- Test plan: `docs/TEST_PLAN.md`
+Current test footprint:
+- 30 JVM test classes under `app/src/test`
+- 6 instrumentation/Compose test classes under `app/src/androidTest`
 
-Contributing
-- See `docs/DEV_NOTES.md` for build/run/test instructions.
-- Suggested workflow:
-	1. Fork & branch from `main` as `feature/your-feature`.
-	2. Write small commits with clear messages.
-	3. Add tests for new logic; keep behavior deterministic for unit tests.
-	4. Open a PR and reference related docs/milestones.
+Coverage artifacts:
+- `app/build/reports/jacoco/jacocoTestReport/html/index.html`
+- `app/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml`
 
-Recommended next improvements
-- Add CI with `./gradlew test` and lint checks
-- Add badges (build, test coverage) to this README
-- Add small onboarding checklist for QA (quick steps for OEM testing)
+Coverage verification target is 90% line coverage.
 
-License
-- See `LICENSE` in repository root.
+## CI/CD
+Workflow: `.github/workflows/android-ci-cd.yml`
 
-Questions / Contact
-- For questions about design decisions, see `docs/ARCHITECTURE.md` and `docs/SPEC.md` or open an issue.
+Runs:
+- quality/lint
+- unit + integration + coverage
+- UI tests on emulator
+- release build (non-PR events)
+- optional Play deployment (workflow dispatch)
+
+Codecov config: `codecov.yml`
+
+## Project structure
+- `app/` Android app module
+- `docs/` architecture/spec/testing/design docs
+- `app/src/main/java/com/sleep8/...` production source
+- `app/src/test/...` unit/integration tests
+- `app/src/androidTest/...` instrumentation/Compose tests
+
+## Documentation map
+- `docs/SPEC.md` authoritative product spec
+- `docs/ARCHITECTURE.md` architecture and runtime flow
+- `docs/TEST_PLAN.md` what to verify across unit/integration/UI/manual
+- `docs/MANUAL_TESTS.md` device-first validation checklist
+- `docs/DEV_NOTES.md` developer workflow notes
+- `docs/VERIFICATION_REPORT.md` spec compliance snapshot
+
+## License
+See `LICENSE`.

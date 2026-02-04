@@ -2,94 +2,123 @@
 
 ## 1. Overview
 
-Sleep8 schedules **app-owned exact alarms** using `AlarmManager.setAlarmClock`, then drives a full-screen alarm UI with a foreground ringing service. The app never delegates to the OS Clock app.
+Sleep8 uses app-owned exact alarms (`AlarmManager.setAlarmClock`) and a local ringing flow (receiver + service + full-screen UI). It does not delegate alarm creation to the OS Clock app.
+
+High-level flow:
 
 ```
-User
-  │
-  ▼
-MainActivity / QS Tile ──► ArmManager ──► NightMonitorService
-                                         │
-                                         ▼
-                                Screen OFF/ON events
-                                         │
-                                         ▼
-                               ConfirmOffScheduler
-                                         │ (screen off confirmed)
-                                         ▼
-                                 AlarmScheduler
-                                         │  setAlarmClock(AlarmClockInfo)
-                                         ▼
-                                AlarmManager
-                                         │
-                                         ▼
-                                 AlarmReceiver
-                                         │
-                                         ├──► AlarmRingingService (FGS)
-                                         ├──► AlarmRingingActivity (full-screen)
-                                         └──► Optional Overlay (WindowManager)
+User (Home / QS Tile)
+        │
+        ▼
+    ArmManager
+        │
+        ├── schedules Auto-arm boundaries (WindowScheduler)
+        ├── schedules Night-window boundaries (NightWindowScheduler)
+        └── starts/stops NightMonitorService when armed + in night window
+                                     │
+                                     ▼
+                           SCREEN_OFF / SCREEN_ON
+                                     │
+                                     ▼
+                            StateMachineManager
+                                     │
+                                     ├── ConfirmOffScheduler (20m default)
+                                     └── AlarmScheduler (setAlarmClock)
+                                               │
+                                               ▼
+                                          AlarmReceiver
+                                               │
+                                               ├── AlarmRingingService (FGS)
+                                               ├── AlarmRingingActivity (full-screen)
+                                               └── AlarmOverlayController (optional)
 ```
 
 ---
 
-## 2. Key Components
+## 2. Core Components
 
-- **AlarmScheduler**
-  - Calculates `triggerAt` using configured duration.
-  - Persists metadata (`duration_used_minutes`, `alarm_instance_id`, `request_code`, `overlay_used`, `activity_presented`).
-  - Schedules `AlarmManager.setAlarmClock` so system “next alarm” UI reflects the app’s alarm.
-  - Enforces **single active alarm** by canceling previously scheduled alarms and marking them `CANCELED`.
+- `ArmManager`
+  - Handles arm/disarm from app button, tile, and auto-arm schedule.
+  - Maintains active arm session and schedules window boundaries.
+  - Night window only gates monitoring; it does not force disarm.
 
-- **AlarmReceiver**
-  - Receives the alarm clock operation.
-  - Dedupes by `alarm_instance_id` and record status.
-  - Starts ringing service and full-screen activity.
+- `StateMachineManager`
+  - Owns runtime states: `DISARMED`, `ARMED_IDLE`, `ARMED_PENDING_CONFIRM`, `ARMED_ALARM_SET`.
+  - Applies "latest screen-off wins" policy and coordinates confirmation timer.
+  - Triggers alarm scheduling when confirmation succeeds.
 
-- **AlarmRingingService**
-  - Foreground service only while ringing.
-  - Uses ALARM-category notification with **Dismiss-only** action.
-  - Shows optional overlay when user-enabled + permission granted.
+- `ConfirmOffScheduler`
+  - Uses `setExactAndAllowWhileIdle` for confirmation timeout.
+  - Persists pending candidate/deadline in `AppPreferences`.
 
-- **Navigation**
-  - Hamburger menu includes **Alarm** entry.
-  - Routes to active ringing UI if an alarm is ringing; otherwise opens alarm preview/history.
-  - Alarm page is an AOSP-style list with toggle-only controls (no edits).
+- `AlarmScheduler`
+  - Computes alarm trigger from `screenOffTs + duration`.
+  - Uses `setAlarmClock` so system "next alarm" can surface Sleep8's alarm.
+  - Enforces single-active invariant by cancelling prior scheduled records.
+  - Reconciles/cleans scheduled records after boot.
 
-- **Alarm List Flow**
-  - Alarm list screen reads from DB (`AlarmRecord`).
-  - Toggle ON → `AlarmScheduler.enableExisting` → `AlarmManager.setAlarmClock` + DB status update.
-  - Toggle OFF → `AlarmScheduler.cancelAlarm` → DB status update.
-  - Single active invariant: enabling one alarm cancels other scheduled alarms.
+- `NightMonitorService`
+  - Foreground service that listens for screen on/off broadcasts.
+  - Updates monitoring notification based on armed/pending state.
 
-- **AlarmRingingActivity**
-  - Full-screen, shows over lock screen, turns screen on.
+- `AlarmReceiver`
+  - Validates alarm record status + instance ID before firing.
+  - Starts ringing service and ringing activity (or activity-only fallback if notifications denied).
+  - Marks record `FIRED` and `activity_presented`.
 
-- **Duration UI invariant**
-  - Settings duration input is always **hours + minutes** (never minutes-only).
+- `AlarmRingingService` and `AlarmRingingActivity`
+  - Ring with alarm audio + vibration.
+  - Expose dismiss-only action.
+  - Optional overlay path controlled by settings + overlay permission.
 
 ---
 
-## 3. Best-effort OS Integration
+## 3. Storage Boundaries
 
-- **ACTION_SHOW_ALARMS** opens Alarm History.
-- **Deep links**:
+- Room (`Sleep8Database`)
+  - `settings`, `arm_sessions`, `screen_events`, `alarm_records`
+  - Durable product data and alarm lifecycle history.
+
+- SharedPreferences (`AppPreferences`)
+  - Runtime continuity keys (armed flag, active IDs, pending confirmation timestamps, theme mode).
+  - Instance ID generation for alarm pending intent uniqueness.
+
+---
+
+## 4. Navigation and Surfaces
+
+- `MainActivity` (home)
+  - Arm/disarm, current status, latest scheduled alarm summary.
+
+- `AlarmListActivity`
+  - Toggle-only list for current/past alarms.
+  - Enabling one alarm disables other scheduled alarms.
+
+- `AlarmHistoryActivity`
+  - Full local audit trail and deep-link/ACTION_SHOW_ALARMS target.
+
+- `SettingsActivity`
+  - Night window, auto-arm, duration, confirm window, overlay toggle, reliability checklist, theme.
+
+---
+
+## 5. Reboot and Recovery
+
+`BootReceiver` restores system behavior in this order:
+- Recreates auto-arm start/end schedules when enabled.
+- Re-evaluates whether app should currently be armed.
+- Restores active session and night-window monitoring state.
+- Restores pending confirmation (immediate schedule if overdue and screen still off).
+- Reconciles multiple scheduled alarms (keeps newest, cancels extras with `REBOOT_CLEANUP`).
+- Reschedules surviving scheduled alarm; if overdue, schedules near-immediate trigger.
+
+---
+
+## 6. OS Integration (Best-effort)
+
+- Handles `AlarmClock.ACTION_SHOW_ALARMS` via `AlarmHistoryActivity`.
+- Supports deep links:
   - `sleep8://alarms`
   - `sleep8://alarm/<id>`
 
-Android does not guarantee a third-party app can be the system default alarm app; this is best-effort.
-
----
-
-## 4. Data Flow
-
-- Screen-off confirmed → DB record written (`SCHEDULED`).
-- Alarm fires → record set `FIRED`.
-- Dismiss → record set `DISMISSED`.
-- Dismiss → record set `DISMISSED`.
-
----
-
-## 5. Reboot Restore
-
-- Restore armed state and pending confirmation timers.
-- Reschedule latest `SCHEDULED` record; cancel extras with reason `REBOOT_CLEANUP`; if overdue, fire immediately.
+Android does not guarantee third-party default alarm ownership; integration remains best-effort.
