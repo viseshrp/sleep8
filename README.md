@@ -1,6 +1,6 @@
 # Sleep8
-[![CI](https://github.com/<OWNER>/<REPO>/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/<OWNER>/<REPO>/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/<OWNER>/<REPO>/branch/main/graph/badge.svg?token=<CODECOV_TOKEN>)](https://codecov.io/gh/<OWNER>/<REPO>)
+[![CI](https://github.com/viseshrp/sleep8/actions/workflows/android-ci-cd.yml/badge.svg?branch=main)](https://github.com/viseshrp/sleep8/actions/workflows/android-ci-cd.yml)
+[![codecov](https://codecov.io/gh/viseshrp/sleep8/branch/main/graph/badge.svg)](https://codecov.io/gh/viseshrp/sleep8)
 
 Sleep8 is a lightweight, offline-first Android app that helps users set an alarm automatically based on when they actually go to sleep.
 
