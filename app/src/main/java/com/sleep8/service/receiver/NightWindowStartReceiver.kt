@@ -11,6 +11,7 @@ import com.sleep8.domain.state.StateHolder
 import com.sleep8.service.ServiceController
 import com.sleep8.util.TimeUtils
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -26,28 +27,34 @@ class NightWindowStartReceiver : BroadcastReceiver() {
     @Inject lateinit var serviceController: ServiceController
     @Inject lateinit var stateMachineManager: StateMachineManager
 
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    @androidx.annotation.VisibleForTesting
+    internal var dispatcher: CoroutineDispatcher = Dispatchers.Default
 
     override fun onReceive(context: Context, intent: Intent) {
         val pending = goAsync()
+        val scope = CoroutineScope(SupervisorJob() + dispatcher)
         scope.launch {
-            if (stateHolder.state.value == AppState.DISARMED) {
-                pending.finish()
-                return@launch
-            }
-            val settings = settingsRepository.getSettings()
-            val start = TimeUtils.parseLocalTime(settings.nightStart)
-            val end = TimeUtils.parseLocalTime(settings.nightEnd)
-            val now = LocalDateTime.now()
-            val inWindow = TimeUtils.isInWindow(now.toLocalTime(), start, end)
-            if (inWindow) {
-                // Ring-style: Night Window only gates monitoring, never changes armed state.
-                serviceController.startNightMonitorService()
-                val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
-                val screenStillOff = !powerManager.isInteractive
-                stateMachineManager.resumePendingConfirmationIfEligible(screenStillOff)
-            }
-            pending.finish()
+            handleNightWindowStart(context)
+            pending?.finish()
+        }
+    }
+
+    @androidx.annotation.VisibleForTesting
+    internal suspend fun handleNightWindowStart(context: Context) {
+        if (stateHolder.state.value == AppState.DISARMED) {
+            return
+        }
+        val settings = settingsRepository.getSettings()
+        val start = TimeUtils.parseLocalTime(settings.nightStart)
+        val end = TimeUtils.parseLocalTime(settings.nightEnd)
+        val now = LocalDateTime.now()
+        val inWindow = TimeUtils.isInWindow(now.toLocalTime(), start, end)
+        if (inWindow) {
+            // Ring-style: Night Window only gates monitoring, never changes armed state.
+            serviceController.startNightMonitorService()
+            val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+            val screenStillOff = !powerManager.isInteractive
+            stateMachineManager.resumePendingConfirmationIfEligible(screenStillOff)
         }
     }
 }

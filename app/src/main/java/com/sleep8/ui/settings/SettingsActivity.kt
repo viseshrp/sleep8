@@ -71,7 +71,7 @@ class SettingsActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SettingsScreen(
+internal fun SettingsScreen(
     viewModel: SettingsViewModel,
     onBack: () -> Unit
 ) {

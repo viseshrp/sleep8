@@ -111,6 +111,23 @@ private fun MainScreen(
     onToggleArmed: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    MainContent(
+        uiState = uiState,
+        onOpenSettings = onOpenSettings,
+        onOpenAlarm = onOpenAlarm,
+        onOpenHistory = onOpenHistory,
+        onToggleArmed = onToggleArmed
+    )
+}
+
+@Composable
+internal fun MainContent(
+    uiState: MainUiState,
+    onOpenSettings: () -> Unit,
+    onOpenAlarm: () -> Unit,
+    onOpenHistory: () -> Unit,
+    onToggleArmed: () -> Unit
+) {
     val drawerState = androidx.compose.material3.rememberDrawerState(
         initialValue = androidx.compose.material3.DrawerValue.Closed
     )

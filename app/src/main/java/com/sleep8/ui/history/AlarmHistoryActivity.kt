@@ -77,7 +77,7 @@ class AlarmHistoryActivity : ComponentActivity() {
 }
 
 @Composable
-private fun AlarmHistoryScreen(
+internal fun AlarmHistoryScreen(
     viewModel: AlarmHistoryViewModel,
     onBack: () -> Unit
 ) {

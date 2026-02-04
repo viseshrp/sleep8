@@ -1,6 +1,7 @@
 # Sleep8 — Manual Test Cases (Owned Exact Alarms + Optional Overlay)
 
 These tests require **physical devices** (Pixel 8 / Android 14+ recommended).
+Automated unit, integration, and Compose UI tests cover most logic and UI flows; manual tests focus on platform-specific behaviors (exact alarms, lockscreen, OEM clock integration, overlay reliability).
 
 ## Core Alarm Flow
 - Screen off → confirmation → alarm fires at `screen_off + duration`.
@@ -35,6 +36,11 @@ These tests require **physical devices** (Pixel 8 / Android 14+ recommended).
   - `sleep8://alarms` opens history
   - `sleep8://alarm/<id>` opens history with selected record
 - Schedule an alarm earlier than Google Clock → lockscreen “next alarm” shows Sleep8 time.
+
+## Remaining Platform-Only Behaviors
+- Verify exact-alarm permission prompts on Android 12+ and that alarms still fire after Doze.
+- Confirm lockscreen indicator updates on real hardware.
+- Validate OEM-specific battery optimization flows.
 
 ## Alarm List (AOSP-style)
 - Alarm page shows time, subtitle, and toggle switch per alarm.

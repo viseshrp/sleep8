@@ -25,12 +25,28 @@ Physical device testing is required; emulators are not authoritative for exact a
 - Alarm list has no edit actions.
 - `AlarmManager.getNextAlarmClock` reflects the earliest scheduled alarm (debug/log assertion).
 - AlarmRingingActivity fullScreenIntent is used for ringing UI.
+- Boot restore behavior with pending confirmations and overdue scheduled alarms.
+- AlarmReceiver behavior for notification-permitted vs denied flows.
+- Window schedulers (auto-arm and night window start/end).
+- Window receivers invoke scheduled arm/disarm.
+- AppPreferences migration and instance id generation.
 
 ---
 
 ## Integration Tests (Robolectric)
 - Arm → screen off → confirm → alarm scheduled.
 - Boot restore reschedules `SCHEDULED` record.
+- Night window start/end receivers gate monitoring.
+- Service lifecycle and foreground notification behavior.
+
+---
+
+## UI Tests (Compose)
+- Settings screen sections and reliability checklist.
+- Alarm list content (empty state, toggles).
+- Alarm history page and back navigation.
+- Ringing UI (Dismiss-only).
+- Main navigation drawer flows (hamburger/menu selections).
 
 ---
 
