@@ -15,7 +15,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import com.sleep8.service.AlarmRinger
 import com.sleep8.service.AlarmRingingService
 import com.sleep8.ui.theme.Sleep8Theme
+import com.sleep8.util.TimeUtils
 import com.sleep8.util.Constants
+import java.time.LocalTime
 
 class AlarmRingingActivity : AppCompatActivity() {
 
@@ -56,8 +58,10 @@ class AlarmRingingActivity : AppCompatActivity() {
         setContent {
             Sleep8Theme {
                 Surface(modifier = Modifier.fillMaxSize()) {
+                    val alarmLabel = if (alarmId > 0) "Alarm #$alarmId" else "Alarm"
                     AlarmRingingContent(
                         label = getString(com.sleep8.R.string.alarm_ringing_title),
+                        alarmInfo = "$alarmLabel • ${TimeUtils.formatAlarmTime(LocalTime.now())}",
                         onDismiss = {
                             ringer?.stop()
                             AlarmRingingService.stop(this, alarmId)

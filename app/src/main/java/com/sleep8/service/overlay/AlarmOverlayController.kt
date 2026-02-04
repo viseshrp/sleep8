@@ -10,6 +10,8 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import com.sleep8.ui.ringing.AlarmRingingContent
 import com.sleep8.ui.theme.Sleep8Theme
+import com.sleep8.util.TimeUtils
+import java.time.LocalTime
 
 class AlarmOverlayController(
     private val context: Context
@@ -26,6 +28,7 @@ class AlarmOverlayController(
                 Sleep8Theme {
                     AlarmRingingContent(
                         label = context.getString(com.sleep8.R.string.alarm_ringing_title),
+                        alarmInfo = "Alarm overlay • ${TimeUtils.formatAlarmTime(LocalTime.now())}",
                         onDismiss = onDismiss
                     )
                 }

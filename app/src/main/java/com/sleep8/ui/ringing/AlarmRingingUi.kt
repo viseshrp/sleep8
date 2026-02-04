@@ -4,11 +4,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,6 +33,7 @@ import java.time.LocalTime
 @Composable
 fun AlarmRingingContent(
     label: String,
+    alarmInfo: String,
     onDismiss: () -> Unit
 ) {
     var timeText by remember { mutableStateOf(TimeUtils.formatAlarmTime(LocalTime.now())) }
@@ -65,13 +68,23 @@ fun AlarmRingingContent(
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+            Text(
+                text = alarmInfo,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
 
         Button(
             onClick = onDismiss,
             modifier = Modifier
                 .fillMaxWidth()
-                .testTag("ringing-dismiss")
+                .height(64.dp)
+                .testTag("ringing-dismiss"),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.error,
+                contentColor = MaterialTheme.colorScheme.onError
+            )
         ) {
             Text(text = stringResource(id = R.string.alarm_dismiss))
         }

@@ -17,11 +17,12 @@ class AlarmRingingContentTest {
     fun ringingUiShowsDismissOnly() {
         composeRule.setContent {
             MaterialTheme {
-                AlarmRingingContent(label = "Alarm", onDismiss = {})
+                AlarmRingingContent(label = "Alarm", alarmInfo = "Alarm #123", onDismiss = {})
             }
         }
 
         composeRule.onNodeWithText("Dismiss").assertExists()
+        composeRule.onNodeWithText("Alarm #123").assertExists()
         composeRule.onNodeWithText("Snooze").assertDoesNotExist()
         composeRule.onNodeWithContentDescription("Back").assertDoesNotExist()
         composeRule.onNodeWithContentDescription("Open menu").assertDoesNotExist()

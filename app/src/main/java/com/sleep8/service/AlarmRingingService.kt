@@ -75,6 +75,9 @@ class AlarmRingingService : Service() {
             return
         }
         startForeground(Constants.ALARM_RINGING_NOTIFICATION_ID, notification)
+        if (alarmId > 0) {
+            AlarmRingingActivity.launch(this, alarmId)
+        }
         if (ringer == null) {
             ringer = AlarmRinger(this)
         }
