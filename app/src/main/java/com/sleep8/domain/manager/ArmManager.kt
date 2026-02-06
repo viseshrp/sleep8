@@ -27,7 +27,8 @@ class ArmManager(
     private val windowScheduler: WindowScheduler,
     private val settingsRepository: SettingsRepository,
     private val nightWindowScheduler: NightWindowScheduler,
-    private val confirmOffScheduler: ConfirmOffScheduler
+    private val confirmOffScheduler: ConfirmOffScheduler,
+    private val monitoringReliabilityManager: MonitoringReliabilityManager
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -65,6 +66,8 @@ class ArmManager(
         serviceController.stopNightMonitorService()
         nightWindowScheduler.cancelWindowStart()
         nightWindowScheduler.cancelWindowEnd()
+        nightWindowScheduler.cancelWindowStartBackstops()
+        monitoringReliabilityManager.onNightWindowEnded()
         return Result.success(Unit)
     }
 
@@ -106,6 +109,8 @@ class ArmManager(
             serviceController.stopNightMonitorService()
             nightWindowScheduler.cancelWindowStart()
             nightWindowScheduler.cancelWindowEnd()
+            nightWindowScheduler.cancelWindowStartBackstops()
+            monitoringReliabilityManager.onNightWindowEnded()
             return
         }
         val settings = settingsRepository.getSettings()
@@ -130,10 +135,18 @@ class ArmManager(
                 end
             )
             nightWindowScheduler.scheduleWindowStart(nextStart.startTs)
+            nightWindowScheduler.scheduleWindowStartBackstops(nextStart.startTs)
+            scope.launch {
+                monitoringReliabilityManager.recordNightWindowStartSchedule(nextStart.startTs)
+            }
         } else {
             serviceController.stopNightMonitorService()
             nightWindowScheduler.scheduleWindowStart(currentOrNext.startTs)
             nightWindowScheduler.scheduleWindowEnd(currentOrNext.endTs)
+            nightWindowScheduler.scheduleWindowStartBackstops(currentOrNext.startTs)
+            scope.launch {
+                monitoringReliabilityManager.recordNightWindowStartSchedule(currentOrNext.startTs)
+            }
         }
     }
 

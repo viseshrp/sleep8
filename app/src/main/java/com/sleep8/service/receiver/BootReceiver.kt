@@ -7,8 +7,10 @@ import android.os.PowerManager
 import com.sleep8.data.repository.SettingsRepository
 import com.sleep8.data.repository.SessionRepository
 import com.sleep8.domain.manager.ArmManager
+import com.sleep8.domain.manager.MonitoringReliabilityManager
 import com.sleep8.domain.manager.StateMachineManager
 import com.sleep8.domain.model.AppState
+import com.sleep8.domain.model.MonitoringTriggerSource
 import com.sleep8.domain.scheduler.ConfirmOffScheduler
 import com.sleep8.domain.scheduler.AlarmScheduler
 import com.sleep8.domain.scheduler.WindowScheduler
@@ -36,12 +38,20 @@ class BootReceiver : BroadcastReceiver() {
     @Inject lateinit var windowScheduler: WindowScheduler
     @Inject lateinit var stateMachineManager: StateMachineManager
     @Inject lateinit var armManager: ArmManager
+    @Inject lateinit var monitoringReliabilityManager: MonitoringReliabilityManager
 
     @androidx.annotation.VisibleForTesting
     internal var dispatcher: CoroutineDispatcher = Dispatchers.Default
 
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action != Intent.ACTION_BOOT_COMPLETED) return
+        val supportedActions = setOf(
+            Intent.ACTION_BOOT_COMPLETED,
+            Intent.ACTION_LOCKED_BOOT_COMPLETED,
+            Intent.ACTION_TIME_CHANGED,
+            Intent.ACTION_TIMEZONE_CHANGED,
+            Intent.ACTION_MY_PACKAGE_REPLACED
+        )
+        if (intent.action !in supportedActions) return
 
         val pendingResult = goAsync()
         val scope = CoroutineScope(SupervisorJob() + dispatcher)
@@ -117,6 +127,7 @@ class BootReceiver : BroadcastReceiver() {
             serviceController.stopNightMonitorService()
         }
         armManager.refreshNightWindowBoundariesIfArmed()
+        monitoringReliabilityManager.onTrigger(context, MonitoringTriggerSource.BOOT_OR_TIME_RECONCILE)
 
         val pendingScreenOffTs = stateHolder.pendingCandidateScreenOffTs.value
         val pendingDeadlineTs = stateHolder.pendingConfirmDeadlineTs.value

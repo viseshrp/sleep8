@@ -27,6 +27,7 @@ class ArmManagerTest {
     private val windowScheduler = mockk<WindowScheduler>(relaxed = true)
     private val nightWindowScheduler = mockk<com.sleep8.domain.scheduler.NightWindowScheduler>(relaxed = true)
     private val confirmOffScheduler = mockk<ConfirmOffScheduler>(relaxed = true)
+    private val monitoringReliabilityManager = mockk<MonitoringReliabilityManager>(relaxed = true)
     private val settingsRepository = mockk<SettingsRepository>()
 
     private val prefs = AppPreferences(InMemorySharedPreferences())
@@ -39,7 +40,8 @@ class ArmManagerTest {
         windowScheduler = windowScheduler,
         settingsRepository = settingsRepository,
         nightWindowScheduler = nightWindowScheduler,
-        confirmOffScheduler = confirmOffScheduler
+        confirmOffScheduler = confirmOffScheduler,
+        monitoringReliabilityManager = monitoringReliabilityManager
     )
 
     @Test

@@ -7,6 +7,7 @@ import com.sleep8.data.preferences.AppPreferences
 import com.sleep8.data.repository.SettingsRepository
 import com.sleep8.data.repository.SessionRepository
 import com.sleep8.domain.manager.ArmManager
+import com.sleep8.domain.manager.MonitoringReliabilityManager
 import com.sleep8.domain.manager.StateMachineManager
 import com.sleep8.domain.model.AppState
 import com.sleep8.domain.model.AlarmRecord
@@ -49,6 +50,7 @@ class BootReceiverTest {
     private val windowScheduler = mockk<WindowScheduler>(relaxed = true)
     private val stateMachineManager = mockk<StateMachineManager>(relaxed = true)
     private val armManager = mockk<ArmManager>(relaxed = true)
+    private val monitoringReliabilityManager = mockk<MonitoringReliabilityManager>(relaxed = true)
 
     private val prefs = AppPreferences(InMemorySharedPreferences())
     private val stateHolder = StateHolder(prefs)
@@ -95,6 +97,7 @@ class BootReceiverTest {
             this.windowScheduler = this@BootReceiverTest.windowScheduler
             this.stateMachineManager = this@BootReceiverTest.stateMachineManager
             this.armManager = this@BootReceiverTest.armManager
+            this.monitoringReliabilityManager = this@BootReceiverTest.monitoringReliabilityManager
         }
 
         runBlocking { receiver.handleBoot(context) }
@@ -153,6 +156,7 @@ class BootReceiverTest {
             this.windowScheduler = this@BootReceiverTest.windowScheduler
             this.stateMachineManager = this@BootReceiverTest.stateMachineManager
             this.armManager = this@BootReceiverTest.armManager
+            this.monitoringReliabilityManager = this@BootReceiverTest.monitoringReliabilityManager
         }
 
         runBlocking { receiver.handleBoot(context) }
@@ -211,6 +215,7 @@ class BootReceiverTest {
             this.windowScheduler = this@BootReceiverTest.windowScheduler
             this.stateMachineManager = this@BootReceiverTest.stateMachineManager
             this.armManager = this@BootReceiverTest.armManager
+            this.monitoringReliabilityManager = this@BootReceiverTest.monitoringReliabilityManager
         }
 
         runBlocking { receiver.handleBoot(context) }

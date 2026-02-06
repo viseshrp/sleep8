@@ -24,6 +24,8 @@ fun StatusCard(
     latestAlarmText: String,
     latestAlarmSubtitle: String,
     notificationWarningText: String,
+    monitoringHealthText: String,
+    reliabilityWarningText: String,
     pendingCountdown: String?
 ) {
     Card(
@@ -38,6 +40,9 @@ fun StatusCard(
                 text = status,
                 style = MaterialTheme.typography.headlineSmall
             )
+            if (monitoringHealthText.isNotBlank()) {
+                KeyValueRow(label = "Monitoring health", value = monitoringHealthText)
+            }
             if (armedUntil.isNotBlank()) {
                 KeyValueRow(label = "Armed until", value = armedUntil)
             }
@@ -58,6 +63,13 @@ fun StatusCard(
                 HorizontalDivider()
                 Text(
                     text = notificationWarningText,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+            if (reliabilityWarningText.isNotBlank()) {
+                Text(
+                    text = reliabilityWarningText,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error
                 )

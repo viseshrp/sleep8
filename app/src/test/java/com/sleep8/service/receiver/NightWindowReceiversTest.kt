@@ -8,8 +8,10 @@ import com.sleep8.data.preferences.AppPreferences
 import com.sleep8.data.repository.SettingsRepository
 import com.sleep8.domain.manager.StateMachineManager
 import com.sleep8.domain.model.AppState
+import com.sleep8.domain.model.MonitoringTriggerSource
 import com.sleep8.domain.model.Settings
 import com.sleep8.domain.state.StateHolder
+import com.sleep8.domain.manager.MonitoringReliabilityManager
 import com.sleep8.service.ServiceController
 import com.sleep8.testutil.InMemorySharedPreferences
 import io.mockk.coEvery
@@ -58,20 +60,22 @@ class NightWindowReceiversTest {
         val stateHolder = StateHolder(AppPreferences(InMemorySharedPreferences()))
         stateHolder.setState(AppState.ARMED_IDLE)
 
-        val service = mockk<ServiceController>(relaxed = true)
+        val reliabilityManager = mockk<MonitoringReliabilityManager>(relaxed = true)
         val manager = mockk<StateMachineManager>(relaxed = true)
 
         val receiver = NightWindowStartReceiver().apply {
             this.stateHolder = stateHolder
             this.settingsRepository = repo
-            this.serviceController = service
+            this.monitoringReliabilityManager = reliabilityManager
             this.stateMachineManager = manager
             this.dispatcher = Dispatchers.Default
         }
 
         runBlocking { receiver.handleNightWindowStart(context) }
 
-        verify(timeout = 1000) { service.startNightMonitorService() }
+        coVerify(timeout = 1000) {
+            reliabilityManager.onTrigger(context, MonitoringTriggerSource.NIGHT_WINDOW_BOUNDARY_ALARM)
+        }
         coVerify(timeout = 1000) { manager.resumePendingConfirmationIfEligible(true) }
     }
 
@@ -83,18 +87,54 @@ class NightWindowReceiversTest {
 
         val service = mockk<ServiceController>(relaxed = true)
         val manager = mockk<StateMachineManager>(relaxed = true)
+        val reliabilityManager = mockk<MonitoringReliabilityManager>(relaxed = true)
 
         val receiver = NightWindowEndReceiver().apply {
             this.stateHolder = stateHolder
             this.serviceController = service
             this.stateMachineManager = manager
+            this.monitoringReliabilityManager = reliabilityManager
             this.dispatcher = Dispatchers.Default
         }
 
         runBlocking { receiver.handleNightWindowEnd() }
 
         verify(timeout = 1000) { service.stopNightMonitorService() }
+        verify(timeout = 1000) { reliabilityManager.onNightWindowEnded() }
         coVerify(timeout = 1000) { manager.onNightWindowEnd() }
+    }
+
+    @Test
+    fun `night window start does not trigger monitoring when disarmed`() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val repo = mockk<SettingsRepository>()
+        coEvery { repo.getSettings() } returns Settings(
+            nightStart = "00:00",
+            nightEnd = "23:59",
+            confirmOffMinutes = 10,
+            alarmDurationMinutes = 480,
+            overlayEnabled = false,
+            armedDefault = false,
+            autoArmEnabled = false
+        )
+
+        val stateHolder = StateHolder(AppPreferences(InMemorySharedPreferences()))
+        stateHolder.setState(AppState.DISARMED)
+        val reliabilityManager = mockk<MonitoringReliabilityManager>(relaxed = true)
+        val manager = mockk<StateMachineManager>(relaxed = true)
+
+        val receiver = NightWindowStartReceiver().apply {
+            this.stateHolder = stateHolder
+            this.settingsRepository = repo
+            this.monitoringReliabilityManager = reliabilityManager
+            this.stateMachineManager = manager
+            this.dispatcher = Dispatchers.Default
+        }
+
+        runBlocking { receiver.handleNightWindowStart(context) }
+
+        coVerify(exactly = 0) { reliabilityManager.onTrigger(any(), any()) }
+        coVerify(exactly = 0) { manager.resumePendingConfirmationIfEligible(any()) }
     }
 
     private fun advanceClockTo(target: LocalDateTime) {

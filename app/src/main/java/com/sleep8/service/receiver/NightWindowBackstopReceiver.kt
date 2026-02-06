@@ -4,10 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.sleep8.domain.manager.MonitoringReliabilityManager
-import com.sleep8.domain.manager.StateMachineManager
-import com.sleep8.domain.model.AppState
-import com.sleep8.domain.state.StateHolder
-import com.sleep8.service.ServiceController
+import com.sleep8.domain.model.MonitoringTriggerSource
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -17,11 +14,8 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class NightWindowEndReceiver : BroadcastReceiver() {
+class NightWindowBackstopReceiver : BroadcastReceiver() {
 
-    @Inject lateinit var stateHolder: StateHolder
-    @Inject lateinit var serviceController: ServiceController
-    @Inject lateinit var stateMachineManager: StateMachineManager
     @Inject lateinit var monitoringReliabilityManager: MonitoringReliabilityManager
 
     @androidx.annotation.VisibleForTesting
@@ -31,18 +25,8 @@ class NightWindowEndReceiver : BroadcastReceiver() {
         val pending = goAsync()
         val scope = CoroutineScope(SupervisorJob() + dispatcher)
         scope.launch {
-            handleNightWindowEnd()
+            monitoringReliabilityManager.onTrigger(context, MonitoringTriggerSource.NIGHT_WINDOW_BACKSTOP)
             pending?.finish()
-        }
-    }
-
-    @androidx.annotation.VisibleForTesting
-    internal suspend fun handleNightWindowEnd() {
-        if (stateHolder.state.value != AppState.DISARMED) {
-            // Ring-style: Night Window only gates monitoring, never changes armed state.
-            serviceController.stopNightMonitorService()
-            monitoringReliabilityManager.onNightWindowEnded()
-            stateMachineManager.onNightWindowEnd()
         }
     }
 }

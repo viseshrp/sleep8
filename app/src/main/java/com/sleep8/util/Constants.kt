@@ -24,6 +24,8 @@ object Constants {
     const val ACTION_WINDOW_START = "com.sleep8.action.WINDOW_START"
     const val ACTION_NIGHT_WINDOW_START = "com.sleep8.action.NIGHT_WINDOW_START"
     const val ACTION_NIGHT_WINDOW_END = "com.sleep8.action.NIGHT_WINDOW_END"
+    const val ACTION_NIGHT_WINDOW_BACKSTOP = "com.sleep8.action.NIGHT_WINDOW_BACKSTOP"
+    const val ACTION_MONITORING_HEALTH_CHECK = "com.sleep8.action.MONITORING_HEALTH_CHECK"
 
     const val PENDING_INTENT_REQUEST_CONFIRM = 2001
     const val PENDING_INTENT_REQUEST_ALARM = 2002
@@ -32,6 +34,9 @@ object Constants {
     const val PENDING_INTENT_REQUEST_WINDOW_START = 2005
     const val PENDING_INTENT_REQUEST_NIGHT_WINDOW_START = 2006
     const val PENDING_INTENT_REQUEST_NIGHT_WINDOW_END = 2007
+    const val PENDING_INTENT_REQUEST_NIGHT_WINDOW_BACKSTOP_SOON = 2008
+    const val PENDING_INTENT_REQUEST_NIGHT_WINDOW_BACKSTOP_LATE = 2009
+    const val PENDING_INTENT_REQUEST_MONITORING_HEALTH_CHECK = 2010
     const val ALARM_SHOW_INTENT_REQUEST_CODE_OFFSET = 10_000
 
     const val EXTRA_ALARM_ID = "extra_alarm_id"
@@ -53,4 +58,6 @@ object Constants {
     const val PREF_ACTIVE_ALARM_REQUEST_CODE = "pref_active_alarm_request_code"
     const val PREF_ACTIVE_ALARM_INSTANCE_ID = "pref_active_alarm_instance_id"
     const val PREF_THEME_MODE = "pref_theme_mode"
+    const val PREF_EXPECTED_NIGHT_WINDOW_START_TS = "pref_expected_night_window_start_ts"
+    const val PREF_EXPECTED_NIGHT_WINDOW_START_SCHEDULED_AT_TS = "pref_expected_night_window_start_scheduled_at_ts"
 }

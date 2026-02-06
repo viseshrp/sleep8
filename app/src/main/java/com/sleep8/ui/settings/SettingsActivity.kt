@@ -226,7 +226,7 @@ internal fun SettingsScreen(
                 label = "Battery optimization",
                 ok = uiState.batteryOptimizationsIgnored,
                 actionText = "Request exclusion",
-                description = "Prevents the system from killing the app during the night.",
+                description = "On Pixel, set Sleep8 to Unrestricted battery and disable Extreme Battery Saver for Sleep8 so monitoring can auto-start at night window start.",
                 onAction = {
                     context.startActivity(PermissionUtils.batteryOptimizationIntent(context))
                     viewModel.setBatteryOptAck(true)

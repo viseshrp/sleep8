@@ -68,6 +68,14 @@ class AppPreferences(private val prefs: SharedPreferences) {
         get() = AppThemeMode.fromPref(prefs.getString(Constants.PREF_THEME_MODE, AppThemeMode.DEFAULT.prefValue))
         set(value) = prefs.edit().putString(Constants.PREF_THEME_MODE, value.prefValue).apply()
 
+    var expectedNightWindowStartTs: Long
+        get() = prefs.getLong(Constants.PREF_EXPECTED_NIGHT_WINDOW_START_TS, -1L)
+        set(value) = prefs.edit().putLong(Constants.PREF_EXPECTED_NIGHT_WINDOW_START_TS, value).apply()
+
+    var expectedNightWindowStartScheduledAtTs: Long
+        get() = prefs.getLong(Constants.PREF_EXPECTED_NIGHT_WINDOW_START_SCHEDULED_AT_TS, -1L)
+        set(value) = prefs.edit().putLong(Constants.PREF_EXPECTED_NIGHT_WINDOW_START_SCHEDULED_AT_TS, value).apply()
+
     private var lastAlarmInstanceId: Long
         get() = prefs.getLong(Constants.PREF_LAST_ALARM_INSTANCE_ID, 0L)
         set(value) = prefs.edit().putLong(Constants.PREF_LAST_ALARM_INSTANCE_ID, value).apply()
