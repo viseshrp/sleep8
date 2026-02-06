@@ -136,23 +136,6 @@ internal fun SettingsScreen(
                 onValueSelected = viewModel::updateNightEnd
             )
         },
-        SettingsSectionModel(title = "Auto-arm Schedule") {
-            RowWithSwitch(
-                label = "Enable auto-arm",
-                checked = uiState.autoArmEnabled,
-                onCheckedChange = viewModel::updateAutoArmEnabled
-            )
-            TimePickerRow(
-                label = "Auto-arm start",
-                value = uiState.autoArmStart,
-                onValueSelected = viewModel::updateAutoArmStart
-            )
-            TimePickerRow(
-                label = "Auto-arm end",
-                value = uiState.autoArmEnd,
-                onValueSelected = viewModel::updateAutoArmEnd
-            )
-        },
         SettingsSectionModel(title = "Alarm Behavior") {
             AlarmDurationFields(
                 hours = uiState.alarmDurationHoursInput,

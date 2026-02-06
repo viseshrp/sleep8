@@ -5,9 +5,8 @@ import com.sleep8.data.repository.SessionRepository
 import com.sleep8.domain.model.ArmSession
 import com.sleep8.domain.model.ArmSource
 import com.sleep8.domain.scheduler.ConfirmOffScheduler
-import com.sleep8.domain.state.StateHolder
 import com.sleep8.domain.scheduler.NightWindowScheduler
-import com.sleep8.domain.scheduler.WindowScheduler
+import com.sleep8.domain.state.StateHolder
 import com.sleep8.service.ServiceController
 import com.sleep8.util.TimeUtils
 import kotlinx.coroutines.CoroutineScope
@@ -24,7 +23,6 @@ class ArmManager(
     private val sessionRepository: SessionRepository,
     private val stateHolder: StateHolder,
     private val serviceController: ServiceController,
-    private val windowScheduler: WindowScheduler,
     private val settingsRepository: SettingsRepository,
     private val nightWindowScheduler: NightWindowScheduler,
     private val confirmOffScheduler: ConfirmOffScheduler,
@@ -47,7 +45,6 @@ class ArmManager(
             source = source
         )
         stateHolder.setActiveSession(session)
-        // Ring-style: manual actions are immediate but temporary; schedules remain authoritative.
         stateHolder.setArmed(true)
         refreshNightWindowBoundariesIfArmed()
         return Result.success(session)
@@ -59,7 +56,6 @@ class ArmManager(
             sessionRepository.endSession(session.id, System.currentTimeMillis())
         }
         stateHolder.setActiveSession(null)
-        // Ring-style: manual disarm never cancels Auto-Arm scheduling.
         stateHolder.setArmed(false)
         stateHolder.clearPendingCandidate()
         confirmOffScheduler.cancelConfirmation()
@@ -69,39 +65,6 @@ class ArmManager(
         nightWindowScheduler.cancelWindowStartBackstops()
         monitoringReliabilityManager.onNightWindowEnded()
         return Result.success(Unit)
-    }
-
-    suspend fun handleAutoArm() {
-        val settings = settingsRepository.getSettings()
-        if (!settings.autoArmEnabled) return
-        val start = TimeUtils.parseLocalTime(settings.autoArmStart)
-        val end = TimeUtils.parseLocalTime(settings.autoArmEnd)
-        val now = LocalDateTime.now()
-        val window = TimeUtils.calculateNextWindow(now, start, end)
-        windowScheduler.scheduleWindowStart(window.startTs)
-        windowScheduler.scheduleWindowEnd(window.endTs)
-        // If currently within the auto-arm window, arm immediately
-        if (TimeUtils.isInWindow(now.toLocalTime(), start, end)) {
-            arm(ArmSource.SCHEDULED)
-        }
-    }
-
-    suspend fun updateAutoArmEnabled(enabled: Boolean) {
-        if (enabled) {
-            handleAutoArm()
-        } else {
-            windowScheduler.cancelWindowStart()
-            windowScheduler.cancelWindowEnd()
-        }
-    }
-
-    fun onScheduledEvent(type: String) {
-        // Ring-style: Auto-Arm boundaries are authoritative while enabled.
-        if (type == "start") {
-            scope.launch { arm(ArmSource.SCHEDULED) }
-        } else if (type == "end") {
-            scope.launch { disarm(ArmSource.SCHEDULED) }
-        }
     }
 
     suspend fun refreshNightWindowBoundariesIfArmed() {

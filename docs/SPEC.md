@@ -21,6 +21,7 @@ When the user **arms** the app (button or Quick Settings tile), the app watches 
 
 ## 3. Key Decisions (locked)
 - Arming: **only when armed** (in-app button + Quick Settings tile).
+- No scheduled arming/disarming; armed state changes only from manual actions.
 - Night window: **fixed** start/end time configured by user.
 - Rescheduling: **latest screen-off wins** (keep updating the scheduled time until confirmed).
 - Confirm rule: only commit when **screen remains OFF for 20 minutes** after an OFF event.
@@ -51,7 +52,6 @@ When the user **arms** the app (button or Quick Settings tile), the app watches 
 - App launches with Android splash screen (logo + app name) and transitions into Home after startup initialization.
 - User sets:
   - Night window start/end (default **22:30–04:00**).
-  - Auto-arm schedule start/end (default **22:00–05:00**).
   - **Alarm duration** in hours + minutes (0-720 total, default 8h 0m).
   - Dark mode preference in Settings (defaults to On).
 - App shows a “Reliability checklist”:
@@ -109,7 +109,7 @@ When the screen has remained OFF for 20 minutes since the latest OFF event:
 ### 5.7 Disarming
 - User can disarm anytime (button/tile).
 - Disarm stops monitoring service and cancels pending confirmation timer.
-- Manual disarm and auto-disarm do not cancel existing alarms; they only prevent new alarms and clear pending confirmation.
+- Manual disarm does not cancel existing alarms; it only prevents new alarms and clears pending confirmation.
 - Disarm does not retroactively alter already-fired alarms.
 
 ### 5.8 Alarm Observability (Local Only)
@@ -211,9 +211,6 @@ Tables:
 - `id` (singleton)
 - `night_start` (HH:MM, default 22:30)
 - `night_end` (HH:MM, default 04:00)
-- `auto_arm_start` (HH:MM, default 22:00)
-- `auto_arm_end` (HH:MM, default 05:00)
-- `auto_arm_enabled` (bool, default false)
 - `confirm_off_minutes` (default 20)
 - `alarm_duration_minutes` (0-720, default 480)
 - `overlay_enabled` (bool, default false)

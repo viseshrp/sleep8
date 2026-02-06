@@ -13,10 +13,9 @@ import com.sleep8.domain.manager.MonitoringReliabilityManager
 import com.sleep8.domain.manager.StateMachineManager
 import com.sleep8.domain.model.AppState
 import com.sleep8.domain.model.ArmSource
+import com.sleep8.domain.scheduler.AlarmScheduler
 import com.sleep8.domain.scheduler.ConfirmOffScheduler
 import com.sleep8.domain.scheduler.NightWindowScheduler
-import com.sleep8.domain.scheduler.AlarmScheduler
-import com.sleep8.domain.scheduler.WindowScheduler
 import com.sleep8.domain.state.StateHolder
 import com.sleep8.service.ServiceController
 import com.sleep8.service.notification.NotificationHelper
@@ -31,7 +30,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -65,7 +63,6 @@ class FullFlowIntegrationTest {
         appPreferences = AppPreferences(InMemorySharedPreferences())
         stateHolder = StateHolder(appPreferences)
         val serviceController = mockk<ServiceController>(relaxed = true)
-        val windowScheduler = mockk<WindowScheduler>(relaxed = true)
         val confirmScheduler = mockk<ConfirmOffScheduler>(relaxed = true)
         val nightWindowScheduler = mockk<NightWindowScheduler>(relaxed = true)
         val monitoringReliabilityManager = mockk<MonitoringReliabilityManager>(relaxed = true)
@@ -83,7 +80,6 @@ class FullFlowIntegrationTest {
             sessionRepository,
             stateHolder,
             serviceController,
-            windowScheduler,
             settingsRepository,
             nightWindowScheduler,
             confirmScheduler,
@@ -126,24 +122,6 @@ class FullFlowIntegrationTest {
         stateHolder.setPendingCandidate(123L, 456L)
 
         armManager.disarm(ArmSource.APP_BUTTON)
-
-        val scheduled = alarmRepository.getScheduledRecords()
-        assertEquals(1, scheduled.size)
-        assertEquals(record.id, scheduled.first().id)
-        assertEquals(-1L, stateHolder.pendingCandidateScreenOffTs.value)
-        assertEquals(-1L, stateHolder.pendingConfirmDeadlineTs.value)
-    }
-
-    @Test
-    fun `auto-disarm preserves existing alarm and clears pending confirmation`() = runTest {
-        armManager.arm(ArmSource.APP_BUTTON)
-        val record = alarmScheduler.scheduleSleepAlarm(
-            screenOffTs = System.currentTimeMillis() - 120_000L,
-            confirmedAt = System.currentTimeMillis()
-        )
-        stateHolder.setPendingCandidate(321L, 654L)
-
-        armManager.disarm(ArmSource.SCHEDULED)
 
         val scheduled = alarmRepository.getScheduledRecords()
         assertEquals(1, scheduled.size)

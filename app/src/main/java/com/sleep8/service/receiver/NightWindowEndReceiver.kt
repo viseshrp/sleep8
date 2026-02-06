@@ -39,7 +39,7 @@ class NightWindowEndReceiver : BroadcastReceiver() {
     @androidx.annotation.VisibleForTesting
     internal suspend fun handleNightWindowEnd() {
         if (stateHolder.state.value != AppState.DISARMED) {
-            // Ring-style: Night Window only gates monitoring, never changes armed state.
+            // Night window gates monitoring and does not change armed state.
             serviceController.stopNightMonitorService()
             monitoringReliabilityManager.onNightWindowEnded()
             stateMachineManager.onNightWindowEnd()

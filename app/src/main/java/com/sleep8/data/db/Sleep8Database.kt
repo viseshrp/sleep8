@@ -21,7 +21,7 @@ import com.sleep8.data.db.entity.SettingsEntity
         AlarmRecordEntity::class,
         MonitoringStartEventEntity::class
     ],
-    version = 11,
+    version = 12,
     exportSchema = true
 )
 abstract class Sleep8Database : RoomDatabase() {

@@ -12,7 +12,6 @@ User (Home / QS Tile)
         ▼
     ArmManager
         │
-        ├── schedules Auto-arm boundaries (WindowScheduler)
         ├── schedules Night-window boundaries (NightWindowScheduler)
         └── starts/stops NightMonitorService when armed + in night window
                                      │
@@ -38,7 +37,7 @@ User (Home / QS Tile)
 ## 2. Core Components
 
 - `ArmManager`
-  - Handles arm/disarm from app button, tile, and auto-arm schedule.
+  - Handles manual arm/disarm from app button and tile.
   - Maintains active arm session and schedules window boundaries.
   - Night window only gates monitoring; it does not force disarm.
 
@@ -98,15 +97,13 @@ User (Home / QS Tile)
   - Full local audit trail and deep-link/ACTION_SHOW_ALARMS target.
 
 - `SettingsActivity`
-  - Night window, auto-arm, duration, confirm window, overlay toggle, reliability checklist, theme.
+  - Night window, duration, confirm window, overlay toggle, reliability checklist, theme.
 
 ---
 
 ## 5. Reboot and Recovery
 
 `BootReceiver` restores system behavior in this order:
-- Recreates auto-arm start/end schedules when enabled.
-- Re-evaluates whether app should currently be armed.
 - Restores active session and night-window monitoring state.
 - Restores pending confirmation (immediate schedule if overdue and screen still off).
 - Reconciles multiple scheduled alarms (keeps newest, cancels extras with `REBOOT_CLEANUP`).

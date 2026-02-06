@@ -2,7 +2,6 @@ package com.sleep8.ui.settings
 
 import com.sleep8.data.preferences.AppPreferences
 import com.sleep8.data.repository.SettingsRepository
-import com.sleep8.domain.manager.ArmManager
 import com.sleep8.domain.model.Settings
 import com.sleep8.testutil.InMemorySharedPreferences
 import com.sleep8.ui.theme.AppThemeMode
@@ -17,7 +16,6 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
@@ -25,7 +23,6 @@ import org.junit.Test
 class SettingsViewModelTest {
 
     private val settingsRepository = mockk<SettingsRepository>(relaxed = true)
-    private val armManager = mockk<ArmManager>(relaxed = true)
     private val prefs = AppPreferences(InMemorySharedPreferences())
     private val dispatcher = UnconfinedTestDispatcher()
 
@@ -47,12 +44,9 @@ class SettingsViewModelTest {
             confirmOffMinutes = 10,
             alarmDurationMinutes = 480,
             overlayEnabled = false,
-            armedDefault = false,
-            autoArmEnabled = false,
-            autoArmStart = "22:00",
-            autoArmEnd = "08:00"
+            armedDefault = false
         )
-        val viewModel = SettingsViewModel(settingsRepository, prefs, armManager)
+        val viewModel = SettingsViewModel(settingsRepository, prefs)
         advanceUntilIdle()
 
         viewModel.updateAlarmDurationHours("13")
@@ -76,12 +70,9 @@ class SettingsViewModelTest {
             confirmOffMinutes = 10,
             alarmDurationMinutes = 480,
             overlayEnabled = false,
-            armedDefault = false,
-            autoArmEnabled = false,
-            autoArmStart = "22:00",
-            autoArmEnd = "08:00"
+            armedDefault = false
         )
-        val viewModel = SettingsViewModel(settingsRepository, prefs, armManager)
+        val viewModel = SettingsViewModel(settingsRepository, prefs)
         advanceUntilIdle()
 
         viewModel.updateAlarmDurationHours("0")
@@ -101,12 +92,9 @@ class SettingsViewModelTest {
             confirmOffMinutes = 10,
             alarmDurationMinutes = 480,
             overlayEnabled = false,
-            armedDefault = false,
-            autoArmEnabled = false,
-            autoArmStart = "22:00",
-            autoArmEnd = "08:00"
+            armedDefault = false
         )
-        val viewModel = SettingsViewModel(settingsRepository, prefs, armManager)
+        val viewModel = SettingsViewModel(settingsRepository, prefs)
         advanceUntilIdle()
 
         viewModel.updateAlarmDurationHours("1")
@@ -126,12 +114,9 @@ class SettingsViewModelTest {
             confirmOffMinutes = 10,
             alarmDurationMinutes = 480,
             overlayEnabled = false,
-            armedDefault = false,
-            autoArmEnabled = false,
-            autoArmStart = "22:00",
-            autoArmEnd = "08:00"
+            armedDefault = false
         )
-        val viewModel = SettingsViewModel(settingsRepository, prefs, armManager)
+        val viewModel = SettingsViewModel(settingsRepository, prefs)
         advanceUntilIdle()
 
         viewModel.updateDarkModeEnabled(false)

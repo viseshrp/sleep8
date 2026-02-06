@@ -109,14 +109,6 @@
             android:exported="false" />
 
         <receiver
-            android:name=".service.receiver.WindowEndReceiver"
-            android:exported="false" />
-
-        <receiver
-            android:name=".service.receiver.WindowStartReceiver"
-            android:exported="false" />
-
-        <receiver
             android:name=".service.receiver.NightWindowStartReceiver"
             android:exported="false" />
 

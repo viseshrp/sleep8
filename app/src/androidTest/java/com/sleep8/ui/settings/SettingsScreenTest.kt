@@ -6,7 +6,6 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollTo
 import com.sleep8.data.preferences.AppPreferences
 import com.sleep8.data.repository.SettingsRepository
-import com.sleep8.domain.manager.ArmManager
 import com.sleep8.domain.model.Settings
 import com.sleep8.testutil.InMemorySharedPreferences
 import io.mockk.coEvery
@@ -25,17 +24,15 @@ class SettingsScreenTest {
     @Test
     fun settingsScreenShowsReliabilityChecklist() {
         val settingsRepository = mockk<SettingsRepository>()
-        val armManager = mockk<ArmManager>(relaxed = true)
         coEvery { settingsRepository.getSettings() } returns Settings(
             nightStart = "21:00",
             nightEnd = "04:00",
             confirmOffMinutes = 10,
             alarmDurationMinutes = 480,
             overlayEnabled = false,
-            armedDefault = false,
-            autoArmEnabled = false
+            armedDefault = false
         )
-        val viewModel = SettingsViewModel(settingsRepository, AppPreferences(InMemorySharedPreferences()), armManager)
+        val viewModel = SettingsViewModel(settingsRepository, AppPreferences(InMemorySharedPreferences()))
 
         composeRule.setContent {
             MaterialTheme {
@@ -46,7 +43,6 @@ class SettingsScreenTest {
         composeRule.onNodeWithText("Night Window").assertExists()
         composeRule.onNodeWithText("Appearance").assertExists()
         composeRule.onNodeWithText("Dark mode").assertExists()
-        composeRule.onNodeWithText("Auto-arm Schedule").assertExists()
         composeRule.onNodeWithText("Alarm Behavior").performScrollTo().assertExists()
         composeRule.onNodeWithText("System Reliability").performScrollTo().assertExists()
 

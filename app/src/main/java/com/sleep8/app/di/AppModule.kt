@@ -22,7 +22,6 @@ import com.sleep8.domain.scheduler.ConfirmOffScheduler
 import com.sleep8.domain.scheduler.MonitoringHealthScheduler
 import com.sleep8.domain.scheduler.NightWindowScheduler
 import com.sleep8.domain.scheduler.AlarmScheduler
-import com.sleep8.domain.scheduler.WindowScheduler
 import com.sleep8.domain.state.StateHolder
 import com.sleep8.service.MonitoringRuntimeInspector
 import com.sleep8.service.ServiceController
@@ -127,7 +126,6 @@ object AppModule {
         sessionRepository: SessionRepository,
         stateHolder: StateHolder,
         serviceController: ServiceController,
-        windowScheduler: WindowScheduler,
         settingsRepository: SettingsRepository,
         nightWindowScheduler: NightWindowScheduler,
         confirmOffScheduler: ConfirmOffScheduler,
@@ -137,7 +135,6 @@ object AppModule {
             sessionRepository,
             stateHolder,
             serviceController,
-            windowScheduler,
             settingsRepository,
             nightWindowScheduler,
             confirmOffScheduler,
@@ -193,15 +190,6 @@ object AppModule {
             appPreferences,
             notificationHelper
         )
-    }
-
-    @Provides
-    @Singleton
-    fun provideWindowScheduler(
-        @ApplicationContext context: Context,
-        alarmManager: AlarmManager
-    ): WindowScheduler {
-        return WindowScheduler(context, alarmManager)
     }
 
     @Provides

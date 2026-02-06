@@ -7,8 +7,6 @@ object Constants {
     const val DEFAULT_CONFIRM_MINUTES = 20
     const val DEFAULT_NIGHT_START = "22:30"
     const val DEFAULT_NIGHT_END = "04:00"
-    const val DEFAULT_AUTO_ARM_START = "22:00"
-    const val DEFAULT_AUTO_ARM_END = "05:00"
 
     const val NOTIFICATION_CHANNEL_ID = "sleep8_monitoring"
     const val NOTIFICATION_ID = 1001
@@ -20,8 +18,6 @@ object Constants {
     const val ACTION_CONFIRMATION = "com.sleep8.action.CONFIRMATION"
     const val ACTION_ALARM_RING = "com.sleep8.action.ALARM_RING"
     const val ACTION_ALARM_DISMISS = "com.sleep8.action.ALARM_DISMISS"
-    const val ACTION_WINDOW_END = "com.sleep8.action.WINDOW_END"
-    const val ACTION_WINDOW_START = "com.sleep8.action.WINDOW_START"
     const val ACTION_NIGHT_WINDOW_START = "com.sleep8.action.NIGHT_WINDOW_START"
     const val ACTION_NIGHT_WINDOW_END = "com.sleep8.action.NIGHT_WINDOW_END"
     const val ACTION_NIGHT_WINDOW_BACKSTOP = "com.sleep8.action.NIGHT_WINDOW_BACKSTOP"
@@ -30,8 +26,6 @@ object Constants {
     const val PENDING_INTENT_REQUEST_CONFIRM = 2001
     const val PENDING_INTENT_REQUEST_ALARM = 2002
     const val PENDING_INTENT_REQUEST_ALARM_ACTION = 2003
-    const val PENDING_INTENT_REQUEST_WINDOW_END = 2004
-    const val PENDING_INTENT_REQUEST_WINDOW_START = 2005
     const val PENDING_INTENT_REQUEST_NIGHT_WINDOW_START = 2006
     const val PENDING_INTENT_REQUEST_NIGHT_WINDOW_END = 2007
     const val PENDING_INTENT_REQUEST_NIGHT_WINDOW_BACKSTOP_SOON = 2008

@@ -53,9 +53,7 @@ class NightWindowReceiversTest {
             confirmOffMinutes = 10,
             alarmDurationMinutes = 480,
             overlayEnabled = false,
-            armedDefault = false,
-            autoArmEnabled = false
-        )
+            armedDefault = false)
 
         val stateHolder = StateHolder(AppPreferences(InMemorySharedPreferences()))
         stateHolder.setState(AppState.ARMED_IDLE)
@@ -114,9 +112,7 @@ class NightWindowReceiversTest {
             confirmOffMinutes = 10,
             alarmDurationMinutes = 480,
             overlayEnabled = false,
-            armedDefault = false,
-            autoArmEnabled = false
-        )
+            armedDefault = false)
 
         val stateHolder = StateHolder(AppPreferences(InMemorySharedPreferences()))
         stateHolder.setState(AppState.DISARMED)

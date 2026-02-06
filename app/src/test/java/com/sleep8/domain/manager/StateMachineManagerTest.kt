@@ -56,9 +56,7 @@ class StateMachineManagerTest {
             confirmOffMinutes = 10,
             alarmDurationMinutes = 480,
             overlayEnabled = false,
-            armedDefault = false,
-            autoArmEnabled = true
-        )
+            armedDefault = false)
     }
 
     @Test

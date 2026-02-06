@@ -46,9 +46,7 @@ class MonitoringReliabilityManagerTest {
             confirmOffMinutes = 20,
             alarmDurationMinutes = 480,
             overlayEnabled = false,
-            armedDefault = false,
-            autoArmEnabled = false
-        )
+            armedDefault = false)
         every { runtime.isMonitoringActive(any()) } returnsMany listOf(false, true, true)
         coEvery { repository.hasBoundaryExecution(any()) } returns true
 
@@ -102,9 +100,7 @@ class MonitoringReliabilityManagerTest {
             confirmOffMinutes = 20,
             alarmDurationMinutes = 480,
             overlayEnabled = false,
-            armedDefault = false,
-            autoArmEnabled = false
-        )
+            armedDefault = false)
         every { runtime.isMonitoringActive(any()) } returns false
         coEvery { repository.hasBoundaryExecution(any()) } returns false
         coEvery { repository.latest() } returns MonitoringStartEventEntity(
@@ -174,9 +170,7 @@ class MonitoringReliabilityManagerTest {
             confirmOffMinutes = 20,
             alarmDurationMinutes = 480,
             overlayEnabled = false,
-            armedDefault = false,
-            autoArmEnabled = false
-        )
+            armedDefault = false)
         every { runtime.isMonitoringActive(any()) } returns false
 
         val manager = MonitoringReliabilityManager(
