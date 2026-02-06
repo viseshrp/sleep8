@@ -44,9 +44,8 @@ class SettingsScreenTest {
         composeRule.onNodeWithText("Appearance").assertExists()
         composeRule.onNodeWithText("Dark mode").assertExists()
         composeRule.onNodeWithText("Alarm Behavior").performScrollTo().assertExists()
-        composeRule.onNodeWithText("System Reliability").performScrollTo().assertExists()
-
         composeRule.onNodeWithText("Exact alarms").performScrollTo().assertExists()
+        composeRule.onNodeWithText("System Reliability").assertExists()
         composeRule.onNodeWithText("Notifications").performScrollTo().assertExists()
         composeRule.onNodeWithText("Battery optimization").performScrollTo().assertExists()
         composeRule.onNodeWithText("Draw over other apps (optional)").performScrollTo().assertExists()
