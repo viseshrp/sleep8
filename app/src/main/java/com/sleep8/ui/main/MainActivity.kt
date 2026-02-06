@@ -263,7 +263,7 @@ internal fun MainContent(
                             Text(
                                 text = "Sleep8 monitors screen-off activity and schedules your wake alarm automatically.",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
                         }
                     }

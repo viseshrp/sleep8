@@ -32,27 +32,28 @@ private val DarkColors = darkColorScheme(
 )
 
 private val LightColors = lightColorScheme(
-    primary = Color(0xFF0061A4),
+    primary = Color(0xFF005AC1),
     onPrimary = Color(0xFFFFFFFF),
-    primaryContainer = Color(0xFFD1E4FF),
-    onPrimaryContainer = Color(0xFF001D36),
-    secondary = Color(0xFF535F70),
+    primaryContainer = Color(0xFFD8E2FF),
+    onPrimaryContainer = Color(0xFF001A41),
+    secondary = Color(0xFF535E78),
     onSecondary = Color(0xFFFFFFFF),
-    secondaryContainer = Color(0xFFD7E3F7),
-    onSecondaryContainer = Color(0xFF101C2B),
-    background = Color(0xFFF8F9FF),
-    onBackground = Color(0xFF191C1E),
-    surface = Color(0xFFF8F9FF),
-    surfaceContainer = Color(0xFFE9EEF7),
-    surfaceContainerHigh = Color(0xFFDEE3EB),
-    onSurface = Color(0xFF191C1E),
-    onSurfaceVariant = Color(0xFF43474E),
-    outline = Color(0xFF73777F),
-    error = Color(0xFFBA1A1A),
-    onError = Color.White,
+    secondaryContainer = Color(0xFFD8E2FF),
+    onSecondaryContainer = Color(0xFF0F1B32),
+    background = Color(0xFFFDFBFF),
+    onBackground = Color(0xFF1A1C1E),
+    surface = Color(0xFFFDFBFF),
+    surfaceContainer = Color(0xFFEEF0F8),
+    surfaceContainerHigh = Color(0xFFE3E4EB),
+    onSurface = Color(0xFF1A1C1E),
+    onSurfaceVariant = Color(0xFF44474F),
+    outline = Color(0xFF74777F),
+    error = Color(0xFFBA191A),
+    onError = Color(0xFFFFFFFF),
     errorContainer = Color(0xFFFFDAD6),
     onErrorContainer = Color(0xFF410002)
 )
+
 
 
 
