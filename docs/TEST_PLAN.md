@@ -28,6 +28,10 @@ Physical device testing is required; emulators are not authoritative for exact a
 - Boot restore behavior with pending confirmations and overdue scheduled alarms.
 - AlarmReceiver behavior for notification-permitted vs denied flows.
 - Window schedulers (auto-arm and night window start/end).
+- Monitoring reliability manager:
+  - gate-open boundary start
+  - gate-closed no-start
+  - late-start classification (`app restricted / force-stopped suspected`)
 - Window receivers invoke scheduled arm/disarm.
 - AppPreferences migration and instance id generation.
 

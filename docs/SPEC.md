@@ -236,3 +236,66 @@ Tables:
 - `dismissed_at` (timestamp nullable)
 - `overlay_used` (bool)
 - `activity_presented` (bool)
+
+#### `monitoring_start_events`
+- `id` (pk)
+- `expected_boundary_ts` (timestamp) # scheduled night window start boundary
+- `scheduled_at_ts` (timestamp) # when the boundary trigger was scheduled
+- `boundary_observed_at_ts` (timestamp nullable) # actual observed time of trigger execution
+- `armed_at_boundary` (bool)
+- `in_night_window_at_boundary` (bool)
+- `gate_open` (bool) # `armed && inNightWindow`
+- `boundary_trigger_executed` (bool)
+- `monitoring_active` (bool)
+- `monitoring_activated_at_ts` (timestamp nullable)
+- `reason_bucket` (string) # human-readable reason when monitoring is not active
+- `trigger_source` (string) # schedule/boundary/backstop/health/app/boot
+- `created_at_ts` (timestamp)
+
+---
+
+## 10. Reliability Contract: Monitoring Start Guarantees
+
+### 10.1 Guaranteed behavior under normal OS conditions
+- If `armed && inNightWindow` becomes true at night window start, monitoring will become active automatically without user interaction.
+- “Monitoring active” is defined as: `NightMonitorService` is running and screen events (`SCREEN_OFF` / `SCREEN_ON`) are being observed by the state machine.
+
+### 10.2 Reliability strategy implemented
+- Primary boundary trigger: exact night-window start alarm.
+- Backstops: additional exact alarms at +2 minutes and +10 minutes after boundary.
+- Self-healing health checks: periodic (5-minute interval) checks while `armed && inNightWindow`.
+- Reconcile triggers: app launch and boot/time/timezone/package-replaced events reconcile monitoring start and re-schedule boundaries.
+- Late start behavior: if the boundary was missed but current state is `armed && inNightWindow`, monitoring is started as soon as any backstop/health/reconcile trigger executes.
+
+### 10.3 Recovery SLO
+- Under normal OS background execution conditions (not force-stopped, not severely restricted), missed boundary start recovers within 5 minutes of the next allowed trigger.
+- With backstop and periodic checks, expected practical recovery is usually within 2-10 minutes after boundary.
+
+### 10.4 Known non-guaranteeable cases
+- Force-stop: Android places apps in stopped state; alarms/jobs/implicit background delivery are effectively frozen until user launches the app again.
+- Severe background restrictions (including Pixel Extreme Battery Saver modes) can suppress/defer alarm delivery and service starts.
+- If exact alarms are not granted, boundary precision and reliability degrade.
+
+### 10.5 Detection and reporting of misses
+- Every scheduled boundary and trigger attempt is persisted to `monitoring_start_events`.
+- Records include scheduled vs observed boundary time, gate state, trigger execution, monitoring activation result, and reason bucket.
+- Reason buckets:
+  - `boundary event did not run`
+  - `process not started`
+  - `start attempt blocked`
+  - `app restricted / force-stopped suspected`
+  - `unknown`
+
+### 10.6 User-visible health status
+- Home shows “Monitoring health” with one of:
+  - `Healthy (not required now)`
+  - `Healthy (monitoring active)`
+  - `Degraded (monitoring should be active)`
+- When degraded, the app surfaces actionable Pixel guidance (Unrestricted battery, disable Extreme Battery Saver for Sleep8, reopen app after force-stop).
+
+### 10.7 Acceptance criteria (contract-aligned)
+- Monitoring starts at night window start when `armed && inNightWindow` without user interaction.
+- If boundary start is missed but background execution later becomes available, self-healing starts monitoring within recovery SLO.
+- Monitoring never starts when disarmed or outside the night window.
+- Persisted records prove after-the-fact whether contract was met for each boundary.
+- Known non-guaranteeable cases are detected, classified, and communicated in-app and in docs.
