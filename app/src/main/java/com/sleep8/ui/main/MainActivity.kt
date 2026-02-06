@@ -278,7 +278,6 @@ internal fun MainContent(
                         latestAlarmText = uiState.latestAlarmText,
                         latestAlarmSubtitle = uiState.latestAlarmSubtitle,
                         notificationWarningText = uiState.notificationWarningText,
-                        monitoringHealthText = uiState.monitoringHealthText,
                         reliabilityWarningText = uiState.reliabilityWarningText,
                         pendingCountdown = if (uiState.showPending) uiState.pendingCountdownText else null
                     )
