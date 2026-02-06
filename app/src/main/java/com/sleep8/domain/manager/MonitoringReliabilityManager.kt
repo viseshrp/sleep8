@@ -140,6 +140,6 @@ class MonitoringReliabilityManager(
 
     private companion object {
         const val SERVICE_START_VERIFY_DELAY_MS = 1_000L
-        const val HEALTH_CHECK_INTERVAL_MS = 5 * 60 * 1_000L
+        const val HEALTH_CHECK_INTERVAL_MS = 15 * 60 * 1_000L
     }
 }

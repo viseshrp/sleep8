@@ -112,7 +112,7 @@ Settings includes a reliability section to verify/request:
 
 ## Monitoring reliability contract (summary)
 - Guarantee under normal OS conditions: if `armed && inNightWindow` at night window start, monitoring auto-starts.
-- Reliability strategy: boundary exact alarm + +2/+10 minute boundary backstops + periodic 5-minute in-window health checks + boot/time/app-launch reconcile.
+- Reliability strategy: boundary exact alarm + +2/+10 minute boundary backstops + periodic 15-minute in-window health checks + boot/time/app-launch reconcile.
 - Known limitations: force-stop and severe OS background restrictions can block any app-level guarantee.
 
 ## Tech stack

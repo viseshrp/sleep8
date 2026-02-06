@@ -68,7 +68,7 @@ Automated unit, integration, and Compose UI tests cover most logic and UI flows;
   - `Unrestricted`: arm, leave app closed overnight, verify start at boundary and healthy status.
 - Battery Saver:
   - ON at boundary: verify whether boundary or backstop starts monitoring.
-  - OFF after charging while still in-window: verify self-healing starts monitoring within 5 minutes.
+  - OFF after charging while still in-window: verify self-healing starts monitoring within 15 minutes.
 - Extreme Battery Saver (Pixel):
   - Enable and add/remove Sleep8 from unrestricted list; verify expected degradation and in-app guidance text.
 - App unopened for 24+ hours:

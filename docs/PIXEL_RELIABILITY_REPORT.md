@@ -55,9 +55,9 @@ Reason buckets:
 - Contract trigger: start-monitoring event is required when `armed && inNightWindow` becomes true.
 - Primary trigger: night window exact boundary alarm.
 - Backstops: +2 minute and +10 minute alarms.
-- Self-healing: periodic 5-minute in-window health checks.
+- Self-healing: periodic 15-minute in-window health checks.
 - Reconcile hooks: app launch and boot/time/timezone/package update.
-- Recovery target: when OS permits background execution, recovery starts within 5 minutes of the next allowed trigger.
+- Recovery target: when OS permits background execution, recovery starts within 15 minutes of the next allowed trigger.
 
 Known unguaranteeable cases are explicitly documented:
 - Force-stop

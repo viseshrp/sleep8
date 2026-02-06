@@ -263,12 +263,12 @@ Tables:
 ### 10.2 Reliability strategy implemented
 - Primary boundary trigger: exact night-window start alarm.
 - Backstops: additional exact alarms at +2 minutes and +10 minutes after boundary.
-- Self-healing health checks: periodic (5-minute interval) checks while `armed && inNightWindow`.
+- Self-healing health checks: periodic (15-minute interval) checks while `armed && inNightWindow`.
 - Reconcile triggers: app launch and boot/time/timezone/package-replaced events reconcile monitoring start and re-schedule boundaries.
 - Late start behavior: if the boundary was missed but current state is `armed && inNightWindow`, monitoring is started as soon as any backstop/health/reconcile trigger executes.
 
 ### 10.3 Recovery SLO
-- Under normal OS background execution conditions (not force-stopped, not severely restricted), missed boundary start recovers within 5 minutes of the next allowed trigger.
+- Under normal OS background execution conditions (not force-stopped, not severely restricted), missed boundary start recovers within 15 minutes of the next allowed trigger.
 - With backstop and periodic checks, expected practical recovery is usually within 2-10 minutes after boundary.
 
 ### 10.4 Known non-guaranteeable cases
