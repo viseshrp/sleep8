@@ -154,4 +154,55 @@ class StateMachineManagerTest {
 
         coVerify(exactly = 0) { alarmScheduler.scheduleSleepAlarm(any(), any()) }
     }
+
+    @Test
+    fun `night window end from pending confirm returns to idle and cancels timer only`() = runTest {
+        setupSession()
+        manager.onScreenOff(Instant.parse("2024-01-15T23:00:00Z"))
+
+        manager.onNightWindowEnd()
+
+        assertEquals(AppState.ARMED_IDLE, manager.currentState)
+        coVerify { confirmScheduler.cancelConfirmationTimerOnly() }
+    }
+
+    @Test
+    fun `resume pending confirmation schedules remaining timer when deadline not reached`() = runTest {
+        setupSession()
+        val now = System.currentTimeMillis()
+        val screenOffTs = now - 60_000L
+        val deadlineTs = now + 120_000L
+        stateHolder.setPendingCandidate(screenOffTs, deadlineTs)
+
+        manager.resumePendingConfirmationIfEligible(screenStillOff = true)
+
+        assertEquals(AppState.ARMED_PENDING_CONFIRM, manager.currentState)
+        coVerify { confirmScheduler.scheduleConfirmationAt(screenOffTs, deadlineTs) }
+    }
+
+    @Test
+    fun `resume pending confirmation schedules alarm immediately when overdue`() = runTest {
+        setupSession()
+        val now = System.currentTimeMillis()
+        val screenOffTs = now - 20 * 60_000L
+        val deadlineTs = now - 1_000L
+        stateHolder.setPendingCandidate(screenOffTs, deadlineTs)
+
+        manager.resumePendingConfirmationIfEligible(screenStillOff = true)
+
+        assertEquals(AppState.ARMED_ALARM_SET, manager.currentState)
+        coVerify { alarmScheduler.scheduleSleepAlarm(screenOffTs, any()) }
+    }
+
+    @Test
+    fun `resume pending confirmation clears pending state when screen is on`() = runTest {
+        setupSession()
+        val now = System.currentTimeMillis()
+        stateHolder.setPendingCandidate(now - 10_000L, now + 60_000L)
+
+        manager.resumePendingConfirmationIfEligible(screenStillOff = false)
+
+        assertEquals(AppState.ARMED_IDLE, manager.currentState)
+        coVerify(exactly = 0) { confirmScheduler.scheduleConfirmationAt(any(), any()) }
+    }
 }

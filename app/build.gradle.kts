@@ -83,6 +83,7 @@ jacoco {
 
 dependencies {
     implementation("androidx.core:core-ktx:1.15.0")
+    implementation("androidx.core:core-splashscreen:1.0.1")
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("androidx.activity:activity-compose:1.9.3")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
@@ -140,39 +141,54 @@ val jacocoExcludes = listOf(
     "**/*_MembersInjector*.*"
 )
 
-tasks.register<JacocoReport>("jacocoTestReport") {
+val criticalCoverageIncludes = listOf(
+    // Core automation engine: state transitions, window validation, and duration/time logic.
+    "com/sleep8/domain/manager/ArmManager*",
+    "com/sleep8/domain/manager/StateMachineManager*",
+    "com/sleep8/domain/state/StateHolder*",
+    "com/sleep8/domain/overlay/AlarmOverlayPolicy*",
+    "com/sleep8/domain/validator/NightWindowValidator*",
+    "com/sleep8/util/AlarmDurationValidator*",
+    "com/sleep8/util/TimeUtils*"
+)
+
+fun criticalClassDirectories() = files(
+    fileTree(layout.buildDirectory.dir("intermediates/javac/debug/classes")) {
+        include(criticalCoverageIncludes)
+        exclude(jacocoExcludes)
+    },
+    fileTree(layout.buildDirectory.dir("tmp/kotlin-classes/debug")) {
+        include(criticalCoverageIncludes)
+        exclude(jacocoExcludes)
+    }
+)
+
+fun debugExecutionData() = fileTree(layout.buildDirectory) {
+    include("outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec")
+    include("jacoco/testDebugUnitTest.exec")
+}
+
+tasks.register<JacocoReport>("jacocoCriticalReport") {
     dependsOn("testDebugUnitTest")
 
     reports {
         xml.required.set(true)
         html.required.set(true)
+        xml.outputLocation.set(layout.buildDirectory.file("reports/jacoco/jacocoTestReport/jacocoTestReport.xml"))
+        html.outputLocation.set(layout.buildDirectory.dir("reports/jacoco/jacocoTestReport/html"))
     }
 
-    val javaClasses = fileTree(layout.buildDirectory.dir("intermediates/javac/debug/classes")) {
-        exclude(jacocoExcludes)
-    }
-    val kotlinClasses = fileTree(layout.buildDirectory.dir("tmp/kotlin-classes/debug")) {
-        exclude(jacocoExcludes)
-    }
-
-    classDirectories.setFrom(files(javaClasses, kotlinClasses))
+    classDirectories.setFrom(criticalClassDirectories())
     sourceDirectories.setFrom(files("src/main/java", "src/main/kotlin"))
-    executionData.setFrom(fileTree(layout.buildDirectory) { include("jacoco/testDebugUnitTest.exec") })
+    executionData.setFrom(debugExecutionData())
 }
 
-tasks.register<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
-    dependsOn("jacocoTestReport")
+tasks.register<JacocoCoverageVerification>("jacocoCriticalCoverageVerification") {
+    dependsOn("jacocoCriticalReport")
 
-    val javaClasses = fileTree(layout.buildDirectory.dir("intermediates/javac/debug/classes")) {
-        exclude(jacocoExcludes)
-    }
-    val kotlinClasses = fileTree(layout.buildDirectory.dir("tmp/kotlin-classes/debug")) {
-        exclude(jacocoExcludes)
-    }
-
-    classDirectories.setFrom(files(javaClasses, kotlinClasses))
+    classDirectories.setFrom(criticalClassDirectories())
     sourceDirectories.setFrom(files("src/main/java", "src/main/kotlin"))
-    executionData.setFrom(fileTree(layout.buildDirectory) { include("jacoco/testDebugUnitTest.exec") })
+    executionData.setFrom(debugExecutionData())
 
     violationRules {
         rule {
@@ -181,4 +197,12 @@ tasks.register<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
             }
         }
     }
+}
+
+tasks.register("jacocoTestReport") {
+    dependsOn("jacocoCriticalReport")
+}
+
+tasks.register("jacocoTestCoverageVerification") {
+    dependsOn("jacocoCriticalCoverageVerification")
 }

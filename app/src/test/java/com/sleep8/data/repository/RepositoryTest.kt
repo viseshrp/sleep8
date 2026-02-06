@@ -230,4 +230,34 @@ class RepositoryTest {
         val history = kotlinx.coroutines.runBlocking { alarmRepository.getAllRecordsNewestFirst() }
         assertEquals(listOf(8500L, 5500L, 2500L), history.map { it.scheduledAt })
     }
+
+    @Test
+    fun `clear all records removes alarm history`() {
+        val session = kotlinx.coroutines.runBlocking { sessionRepository.createSession(ArmSource.APP_BUTTON) }
+        val record = AlarmRecord(
+            id = 0,
+            sessionId = session.id,
+            screenOffTs = 1000L,
+            confirmedAt = 2000L,
+            scheduledAt = 2500L,
+            triggerAt = 3000L,
+            durationUsedMinutes = 480,
+            alarmInstanceId = 777L,
+            requestCode = 777,
+            source = AlarmSource.SLEEP_AUTOMATION,
+            status = AlarmStatus.SCHEDULED,
+            canceledReason = null,
+            firedAt = null,
+            dismissedAt = null,
+            overlayUsed = false,
+            activityPresented = false
+        )
+        kotlinx.coroutines.runBlocking {
+            alarmRepository.insertRecord(record)
+            alarmRepository.clearAllRecords()
+        }
+
+        val history = kotlinx.coroutines.runBlocking { alarmRepository.getAllRecordsNewestFirst() }
+        assertEquals(emptyList<AlarmRecord>(), history)
+    }
 }

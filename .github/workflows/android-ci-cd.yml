@@ -26,6 +26,7 @@ on:
     - cron: "0 2 * * *"
 
 permissions:
+  actions: write
   contents: read
   checks: write
   pull-requests: write
@@ -96,7 +97,6 @@ jobs:
   tests:
     name: Unit + Integration + Coverage
     runs-on: ubuntu-latest
-    needs: [quality]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -181,7 +181,6 @@ jobs:
   ui_tests:
     name: UI Tests (Espresso)
     runs-on: ubuntu-latest
-    needs: [tests]
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.run_ui_tests == 'true' }}
     steps:
       - name: Checkout
@@ -228,8 +227,10 @@ jobs:
           arch: x86_64
           profile: Nexus 6
           disable-animations: true
-          cache: true
-          script: make test-ui
+          cache: false
+          emulator-boot-timeout: 900
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot -no-snapshot-save -wipe-data
+          script: adb devices && make test-ui
 
       - name: Upload UI test reports
         if: always()
@@ -246,14 +247,14 @@ jobs:
         uses: dorny/test-reporter@v1
         with:
           name: Instrumentation Tests
-          path: app/build/outputs/androidTest-results/connected/*.xml
+          path: app/build/outputs/androidTest-results/connected/**/*.xml
           reporter: java-junit
           fail-on-error: false
 
   build_release:
     name: Build / Package
     runs-on: ubuntu-latest
-    needs: [ui_tests]
+    needs: [quality, tests, ui_tests]
     if: ${{ github.event_name != 'pull_request' }}
     steps:
       - name: Checkout

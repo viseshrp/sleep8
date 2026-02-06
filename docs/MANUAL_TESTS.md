@@ -1,7 +1,7 @@
 # Sleep8 — Manual Test Cases (Owned Exact Alarms + Optional Overlay)
 
 These tests require **physical devices** (Pixel 8 / Android 14+ recommended).
-Automated unit, integration, and Compose UI tests cover most logic and UI flows; manual tests focus on platform-specific behaviors (exact alarms, lockscreen, OEM clock integration, overlay reliability).
+Automated unit, integration, and Compose UI tests cover most logic and UI flows; manual tests focus on platform-specific behaviors (exact alarms, lockscreen/full-screen behavior, overlay reliability).
 
 ## Core Alarm Flow
 - Screen off → confirmation → alarm fires at `screen_off + duration`.
@@ -15,6 +15,21 @@ Automated unit, integration, and Compose UI tests cover most logic and UI flows;
 - On Home, Alarm History, and Settings: tap the top-left icon 20x; no missed taps.
 - Ensure taps do not accidentally open the notification shade.
 
+## Visual Regression Checklist
+- Home, Alarm list, History, and Settings use consistent Material top app bars and spacing rhythm (8/12/16/24dp feel).
+- Home uses card-based grouping and clear hierarchy; Alarm list/History use list-row/card patterns.
+- Interactive controls meet touch-target expectations and are easy to tap.
+- Contrast remains readable in dark and light themes.
+- Toggle dark mode in Settings and verify every screen updates immediately.
+- Ringing UI presents AOSP-like layout (large centered time, subtle label, dismiss-only).
+- Ringing UI shows alarm info text and a sticky red dismiss button at bottom.
+- Ringing dismiss action stops audio/vibration and closes UI instantly.
+- Icon checks on emulator/device:
+  - launcher/home screen icon
+  - app info/settings icon
+  - recents/task switcher icon
+  - ringing notification small icon
+
 ## Duration Settings
 - Set duration to 0 minutes → alarm rings immediately at confirmation time.
 - Set duration to 720 minutes → alarm scheduled exactly +720 minutes.
@@ -22,9 +37,9 @@ Automated unit, integration, and Compose UI tests cover most logic and UI flows;
 - Duration inputs are always Hours + Minutes fields.
 
 ## Overlay (Optional)
-- Enable overlay toggle → if permission granted, overlay appears while alarm is ringing.
+- Enable overlay toggle + grant permission → overlay appears while alarm is ringing.
 - Enable overlay toggle without permission → permission screen opens; overlay does not show until granted.
-- Disable overlay toggle → only AlarmRingingActivity is shown.
+- Disable overlay toggle (even with permission granted) → only AlarmRingingActivity is shown.
 
 ## Notifications / Permission
 - Deny POST_NOTIFICATIONS → alarm still rings; UI shows warning about limited lockscreen UX.
@@ -32,6 +47,10 @@ Automated unit, integration, and Compose UI tests cover most logic and UI flows;
 
 ## OS Integration
 - ACTION_SHOW_ALARMS opens Alarm History screen.
+- Alarm History clear flow:
+  - Tap **Clear** and verify confirmation dialog appears.
+  - Tap **Cancel** and verify history remains.
+  - Tap **Clear** in the dialog and verify history becomes empty.
 - Deep links:
   - `sleep8://alarms` opens history
   - `sleep8://alarm/<id>` opens history with selected record

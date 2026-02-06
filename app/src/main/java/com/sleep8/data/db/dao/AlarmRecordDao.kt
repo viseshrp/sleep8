@@ -29,6 +29,9 @@ interface AlarmRecordDao {
     @Query("SELECT * FROM alarm_records WHERE status = :status ORDER BY scheduled_at DESC")
     suspend fun getRecordsByStatus(status: String): List<AlarmRecordEntity>
 
+    @Query("DELETE FROM alarm_records")
+    suspend fun deleteAll()
+
     @Query("UPDATE alarm_records SET status = :status, fired_at = :firedAt WHERE alarm_id = :alarmId")
     suspend fun markFired(alarmId: Long, status: String, firedAt: Long)
 

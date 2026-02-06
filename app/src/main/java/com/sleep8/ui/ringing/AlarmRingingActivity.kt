@@ -7,17 +7,20 @@ import android.content.IntentFilter
 import android.os.Build
 import android.os.Bundle
 import android.view.WindowManager
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.material3.MaterialTheme
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.core.content.ContextCompat
 import com.sleep8.service.AlarmRinger
 import com.sleep8.service.AlarmRingingService
+import com.sleep8.ui.theme.Sleep8Theme
+import com.sleep8.util.TimeUtils
 import com.sleep8.util.Constants
+import java.time.LocalTime
 
-class AlarmRingingActivity : ComponentActivity() {
+class AlarmRingingActivity : AppCompatActivity() {
 
     private var alarmId: Long = -1L
     private var ringInActivity: Boolean = false
@@ -54,13 +57,14 @@ class AlarmRingingActivity : ComponentActivity() {
         }
 
         setContent {
-            MaterialTheme {
+            Sleep8Theme {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     AlarmRingingContent(
                         label = getString(com.sleep8.R.string.alarm_ringing_title),
+                        alarmInfo = "${TimeUtils.formatAlarmTime(LocalTime.now())}",
                         onDismiss = {
                             ringer?.stop()
-                            AlarmRingingService.stop(this)
+                            AlarmRingingService.stop(this, alarmId)
                             finish()
                         }
                     )
@@ -74,7 +78,12 @@ class AlarmRingingActivity : ComponentActivity() {
         val filter = IntentFilter().apply {
             addAction(Constants.ACTION_ALARM_DISMISS)
         }
-        registerReceiver(closeReceiver, filter)
+        ContextCompat.registerReceiver(
+            this,
+            closeReceiver,
+            filter,
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
         if (ringInActivity && ringer == null) {
             ringer = AlarmRinger(this).also { it.start() }
         }

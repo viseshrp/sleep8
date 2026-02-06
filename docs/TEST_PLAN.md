@@ -43,17 +43,23 @@ Physical device testing is required; emulators are not authoritative for exact a
 
 ## UI Tests (Compose)
 - Settings screen sections and reliability checklist.
+- Theme toggle switches dark/light mode state from Settings.
 - Alarm list content (empty state, toggles).
-- Alarm history page and back navigation.
-- Ringing UI (Dismiss-only).
+- Alarm history page, clear confirmation dialog, and back navigation.
+- Ringing UI (alarm info visible, sticky Dismiss, no top app bar/back/menu).
 - Main navigation drawer flows (hamburger/menu selections).
+- Navigation remains functional across Home → Alarm/History/Settings.
 
 ---
 
 ## Manual Tests (Pixel 8 / Android 14+)
+- Cold start shows splash screen and transitions smoothly to Home (no blank frame/jank).
+- Verify dark mode is default on fresh install.
+- Toggle dark mode On/Off in Settings and verify every screen updates (Home, Alarm list, History, Settings, ringing UI).
 - Alarm fires and displays full-screen UI on lockscreen.
 - Overlay toggle on: overlay appears while ringing (permission granted).
 - Overlay toggle on, permission denied: alarm still rings; overlay not shown.
+- Overlay toggle off: alarm always shows full-screen ringing activity (no overlay).
 - Notification permission requested on first arm; deny → alarm still rings without FGS notification.
 - ACTION_SHOW_ALARMS opens Alarm History screen.
 - Deep links:
@@ -63,6 +69,11 @@ Physical device testing is required; emulators are not authoritative for exact a
 - Alarm page list shows time + switch; toggling off disables the alarm.
 - Ringing UI shows Dismiss only (no snooze anywhere).
 - Notifications permission denied still rings; UI warns about reduced lockscreen UX.
+- Icon verification checklist:
+  - Launcher icon (home screen/app drawer)
+  - App info/settings list icon
+  - Recents/task switcher icon
+  - Alarm notification small icon is monochrome and legible
 
 ---
 

@@ -59,6 +59,12 @@ class AlarmRingingService : Service() {
 
     private fun startRinging() {
         appPreferences.activeAlarmId = if (alarmId > 0) alarmId else -1L
+        val settings = runBlocking { settingsRepository.getSettings() }
+        val overlayAllowed = PermissionUtils.canDrawOverlays(this)
+        val shouldShowOverlay = AlarmOverlayPolicy.shouldShowOverlay(
+            enabled = settings.overlayEnabled,
+            permissionGranted = overlayAllowed
+        )
         val alarmIntent = AlarmRingingActivity.pendingIntent(this, alarmId)
         val contentIntent = alarmIntent
         val dismissIntent = createActionIntent(Constants.ACTION_ALARM_DISMISS)
@@ -75,11 +81,16 @@ class AlarmRingingService : Service() {
             return
         }
         startForeground(Constants.ALARM_RINGING_NOTIFICATION_ID, notification)
+        if (alarmId > 0) {
+            AlarmRingingActivity.launch(this, alarmId)
+        }
         if (ringer == null) {
             ringer = AlarmRinger(this)
         }
         ringer?.start()
-        maybeShowOverlay()
+        if (shouldShowOverlay) {
+            showOverlay()
+        }
     }
 
     private fun stopRinging() {
@@ -108,16 +119,14 @@ class AlarmRingingService : Service() {
 
     private fun broadcastAlarmAction(action: String) {
         val intent = Intent(action).apply {
+            `package` = packageName
             putExtra(Constants.EXTRA_ALARM_ID, alarmId)
         }
         sendBroadcast(intent)
     }
 
-    private fun maybeShowOverlay() {
+    private fun showOverlay() {
         if (alarmId <= 0) return
-        val settings = runBlocking { settingsRepository.getSettings() }
-        val overlayAllowed = PermissionUtils.canDrawOverlays(this)
-        if (!AlarmOverlayPolicy.shouldShowOverlay(settings.overlayEnabled, overlayAllowed)) return
         overlayController = AlarmOverlayController(this).also { controller ->
             controller.show(
                 onDismiss = { handleDismiss() }
@@ -150,9 +159,12 @@ class AlarmRingingService : Service() {
             ContextCompat.startForegroundService(context, intent)
         }
 
-        fun stop(context: Context) {
+        fun stop(context: Context, alarmId: Long = -1L) {
             val intent = Intent(context, AlarmRingingService::class.java).apply {
                 action = Constants.ACTION_ALARM_DISMISS
+                if (alarmId > 0) {
+                    putExtra(Constants.EXTRA_ALARM_ID, alarmId)
+                }
             }
             ContextCompat.startForegroundService(context, intent)
         }

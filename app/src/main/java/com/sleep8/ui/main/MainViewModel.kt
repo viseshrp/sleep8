@@ -14,6 +14,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.time.Duration
 import javax.inject.Inject
@@ -28,24 +29,33 @@ class MainViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(MainUiState())
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
+    private val _startupReady = MutableStateFlow(false)
+    val startupReady: StateFlow<Boolean> = _startupReady.asStateFlow()
+    private var latestAlarm: com.sleep8.domain.model.AlarmRecord? = null
+    private var latestAlarmRefreshAt: Long = 0L
 
     init {
         viewModelScope.launch {
-            while (true) {
-                updateState()
+            updateState(forceRefreshLatestAlarm = true)
+            _startupReady.value = true
+            while (isActive) {
                 delay(1000)
+                updateState()
             }
         }
     }
 
-    private suspend fun updateState() {
+    private suspend fun updateState(forceRefreshLatestAlarm: Boolean = false) {
         val state = stateHolder.state.value
         val armed = state != AppState.DISARMED
         val lastScreenOffTs = stateHolder.lastScreenOffTs.value
         val pendingDeadline = stateHolder.pendingConfirmDeadlineTs.value
         val now = System.currentTimeMillis()
         val pendingRemaining = if (pendingDeadline > 0) pendingDeadline - now else 0L
-        val latestAlarm = alarmRepository.getLatestScheduledRecord()
+        if (forceRefreshLatestAlarm || latestAlarm == null || now - latestAlarmRefreshAt >= LATEST_ALARM_REFRESH_MS) {
+            latestAlarm = alarmRepository.getLatestScheduledRecord()
+            latestAlarmRefreshAt = now
+        }
 
         val armedUntilText = stateHolder.activeSession.value?.windowEndTs?.takeIf { it > 0 }?.let {
             TimeUtils.formatAlarmTime(TimeUtils.toLocalTime(it))
@@ -64,14 +74,15 @@ class MainViewModel @Inject constructor(
             ""
         }
 
-        val latestAlarmText = if (latestAlarm != null) {
-            val time = TimeUtils.toLocalTime(latestAlarm.triggerAt)
+        val latestAlarmRecord = latestAlarm
+        val latestAlarmText = if (latestAlarmRecord != null) {
+            val time = TimeUtils.toLocalTime(latestAlarmRecord.triggerAt)
             "Alarm scheduled for ${TimeUtils.formatAlarmTime(time)}"
         } else {
             ""
         }
 
-        val latestAlarmSubtitle = if (latestAlarm != null) {
+        val latestAlarmSubtitle = if (latestAlarmRecord != null) {
             "Scheduled automatically"
         } else {
             ""
@@ -110,7 +121,11 @@ class MainViewModel @Inject constructor(
             } else {
                 armManager.arm(com.sleep8.domain.model.ArmSource.APP_BUTTON)
             }
-            updateState()
+            updateState(forceRefreshLatestAlarm = true)
         }
+    }
+
+    private companion object {
+        const val LATEST_ALARM_REFRESH_MS = 30_000L
     }
 }

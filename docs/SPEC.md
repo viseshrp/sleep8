@@ -31,6 +31,8 @@ When the user **arms** the app (button or Quick Settings tile), the app watches 
 - Invalid duration values are rejected and not persisted until corrected.
 - Minutes >= 60 are normalized into hours; total is clamped to 0-720 minutes.
 - **No snooze**: snooze is not supported anywhere in the app.
+- **Theme default**: dark mode is default on fresh install.
+- Theme control: Settings (hamburger → Settings) includes a global **Dark mode** toggle (On/Off) that applies app-wide and persists.
 - Reboot: **restore state** and reschedule alarms from DB.
 - Storage: persist `duration_used_minutes`, `alarm_instance_id`, `request_code`, `overlay_used`, `activity_presented`.
 - Privacy: **strictly offline**.
@@ -46,10 +48,12 @@ When the user **arms** the app (button or Quick Settings tile), the app watches 
 ## 5. UX / User Flows
 
 ### 5.1 First-run setup
+- App launches with Android splash screen (logo + app name) and transitions into Home after startup initialization.
 - User sets:
   - Night window start/end (default **22:30–04:00**).
   - Auto-arm schedule start/end (default **22:00–05:00**).
   - **Alarm duration** in hours + minutes (0-720 total, default 8h 0m).
+  - Dark mode preference in Settings (defaults to On).
 - App shows a “Reliability checklist”:
   - Exact alarm capability (Android 12+)
   - Notifications permission (Android 13+)
@@ -65,6 +69,7 @@ Armed state shows:
 - “Armed until: end of night window”
 - Last screen-off detected time (if any)
 - Pending confirmation timer (20 min) or confirmed alarm schedule time
+- Material card/list styling with consistent top app bars and spacing.
 
 Navigation:
 - Hamburger menu includes **Alarm** entry:
@@ -89,9 +94,17 @@ When the screen has remained OFF for 20 minutes since the latest OFF event:
 - `AlarmManager` delivers to `AlarmReceiver`.
 - Receiver starts `AlarmRingingService` (foreground) and launches `AlarmRingingActivity`.
 - Alarm UI shows over lock screen, turns screen on, and rings until dismissed.
+- Ringing UI is AOSP Clock-like: full-screen, large current time, subtle label, alarm info line, one sticky bottom **Dismiss** action, no app bar or nav chrome.
+- Overlay page is shown only when both conditions are true: `overlay_enabled == true` and `SYSTEM_ALERT_WINDOW` permission is granted. Otherwise full-screen activity is used.
 
 ### 5.6 Dismiss
 - **Dismiss** stops audio/vibration, stops the foreground service, records `dismissed_at` in DB.
+- Dismiss behavior is identical for overlay and full-screen activity presentations.
+
+### 5.10 App Icon
+- Launcher icon uses a new adaptive icon set (foreground/background + monochrome).
+- Round icon and legacy fallbacks are updated.
+- Notification alarm icon is monochrome and separate from launcher icon.
 
 ### 5.7 Disarming
 - User can disarm anytime (button/tile).
@@ -103,6 +116,7 @@ When the screen has remained OFF for 20 minutes since the latest OFF event:
 - The app maintains a **local alarm log** in its DB (`alarm_records`).
 - Home screen shows the **most recently scheduled alarm**.
 - Alarm History screen shows the full alarm log (newest → oldest).
+- Alarm History includes a **Clear** action with a confirmation dialog to delete all history records.
 
 ### 5.9 Alarm List (AOSP-style)
 - A separate **Alarm** page shows a list of **current alarms** (not history).
@@ -154,10 +168,10 @@ Use `AlarmManager.setAlarmClock(AlarmClockInfo(triggerAt, showIntent), operation
 
 ### 7.2 Alarm UI
 - `AlarmRingingActivity` is full-screen, shows over lock screen, and turns screen on.
-- UI is AOSP-like: large time, subtle label, single **Dismiss** action.
+- UI is AOSP-like: large time, subtle label, alarm info, sticky red **Dismiss** action.
 - Alarm uses `AudioManager.STREAM_ALARM` semantics with looping sound and repeating vibration.
 - Foreground service runs **only while ringing**.
-- Optional overlay (if user-enabled + permission granted) shows the same ringing UI while ringing.
+- Optional overlay (only if user-enabled + permission granted) shows the same ringing UI while ringing.
 
 ### 7.3 Best-effort OS integration
 - Handle `AlarmClock.ACTION_SHOW_ALARMS` to open the app’s alarm history screen.

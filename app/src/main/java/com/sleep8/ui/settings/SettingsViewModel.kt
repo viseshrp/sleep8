@@ -8,6 +8,8 @@ import com.sleep8.data.repository.SettingsRepository
 import com.sleep8.domain.manager.ArmManager
 import com.sleep8.domain.model.Settings
 import com.sleep8.service.NightMonitorService
+import com.sleep8.ui.theme.AppThemeMode
+import com.sleep8.ui.theme.ThemeController
 import com.sleep8.util.Constants
 import com.sleep8.util.PermissionUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -42,6 +44,7 @@ class SettingsViewModel @Inject constructor(
                 confirmOffMinutes = settings.confirmOffMinutes.toString(),
                 armedDefault = settings.armedDefault,
                 autoArmEnabled = settings.autoArmEnabled,
+                darkModeEnabled = appPreferences.themeMode == AppThemeMode.DARK,
                 overlayEnabled = settings.overlayEnabled
             )
             appPreferences.alarmDurationMinutes = settings.alarmDurationMinutes
@@ -53,6 +56,7 @@ class SettingsViewModel @Inject constructor(
         val batteryIgnored = PermissionUtils.isIgnoringBatteryOptimizations(context)
         val isServiceRunning = PermissionUtils.isServiceRunning(context, NightMonitorService::class.java)
         val notificationsAllowed = PermissionUtils.canPostNotifications(context)
+        val fullScreenIntentAllowed = PermissionUtils.canUseFullScreenIntent(context)
         val overlayAllowed = PermissionUtils.canDrawOverlays(context)
         
         _uiState.value = _uiState.value.copy(
@@ -60,6 +64,7 @@ class SettingsViewModel @Inject constructor(
             batteryOptimizationsIgnored = batteryIgnored,
             foregroundServiceActive = isServiceRunning,
             notificationsAllowed = notificationsAllowed,
+            fullScreenIntentAllowed = fullScreenIntentAllowed,
             overlayAllowed = overlayAllowed
         )
     }
@@ -121,6 +126,12 @@ class SettingsViewModel @Inject constructor(
     fun updateOverlayEnabled(enabled: Boolean) {
         _uiState.value = _uiState.value.copy(overlayEnabled = enabled)
         persist()
+    }
+
+    fun updateDarkModeEnabled(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(darkModeEnabled = enabled)
+        appPreferences.themeMode = if (enabled) AppThemeMode.DARK else AppThemeMode.LIGHT
+        ThemeController.apply(appPreferences.themeMode)
     }
 
     private fun persist() {

@@ -4,13 +4,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -19,13 +18,18 @@ fun ArmButton(
     onToggle: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val background = if (armed) Color(0xFFD14F3C) else Color(0xFF3F7AE0)
+    val container = if (armed) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.surfaceContainerHigh
+    val content = if (armed) MaterialTheme.colorScheme.onError else MaterialTheme.colorScheme.onSurface
+    val subColor = if (armed) MaterialTheme.colorScheme.onError.copy(alpha = 0.86f) else MaterialTheme.colorScheme.primary
     val label = if (armed) "Disarm" else "Arm Tonight"
     val sub = if (armed) "Stop monitoring" else "Start monitoring for tonight"
-    Button(
+    FilledTonalButton(
         onClick = onToggle,
         modifier = modifier.fillMaxWidth(),
-        colors = ButtonDefaults.buttonColors(containerColor = background)
+        colors = ButtonDefaults.filledTonalButtonColors(
+            containerColor = container,
+            contentColor = content
+        )
     ) {
         Column(
             modifier = Modifier
@@ -33,8 +37,12 @@ fun ArmButton(
                 .padding(vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Text(text = label, style = MaterialTheme.typography.titleLarge, color = Color.White)
-            Text(text = sub, style = MaterialTheme.typography.labelMedium, color = Color(0xFFE8EEF9))
+            Text(text = label, style = MaterialTheme.typography.titleLarge)
+            Text(
+                text = sub,
+                style = MaterialTheme.typography.labelMedium,
+                color = subColor
+            )
         }
     }
 }

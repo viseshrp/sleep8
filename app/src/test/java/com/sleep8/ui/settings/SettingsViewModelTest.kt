@@ -5,6 +5,7 @@ import com.sleep8.data.repository.SettingsRepository
 import com.sleep8.domain.manager.ArmManager
 import com.sleep8.domain.model.Settings
 import com.sleep8.testutil.InMemorySharedPreferences
+import com.sleep8.ui.theme.AppThemeMode
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -115,5 +116,27 @@ class SettingsViewModelTest {
         assertNull(viewModel.uiState.value.alarmDurationError)
         assertEquals("2", viewModel.uiState.value.alarmDurationHoursInput)
         assertEquals("15", viewModel.uiState.value.alarmDurationMinutesInput)
+    }
+
+    @Test
+    fun `dark mode toggle updates persisted theme preference`() = runTest {
+        coEvery { settingsRepository.getSettings() } returns Settings(
+            nightStart = "22:00",
+            nightEnd = "08:00",
+            confirmOffMinutes = 10,
+            alarmDurationMinutes = 480,
+            overlayEnabled = false,
+            armedDefault = false,
+            autoArmEnabled = false,
+            autoArmStart = "22:00",
+            autoArmEnd = "08:00"
+        )
+        val viewModel = SettingsViewModel(settingsRepository, prefs, armManager)
+        advanceUntilIdle()
+
+        viewModel.updateDarkModeEnabled(false)
+
+        assertEquals(AppThemeMode.LIGHT, prefs.themeMode)
+        assertEquals(false, viewModel.uiState.value.darkModeEnabled)
     }
 }

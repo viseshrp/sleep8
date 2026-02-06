@@ -39,4 +39,11 @@ class AlarmHistoryViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(selectedAlarm = record)
         }
     }
+
+    fun clearHistory() {
+        viewModelScope.launch {
+            alarmRepository.clearAllRecords()
+            _uiState.value = AlarmHistoryUiState()
+        }
+    }
 }

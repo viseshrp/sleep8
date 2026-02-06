@@ -66,6 +66,10 @@ class AlarmRepository(private val alarmRecordDao: AlarmRecordDao) {
     suspend fun markActivityPresented(alarmId: Long) {
         alarmRecordDao.markActivityPresented(alarmId, true)
     }
+
+    suspend fun clearAllRecords() {
+        alarmRecordDao.deleteAll()
+    }
 }
 
 private fun AlarmRecord.toEntity(): AlarmRecordEntity {

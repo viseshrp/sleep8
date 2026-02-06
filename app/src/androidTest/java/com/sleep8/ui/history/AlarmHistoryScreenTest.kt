@@ -1,11 +1,11 @@
 package com.sleep8.ui.history
 
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
-import com.sleep8.testutil.TestActivity
 import androidx.compose.ui.test.performClick
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.sleep8.data.repository.AlarmRepository
 import com.sleep8.domain.model.AlarmRecord
 import com.sleep8.domain.model.AlarmSource
@@ -14,11 +14,13 @@ import io.mockk.coEvery
 import io.mockk.mockk
 import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
 
+@RunWith(AndroidJUnit4::class)
 class AlarmHistoryScreenTest {
 
     @get:Rule
-    val composeRule = createAndroidComposeRule<TestActivity>()
+    val composeRule = createComposeRule()
 
     @Test
     fun historyScreenShowsAlarmDetailsAndBack() {
@@ -58,6 +60,9 @@ class AlarmHistoryScreenTest {
 
         composeRule.onNodeWithText("Alarm History").assertExists()
         composeRule.onNodeWithText("Alarm Detail").assertExists()
+        composeRule.onNodeWithText("Clear").performClick()
+        composeRule.onNodeWithText("Clear alarm history?").assertExists()
+        composeRule.onNodeWithText("Cancel").performClick()
         composeRule.onNodeWithContentDescription("Back").performClick()
         composeRule.runOnIdle { org.junit.Assert.assertTrue(backPressed) }
     }

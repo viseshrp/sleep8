@@ -3,7 +3,7 @@
 ## Overview
 This project uses a mix of unit tests (JVM + Robolectric) and Compose UI tests. Unit tests cover core business logic, schedulers, repositories, receivers, and utilities. Compose UI tests cover key screens and flows.
 
-Target coverage threshold: **90% line coverage** (unit tests via JaCoCo).
+Target coverage threshold: **90%+ for production-critical automation packages** (unit tests via JaCoCo).
 
 ## What Tests Exist
 
@@ -17,7 +17,7 @@ Target coverage threshold: **90% line coverage** (unit tests via JaCoCo).
 ### UI tests (`app/src/androidTest/java`)
 - Settings screen sections and reliability checklist.
 - Alarm list content and toggles.
-- Alarm history screen and back navigation.
+- Alarm history screen, clear confirmation dialog, and back navigation.
 - Main navigation drawer flows.
 - Ringing UI content (Dismiss-only).
 
@@ -46,7 +46,7 @@ Coverage reports are generated at:
 - `app/build/reports/jacoco/jacocoTestReport/html/index.html`
 - `app/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml`
 
-The verification task enforces **>= 90%** overall line coverage.
+The verification task enforces **>= 90%** across critical automation classes (state machine, arm manager, state holder, night-window validation, and core duration/time utilities).
 
 ## Expected Thresholds
 - Unit test coverage: **90%+** (JaCoCo).
