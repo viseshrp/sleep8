@@ -29,17 +29,19 @@ fun StatusCard(
     pendingCountdown: String?
 ) {
     Card(
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
         shape = MaterialTheme.shapes.large
     ) {
+
         Column(
             modifier = Modifier.padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
                 text = status,
-                style = MaterialTheme.typography.headlineSmall
+                style = MaterialTheme.typography.headlineMedium
             )
+
             if (monitoringHealthText.isNotBlank()) {
                 KeyValueRow(label = "Monitoring health", value = monitoringHealthText)
             }
