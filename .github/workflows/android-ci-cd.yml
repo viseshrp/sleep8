@@ -225,11 +225,13 @@ jobs:
           api-level: 34
           target: google_apis
           arch: x86_64
-          profile: Nexus 6
+          profile: pixel_4
           disable-animations: true
-          cache: true
-          emulator-boot-timeout: 300
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+          cache: false
+          force-avd-creation: true
+          disable-linux-hw-accel: true
+          emulator-boot-timeout: 900
+          emulator-options: -no-window -gpu swiftshader_indirect -no-audio -no-boot-anim -no-snapshot -no-snapshot-save -camera-back none -camera-front none
           script: adb devices && make test-ui
 
       - name: Upload UI test reports
