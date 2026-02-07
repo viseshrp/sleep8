@@ -181,7 +181,7 @@ jobs:
   ui_tests:
     name: UI Tests (Espresso)
     runs-on: ubuntu-latest
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.run_ui_tests == 'true' }}
+    if: ${{ github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && inputs.run_ui_tests == 'true') }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -227,9 +227,9 @@ jobs:
           arch: x86_64
           profile: Nexus 6
           disable-animations: true
-          cache: false
-          emulator-boot-timeout: 900
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot -no-snapshot-save -wipe-data
+          cache: true
+          emulator-boot-timeout: 300
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           script: adb devices && make test-ui
 
       - name: Upload UI test reports
