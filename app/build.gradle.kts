@@ -1,5 +1,6 @@
 import org.gradle.testing.jacoco.tasks.JacocoCoverageVerification
 import org.gradle.testing.jacoco.tasks.JacocoReport
+import org.gradle.testing.jacoco.plugins.JacocoTaskExtension
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -55,6 +56,10 @@ android {
     testOptions {
         unitTests.all {
             it.useJUnitPlatform()
+            it.extensions.configure(JacocoTaskExtension::class.java) {
+                isIncludeNoLocationClasses = true
+                excludes = listOf("jdk.internal.*")
+            }
         }
         unitTests.isIncludeAndroidResources = true
     }

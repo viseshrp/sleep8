@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.time.Duration
 import java.time.Instant
+import java.time.LocalDateTime
 import java.time.LocalTime
 
 class TimeUtilsTest {
@@ -56,5 +57,47 @@ class TimeUtilsTest {
         assertEquals("8h", TimeUtils.formatDurationMinutes(480))
         assertEquals("1h 30m", TimeUtils.formatDurationMinutes(90))
         assertEquals("45m", TimeUtils.formatDurationMinutes(45))
+    }
+
+    @Test
+    fun `init default zone is a safe no-op`() {
+        TimeUtils.initDefaultZone()
+    }
+
+    @Test
+    fun `to local date time converts epoch millis`() {
+        val epoch = Instant.parse("2024-01-15T23:45:00Z").toEpochMilli()
+        val local = TimeUtils.toLocalDateTime(epoch)
+        assertEquals(LocalDateTime.ofInstant(Instant.ofEpochMilli(epoch), java.time.ZoneId.systemDefault()), local)
+    }
+
+    @Test
+    fun `calculate night window handles crossing midnight for early morning`() {
+        val now = LocalDateTime.of(2024, 1, 16, 1, 0)
+        val start = LocalTime.of(22, 0)
+        val end = LocalTime.of(8, 0)
+
+        val window = TimeUtils.calculateNightWindow(now, start, end)
+        val zone = java.time.ZoneId.systemDefault()
+        val expectedStart = LocalDateTime.of(2024, 1, 15, 22, 0).atZone(zone).toInstant().toEpochMilli()
+        val expectedEnd = LocalDateTime.of(2024, 1, 16, 8, 0).atZone(zone).toInstant().toEpochMilli()
+
+        assertEquals(expectedStart, window.startTs)
+        assertEquals(expectedEnd, window.endTs)
+    }
+
+    @Test
+    fun `calculate next window outside crossing-midnight window schedules tonight`() {
+        val now = LocalDateTime.of(2024, 1, 16, 12, 0)
+        val start = LocalTime.of(22, 0)
+        val end = LocalTime.of(8, 0)
+
+        val window = TimeUtils.calculateNextWindow(now, start, end)
+        val zone = java.time.ZoneId.systemDefault()
+        val expectedStart = LocalDateTime.of(2024, 1, 16, 22, 0).atZone(zone).toInstant().toEpochMilli()
+        val expectedEnd = LocalDateTime.of(2024, 1, 17, 8, 0).atZone(zone).toInstant().toEpochMilli()
+
+        assertEquals(expectedStart, window.startTs)
+        assertEquals(expectedEnd, window.endTs)
     }
 }

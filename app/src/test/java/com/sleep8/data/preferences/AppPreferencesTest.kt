@@ -38,4 +38,39 @@ class AppPreferencesTest {
 
         assertEquals(AppThemeMode.LIGHT, prefs.themeMode)
     }
+
+    @Test
+    fun `alarm duration uses default when no legacy value exists`() {
+        val shared = InMemorySharedPreferences()
+        val prefs = AppPreferences(shared)
+
+        val minutes = prefs.alarmDurationMinutes
+
+        assertEquals(Constants.ALARM_DEFAULT_DURATION_MINUTES, minutes)
+        assertEquals(Constants.ALARM_DEFAULT_DURATION_MINUTES, shared.getInt(Constants.PREF_ALARM_DURATION_MINUTES, -1))
+    }
+
+    @Test
+    fun `clear pending confirmation resets both timestamps`() {
+        val prefs = AppPreferences(InMemorySharedPreferences())
+        prefs.pendingCandidateScreenOffTs = 10L
+        prefs.pendingConfirmDeadlineTs = 20L
+
+        prefs.clearPendingConfirmation()
+
+        assertEquals(-1L, prefs.pendingCandidateScreenOffTs)
+        assertEquals(-1L, prefs.pendingConfirmDeadlineTs)
+    }
+
+    @Test
+    fun `active alarm identity fields persist`() {
+        val prefs = AppPreferences(InMemorySharedPreferences())
+        prefs.activeAlarmId = 101L
+        prefs.activeAlarmRequestCode = 202
+        prefs.activeAlarmInstanceId = 303L
+
+        assertEquals(101L, prefs.activeAlarmId)
+        assertEquals(202, prefs.activeAlarmRequestCode)
+        assertEquals(303L, prefs.activeAlarmInstanceId)
+    }
 }

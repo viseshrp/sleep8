@@ -43,4 +43,35 @@ class NightWindowSchedulerTest {
         val shadow = shadowOf(alarmManager)
         assertTrue(shadow.scheduledAlarms.isEmpty())
     }
+
+    @Test
+    fun `cancel night window end removes alarm`() {
+        scheduler.scheduleWindowEnd(System.currentTimeMillis() + 10_000L)
+
+        scheduler.cancelWindowEnd()
+
+        val shadow = shadowOf(alarmManager)
+        assertTrue(shadow.scheduledAlarms.isEmpty())
+    }
+
+    @Test
+    fun `schedule backstops adds soon and late alarms`() {
+        val start = System.currentTimeMillis() + 10_000L
+
+        scheduler.scheduleWindowStartBackstops(start)
+
+        val triggerTimes = shadowOf(alarmManager).scheduledAlarms.map { it.triggerAtTime }
+        assertEquals(2, triggerTimes.size)
+        assertTrue(triggerTimes.contains(start + 2 * 60 * 1_000L))
+        assertTrue(triggerTimes.contains(start + 10 * 60 * 1_000L))
+    }
+
+    @Test
+    fun `cancel backstops removes both alarms`() {
+        scheduler.scheduleWindowStartBackstops(System.currentTimeMillis() + 10_000L)
+
+        scheduler.cancelWindowStartBackstops()
+
+        assertTrue(shadowOf(alarmManager).scheduledAlarms.isEmpty())
+    }
 }

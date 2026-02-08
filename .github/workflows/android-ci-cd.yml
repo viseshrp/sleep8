@@ -172,6 +172,7 @@ jobs:
         uses: codecov/codecov-action@v5
         with:
           files: app/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml
+          disable_search: true
           flags: unittests
           fail_ci_if_error: true
           verbose: true

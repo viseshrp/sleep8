@@ -5,6 +5,7 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.sleep8.data.db.Sleep8Database
 import com.sleep8.domain.model.AlarmRecord
+import com.sleep8.domain.model.AlarmCancelReason
 import com.sleep8.domain.model.AlarmSource
 import com.sleep8.domain.model.AlarmStatus
 import com.sleep8.domain.model.ArmSource
@@ -217,6 +218,114 @@ class RepositoryTest {
 
         val history = kotlinx.coroutines.runBlocking { alarmRepository.getAllRecordsNewestFirst() }
         assertEquals(listOf(8500L, 5500L, 2500L), history.map { it.scheduledAt })
+    }
+
+    @Test
+    fun `alarm record lifecycle updates status fields`() {
+        val session = kotlinx.coroutines.runBlocking { sessionRepository.createSession(ArmSource.APP_BUTTON) }
+        val base = AlarmRecord(
+            id = 0,
+            sessionId = session.id,
+            screenOffTs = 1000L,
+            confirmedAt = 2000L,
+            scheduledAt = 2500L,
+            triggerAt = 3000L,
+            durationUsedMinutes = 480,
+            alarmInstanceId = 888L,
+            requestCode = 888,
+            source = AlarmSource.SLEEP_AUTOMATION,
+            status = AlarmStatus.SCHEDULED,
+            canceledReason = null,
+            firedAt = null,
+            dismissedAt = null,
+            overlayUsed = false,
+            activityPresented = false
+        )
+        val id = kotlinx.coroutines.runBlocking { alarmRepository.insertRecord(base) }
+
+        kotlinx.coroutines.runBlocking { alarmRepository.markFired(id, 3333L) }
+        var updated = kotlinx.coroutines.runBlocking { alarmRepository.getRecord(id) }
+        assertEquals(AlarmStatus.FIRED, updated?.status)
+        assertEquals(3333L, updated?.firedAt)
+
+        kotlinx.coroutines.runBlocking { alarmRepository.markDismissed(id, 4444L) }
+        updated = kotlinx.coroutines.runBlocking { alarmRepository.getRecord(id) }
+        assertEquals(AlarmStatus.DISMISSED, updated?.status)
+        assertEquals(4444L, updated?.dismissedAt)
+
+        kotlinx.coroutines.runBlocking { alarmRepository.markCanceled(id, AlarmCancelReason.USER_TOGGLE_OFF) }
+        updated = kotlinx.coroutines.runBlocking { alarmRepository.getRecord(id) }
+        assertEquals(AlarmStatus.CANCELED, updated?.status)
+        assertEquals(AlarmCancelReason.USER_TOGGLE_OFF, updated?.canceledReason)
+    }
+
+    @Test
+    fun `mark scheduled and flags update alarm fields`() {
+        val session = kotlinx.coroutines.runBlocking { sessionRepository.createSession(ArmSource.APP_BUTTON) }
+        val record = AlarmRecord(
+            id = 0,
+            sessionId = session.id,
+            screenOffTs = 1000L,
+            confirmedAt = 2000L,
+            scheduledAt = 0L,
+            triggerAt = 3000L,
+            durationUsedMinutes = 480,
+            alarmInstanceId = 0L,
+            requestCode = 0,
+            source = AlarmSource.SLEEP_AUTOMATION,
+            status = AlarmStatus.CANCELED,
+            canceledReason = AlarmCancelReason.USER_TOGGLE_OFF,
+            firedAt = null,
+            dismissedAt = null,
+            overlayUsed = false,
+            activityPresented = false
+        )
+        val id = kotlinx.coroutines.runBlocking { alarmRepository.insertRecord(record) }
+
+        kotlinx.coroutines.runBlocking { alarmRepository.markScheduled(id, 5555L, 123L, 321) }
+        kotlinx.coroutines.runBlocking { alarmRepository.markOverlayUsed(id) }
+        kotlinx.coroutines.runBlocking { alarmRepository.markActivityPresented(id) }
+        val updated = kotlinx.coroutines.runBlocking { alarmRepository.getRecord(id) }
+
+        assertEquals(AlarmStatus.SCHEDULED, updated?.status)
+        assertEquals(5555L, updated?.scheduledAt)
+        assertEquals(123L, updated?.alarmInstanceId)
+        assertEquals(321, updated?.requestCode)
+        assertEquals(true, updated?.overlayUsed)
+        assertEquals(true, updated?.activityPresented)
+    }
+
+    @Test
+    fun `scheduled queries return only scheduled alarms`() {
+        val session = kotlinx.coroutines.runBlocking { sessionRepository.createSession(ArmSource.APP_BUTTON) }
+        val scheduled = AlarmRecord(
+            id = 0,
+            sessionId = session.id,
+            screenOffTs = 1000L,
+            confirmedAt = 2000L,
+            scheduledAt = 5000L,
+            triggerAt = 6000L,
+            durationUsedMinutes = 480,
+            alarmInstanceId = 999L,
+            requestCode = 999,
+            source = AlarmSource.SLEEP_AUTOMATION,
+            status = AlarmStatus.SCHEDULED,
+            canceledReason = null,
+            firedAt = null,
+            dismissedAt = null,
+            overlayUsed = false,
+            activityPresented = false
+        )
+        val canceled = scheduled.copy(status = AlarmStatus.CANCELED, scheduledAt = 7000L, alarmInstanceId = 1000L)
+        kotlinx.coroutines.runBlocking { alarmRepository.insertRecord(scheduled) }
+        kotlinx.coroutines.runBlocking { alarmRepository.insertRecord(canceled) }
+
+        val scheduledOnly = kotlinx.coroutines.runBlocking { alarmRepository.getScheduledRecords() }
+        val latestScheduled = kotlinx.coroutines.runBlocking { alarmRepository.getLatestScheduledRecord() }
+
+        assertEquals(1, scheduledOnly.size)
+        assertEquals(AlarmStatus.SCHEDULED, scheduledOnly.first().status)
+        assertEquals(AlarmStatus.SCHEDULED, latestScheduled?.status)
     }
 
     @Test
