@@ -2,6 +2,7 @@ package com.sleep8.ui.settings
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollTo
 import com.sleep8.data.preferences.AppPreferences
@@ -44,10 +45,15 @@ class SettingsScreenTest {
         composeRule.onNodeWithText("Appearance").assertExists()
         composeRule.onNodeWithText("Dark mode").assertExists()
         composeRule.onNodeWithText("Alarm Behavior").performScrollTo().assertExists()
-        composeRule.onNodeWithText("Exact alarms").performScrollTo().assertExists()
-        composeRule.onNodeWithText("System Reliability").assertExists()
-        composeRule.onNodeWithText("Notifications").performScrollTo().assertExists()
-        composeRule.onNodeWithText("Battery optimization").performScrollTo().assertExists()
-        composeRule.onNodeWithText("Draw over other apps (optional)").performScrollTo().assertExists()
+        composeRule.onNodeWithText("System Reliability").performScrollTo().assertExists()
+        composeRule.waitUntil(timeoutMillis = 10_000) {
+            composeRule.onAllNodesWithText("Exact alarms", useUnmergedTree = true)
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+
+        composeRule.onNodeWithText("Exact alarms", useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithText("Notifications", useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithText("Battery optimization", useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithText("Draw over other apps (optional)", useUnmergedTree = true).assertExists()
     }
 }
