@@ -7,19 +7,23 @@ import android.os.Build
 import android.os.UserManager
 import com.sleep8.data.db.dao.AlarmRecordDao
 import com.sleep8.data.db.dao.ArmSessionDao
+import com.sleep8.data.db.dao.MonitoringStartEventDao
 import com.sleep8.data.db.dao.ScreenEventDao
 import com.sleep8.data.db.dao.SettingsDao
 import com.sleep8.data.preferences.AppPreferences
 import com.sleep8.data.repository.AlarmRepository
+import com.sleep8.data.repository.MonitoringReliabilityRepository
 import com.sleep8.data.repository.SettingsRepository
 import com.sleep8.data.repository.SessionRepository
 import com.sleep8.domain.manager.ArmManager
+import com.sleep8.domain.manager.MonitoringReliabilityManager
 import com.sleep8.domain.manager.StateMachineManager
 import com.sleep8.domain.scheduler.ConfirmOffScheduler
+import com.sleep8.domain.scheduler.MonitoringHealthScheduler
 import com.sleep8.domain.scheduler.NightWindowScheduler
 import com.sleep8.domain.scheduler.AlarmScheduler
-import com.sleep8.domain.scheduler.WindowScheduler
 import com.sleep8.domain.state.StateHolder
+import com.sleep8.service.MonitoringRuntimeInspector
 import com.sleep8.service.ServiceController
 import com.sleep8.service.ServiceControllerImpl
 import com.sleep8.service.notification.NotificationHelper
@@ -58,6 +62,14 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun provideMonitoringReliabilityRepository(
+        monitoringStartEventDao: MonitoringStartEventDao
+    ): MonitoringReliabilityRepository {
+        return MonitoringReliabilityRepository(monitoringStartEventDao)
+    }
+
+    @Provides
+    @Singleton
     fun provideAlarmManager(@ApplicationContext context: Context): AlarmManager {
         return context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
     }
@@ -92,6 +104,12 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun provideMonitoringRuntimeInspector(): MonitoringRuntimeInspector {
+        return MonitoringRuntimeInspector()
+    }
+
+    @Provides
+    @Singleton
     fun provideNotificationHelper(@ApplicationContext context: Context): NotificationHelper {
         return NotificationHelper(context)
     }
@@ -108,19 +126,19 @@ object AppModule {
         sessionRepository: SessionRepository,
         stateHolder: StateHolder,
         serviceController: ServiceController,
-        windowScheduler: WindowScheduler,
         settingsRepository: SettingsRepository,
         nightWindowScheduler: NightWindowScheduler,
-        confirmOffScheduler: ConfirmOffScheduler
+        confirmOffScheduler: ConfirmOffScheduler,
+        monitoringReliabilityManager: MonitoringReliabilityManager
     ): ArmManager {
         return ArmManager(
             sessionRepository,
             stateHolder,
             serviceController,
-            windowScheduler,
             settingsRepository,
             nightWindowScheduler,
-            confirmOffScheduler
+            confirmOffScheduler,
+            monitoringReliabilityManager
         )
     }
 
@@ -176,19 +194,41 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideWindowScheduler(
-        @ApplicationContext context: Context,
-        alarmManager: AlarmManager
-    ): WindowScheduler {
-        return WindowScheduler(context, alarmManager)
-    }
-
-    @Provides
-    @Singleton
     fun provideNightWindowScheduler(
         @ApplicationContext context: Context,
         alarmManager: AlarmManager
     ): NightWindowScheduler {
         return NightWindowScheduler(context, alarmManager)
+    }
+
+    @Provides
+    @Singleton
+    fun provideMonitoringHealthScheduler(
+        @ApplicationContext context: Context,
+        alarmManager: AlarmManager
+    ): MonitoringHealthScheduler {
+        return MonitoringHealthScheduler(context, alarmManager)
+    }
+
+    @Provides
+    @Singleton
+    fun provideMonitoringReliabilityManager(
+        settingsRepository: SettingsRepository,
+        stateHolder: StateHolder,
+        serviceController: ServiceController,
+        monitoringRuntimeInspector: MonitoringRuntimeInspector,
+        monitoringHealthScheduler: MonitoringHealthScheduler,
+        appPreferences: AppPreferences,
+        reliabilityRepository: MonitoringReliabilityRepository
+    ): MonitoringReliabilityManager {
+        return MonitoringReliabilityManager(
+            settingsRepository = settingsRepository,
+            stateHolder = stateHolder,
+            serviceController = serviceController,
+            monitoringRuntimeInspector = monitoringRuntimeInspector,
+            monitoringHealthScheduler = monitoringHealthScheduler,
+            appPreferences = appPreferences,
+            reliabilityRepository = reliabilityRepository
+        )
     }
 }

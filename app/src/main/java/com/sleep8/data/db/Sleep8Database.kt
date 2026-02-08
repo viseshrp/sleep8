@@ -4,10 +4,12 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import com.sleep8.data.db.dao.AlarmRecordDao
 import com.sleep8.data.db.dao.ArmSessionDao
+import com.sleep8.data.db.dao.MonitoringStartEventDao
 import com.sleep8.data.db.dao.ScreenEventDao
 import com.sleep8.data.db.dao.SettingsDao
 import com.sleep8.data.db.entity.AlarmRecordEntity
 import com.sleep8.data.db.entity.ArmSessionEntity
+import com.sleep8.data.db.entity.MonitoringStartEventEntity
 import com.sleep8.data.db.entity.ScreenEventEntity
 import com.sleep8.data.db.entity.SettingsEntity
 
@@ -16,9 +18,10 @@ import com.sleep8.data.db.entity.SettingsEntity
         SettingsEntity::class,
         ArmSessionEntity::class,
         ScreenEventEntity::class,
-        AlarmRecordEntity::class
+        AlarmRecordEntity::class,
+        MonitoringStartEventEntity::class
     ],
-    version = 10,
+    version = 12,
     exportSchema = true
 )
 abstract class Sleep8Database : RoomDatabase() {
@@ -26,4 +29,5 @@ abstract class Sleep8Database : RoomDatabase() {
     abstract fun armSessionDao(): ArmSessionDao
     abstract fun screenEventDao(): ScreenEventDao
     abstract fun alarmRecordDao(): AlarmRecordDao
+    abstract fun monitoringStartEventDao(): MonitoringStartEventDao
 }

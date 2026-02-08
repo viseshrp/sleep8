@@ -13,8 +13,5 @@ data class SettingsEntity(
     @ColumnInfo(name = "confirm_off_minutes") val confirmOffMinutes: Int = Constants.DEFAULT_CONFIRM_MINUTES,
     @ColumnInfo(name = "alarm_duration_minutes") val alarmDurationMinutes: Int = Constants.ALARM_DEFAULT_DURATION_MINUTES,
     @ColumnInfo(name = "overlay_enabled") val overlayEnabled: Boolean = false,
-    @ColumnInfo(name = "armed_default") val armedDefault: Boolean = false,
-    @ColumnInfo(name = "auto_arm_enabled") val autoArmEnabled: Boolean = false,
-    @ColumnInfo(name = "auto_arm_start") val autoArmStart: String = Constants.DEFAULT_AUTO_ARM_START,
-    @ColumnInfo(name = "auto_arm_end") val autoArmEnd: String = Constants.DEFAULT_AUTO_ARM_END
+    @ColumnInfo(name = "armed_default") val armedDefault: Boolean = false
 )

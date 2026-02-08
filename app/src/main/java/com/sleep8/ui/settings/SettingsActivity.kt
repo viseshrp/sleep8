@@ -136,23 +136,6 @@ internal fun SettingsScreen(
                 onValueSelected = viewModel::updateNightEnd
             )
         },
-        SettingsSectionModel(title = "Auto-arm Schedule") {
-            RowWithSwitch(
-                label = "Enable auto-arm",
-                checked = uiState.autoArmEnabled,
-                onCheckedChange = viewModel::updateAutoArmEnabled
-            )
-            TimePickerRow(
-                label = "Auto-arm start",
-                value = uiState.autoArmStart,
-                onValueSelected = viewModel::updateAutoArmStart
-            )
-            TimePickerRow(
-                label = "Auto-arm end",
-                value = uiState.autoArmEnd,
-                onValueSelected = viewModel::updateAutoArmEnd
-            )
-        },
         SettingsSectionModel(title = "Alarm Behavior") {
             AlarmDurationFields(
                 hours = uiState.alarmDurationHoursInput,
@@ -226,7 +209,7 @@ internal fun SettingsScreen(
                 label = "Battery optimization",
                 ok = uiState.batteryOptimizationsIgnored,
                 actionText = "Request exclusion",
-                description = "Prevents the system from killing the app during the night.",
+                description = "On Pixel, set Sleep8 to Unrestricted battery and disable Extreme Battery Saver for Sleep8 so monitoring can auto-start at night window start.",
                 onAction = {
                     context.startActivity(PermissionUtils.batteryOptimizationIntent(context))
                     viewModel.setBatteryOptAck(true)
@@ -270,7 +253,8 @@ internal fun SettingsScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues),
+                .padding(paddingValues)
+                .testTag("settings-list"),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {

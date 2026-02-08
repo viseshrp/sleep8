@@ -52,9 +52,7 @@ class AlarmSchedulerTest {
             confirmOffMinutes = 10,
             alarmDurationMinutes = 480,
             overlayEnabled = false,
-            armedDefault = false,
-            autoArmEnabled = true
-        )
+            armedDefault = false)
         coEvery { alarmRepository.getScheduledRecords() } returns emptyList()
         scheduler = AlarmScheduler(context, alarmManager, alarmRepository, settingsRepository, prefs, notificationHelper)
     }
@@ -91,9 +89,7 @@ class AlarmSchedulerTest {
             confirmOffMinutes = 10,
             alarmDurationMinutes = 720,
             overlayEnabled = false,
-            armedDefault = false,
-            autoArmEnabled = true
-        )
+            armedDefault = false)
         coEvery { alarmRepository.insertRecord(any()) } returns 2L
         val screenOff = Instant.parse("2024-01-15T23:30:00Z").toEpochMilli()
 
@@ -118,9 +114,7 @@ class AlarmSchedulerTest {
             confirmOffMinutes = 10,
             alarmDurationMinutes = 0,
             overlayEnabled = false,
-            armedDefault = false,
-            autoArmEnabled = true
-        )
+            armedDefault = false)
         coEvery { alarmRepository.insertRecord(any()) } returns 3L
         val screenOff = Instant.parse("2024-01-15T23:30:00Z").toEpochMilli()
         val confirmedAt = screenOff + 600_000L

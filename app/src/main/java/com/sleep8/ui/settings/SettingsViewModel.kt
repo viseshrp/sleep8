@@ -5,7 +5,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sleep8.data.preferences.AppPreferences
 import com.sleep8.data.repository.SettingsRepository
-import com.sleep8.domain.manager.ArmManager
 import com.sleep8.domain.model.Settings
 import com.sleep8.service.NightMonitorService
 import com.sleep8.ui.theme.AppThemeMode
@@ -22,8 +21,7 @@ import javax.inject.Inject
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
-    private val appPreferences: AppPreferences,
-    private val armManager: ArmManager
+    private val appPreferences: AppPreferences
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -36,14 +34,11 @@ class SettingsViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(
                 nightStart = settings.nightStart,
                 nightEnd = settings.nightEnd,
-                autoArmStart = settings.autoArmStart,
-                autoArmEnd = settings.autoArmEnd,
                 alarmDurationHoursInput = hours.toString(),
                 alarmDurationMinutesInput = minutes.toString(),
                 alarmDurationError = null,
                 confirmOffMinutes = settings.confirmOffMinutes.toString(),
                 armedDefault = settings.armedDefault,
-                autoArmEnabled = settings.autoArmEnabled,
                 darkModeEnabled = appPreferences.themeMode == AppThemeMode.DARK,
                 overlayEnabled = settings.overlayEnabled
             )
@@ -58,7 +53,7 @@ class SettingsViewModel @Inject constructor(
         val notificationsAllowed = PermissionUtils.canPostNotifications(context)
         val fullScreenIntentAllowed = PermissionUtils.canUseFullScreenIntent(context)
         val overlayAllowed = PermissionUtils.canDrawOverlays(context)
-        
+
         _uiState.value = _uiState.value.copy(
             exactAlarmAllowed = exactAllowed,
             batteryOptimizationsIgnored = batteryIgnored,
@@ -79,24 +74,6 @@ class SettingsViewModel @Inject constructor(
         persist()
     }
 
-    fun updateAutoArmStart(value: String) {
-        _uiState.value = _uiState.value.copy(autoArmStart = value)
-        if (_uiState.value.autoArmEnabled) {
-            rescheduleAutoArm()
-        } else {
-            persist()
-        }
-    }
-
-    fun updateAutoArmEnd(value: String) {
-        _uiState.value = _uiState.value.copy(autoArmEnd = value)
-        if (_uiState.value.autoArmEnabled) {
-            rescheduleAutoArm()
-        } else {
-            persist()
-        }
-    }
-
     fun updateAlarmDurationHours(value: String) {
         updateAlarmDuration(value, _uiState.value.alarmDurationMinutesInput)
     }
@@ -115,14 +92,6 @@ class SettingsViewModel @Inject constructor(
         persist()
     }
 
-    fun updateAutoArmEnabled(enabled: Boolean) {
-        _uiState.value = _uiState.value.copy(autoArmEnabled = enabled)
-        viewModelScope.launch {
-            persistSettings(_uiState.value)
-            armManager.updateAutoArmEnabled(enabled)
-        }
-    }
-
     fun updateOverlayEnabled(enabled: Boolean) {
         _uiState.value = _uiState.value.copy(overlayEnabled = enabled)
         persist()
@@ -137,13 +106,6 @@ class SettingsViewModel @Inject constructor(
     private fun persist() {
         viewModelScope.launch {
             persistSettings(_uiState.value)
-        }
-    }
-
-    private fun rescheduleAutoArm() {
-        viewModelScope.launch {
-            persistSettings(_uiState.value)
-            armManager.updateAutoArmEnabled(true)
         }
     }
 
@@ -164,10 +126,7 @@ class SettingsViewModel @Inject constructor(
             confirmOffMinutes = confirmOff,
             alarmDurationMinutes = durationMinutes,
             overlayEnabled = state.overlayEnabled,
-            armedDefault = state.armedDefault,
-            autoArmEnabled = state.autoArmEnabled,
-            autoArmStart = state.autoArmStart,
-            autoArmEnd = state.autoArmEnd
+            armedDefault = state.armedDefault
         )
         settingsRepository.updateSettings(settings)
         if (durationResult.error == null) {

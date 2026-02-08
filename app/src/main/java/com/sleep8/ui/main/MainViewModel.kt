@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sleep8.domain.manager.ArmManager
+import com.sleep8.domain.manager.MonitoringReliabilityManager
 import com.sleep8.domain.model.AppState
 import com.sleep8.domain.state.StateHolder
 import com.sleep8.util.PermissionUtils
@@ -17,13 +18,16 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.time.Duration
+import java.time.LocalDateTime
 import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val armManager: ArmManager,
+    private val monitoringReliabilityManager: MonitoringReliabilityManager,
     private val stateHolder: StateHolder,
     private val alarmRepository: com.sleep8.data.repository.AlarmRepository,
+    private val settingsRepository: com.sleep8.data.repository.SettingsRepository,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -36,6 +40,7 @@ class MainViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
+            monitoringReliabilityManager.reconcileOnForeground(context)
             updateState(forceRefreshLatestAlarm = true)
             _startupReady.value = true
             while (isActive) {
@@ -93,6 +98,26 @@ class MainViewModel @Inject constructor(
         } else {
             ""
         }
+        val settings = settingsRepository.getSettings()
+        val inNightWindow = TimeUtils.isInWindow(
+            LocalDateTime.now().toLocalTime(),
+            TimeUtils.parseLocalTime(settings.nightStart),
+            TimeUtils.parseLocalTime(settings.nightEnd)
+        )
+        val monitoringActive = PermissionUtils.isServiceRunning(context, com.sleep8.service.NightMonitorService::class.java)
+        val monitoringHealthText = when {
+            !armed || !inNightWindow -> "Healthy (not required now)"
+            monitoringActive -> "Healthy (monitoring active)"
+            else -> "Degraded (monitoring should be active)"
+        }
+        val latestReason = monitoringReliabilityManager.latestReasonLabel()
+        val reliabilityWarningText = when (latestReason) {
+            "app restricted / force-stopped suspected" -> "Pixel guidance: disable Extreme Battery Saver for Sleep8 and set App battery usage to Unrestricted. If the app was force-stopped, open Sleep8 once to re-enable background starts."
+            "process not started" -> "Sleep8 recovered late. On Pixel, set App battery usage to Unrestricted to reduce missed starts."
+            "boundary event did not run" -> "Night window boundary trigger was missed. Sleep8 will keep retrying via backstops and health checks."
+            "start attempt blocked" -> "Android blocked a background start attempt. Allow Exact alarms and keep Sleep8 out of restrictive battery modes."
+            else -> ""
+        }
 
         val statusText = when (state) {
             AppState.DISARMED -> "Disarmed"
@@ -109,6 +134,8 @@ class MainViewModel @Inject constructor(
             latestAlarmText = latestAlarmText,
             latestAlarmSubtitle = latestAlarmSubtitle,
             notificationWarningText = notificationWarningText,
+            monitoringHealthText = monitoringHealthText,
+            reliabilityWarningText = reliabilityWarningText,
             pendingCountdownText = pendingText,
             showPending = pendingRemaining > 0
         )

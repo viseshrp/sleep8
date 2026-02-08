@@ -93,6 +93,10 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
 
@@ -105,15 +109,15 @@
             android:exported="false" />
 
         <receiver
-            android:name=".service.receiver.WindowEndReceiver"
-            android:exported="false" />
-
-        <receiver
-            android:name=".service.receiver.WindowStartReceiver"
-            android:exported="false" />
-
-        <receiver
             android:name=".service.receiver.NightWindowStartReceiver"
+            android:exported="false" />
+
+        <receiver
+            android:name=".service.receiver.NightWindowBackstopReceiver"
+            android:exported="false" />
+
+        <receiver
+            android:name=".service.receiver.MonitoringHealthCheckReceiver"
             android:exported="false" />
 
         <receiver

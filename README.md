@@ -12,7 +12,6 @@ Default duration is 8h 0m, and valid duration range is 0-720 minutes.
 
 ## What the app does
 - Arms/disarms manually from Home and Quick Settings tile.
-- Supports auto-arm start/end schedule (separate from night window).
 - Runs `NightMonitorService` only while armed and inside the night window.
 - Tracks screen-off confirmation with an exact timer (`setExactAndAllowWhileIdle`).
 - Schedules alarms with `AlarmManager.setAlarmClock` (app-owned alarms, no OS clock delegation).
@@ -22,6 +21,8 @@ Default duration is 8h 0m, and valid duration range is 0-720 minutes.
   - Alarm history (full local audit trail, with clear-all action).
   - Full-screen ringing UI and optional overlay ringing UI.
 - Restores state and reconciles alarms after reboot.
+- Uses boundary backstops and periodic health checks to self-heal monitoring start.
+- Persists monitoring start telemetry for postmortem diagnosis.
 - Works offline only (no `INTERNET` permission).
 
 ## Product behavior
@@ -41,7 +42,7 @@ Default duration is 8h 0m, and valid duration range is 0-720 minutes.
 Notes:
 - "Latest screen-off wins" before confirmation.
 - Duration `0` means ring immediately at confirmation time.
-- Manual disarm and scheduled disarm stop monitoring and pending confirmation, but do not cancel already scheduled alarms.
+- Manual disarm stops monitoring and pending confirmation, but does not cancel already scheduled alarms.
 
 ## Architecture summary
 Code is split into `ui`, `domain`, `service`, `data`, and `util`.
@@ -50,9 +51,9 @@ Code is split into `ui`, `domain`, `service`, `data`, and `util`.
   - `MainActivity`, `SettingsActivity`, `AlarmListActivity`, `AlarmHistoryActivity`, `AlarmRingingActivity`
   - Compose screens and Quick Settings tile (`Sleep8TileService`)
 - Domain layer:
-  - `ArmManager` (arming lifecycle and scheduling boundaries)
+  - `ArmManager` (manual arming lifecycle and night-window boundary scheduling)
   - `StateMachineManager` (screen events/confirmation transitions)
-  - `AlarmScheduler`, `ConfirmOffScheduler`, `WindowScheduler`, `NightWindowScheduler`
+  - `AlarmScheduler`, `ConfirmOffScheduler`, `NightWindowScheduler`
 - Service/receiver layer:
   - `NightMonitorService`, `AlarmRingingService`
   - receivers for alarm firing, boot restore, confirmation, and window boundaries
@@ -67,13 +68,13 @@ State machine:
 - `ARMED_ALARM_SET`
 
 ## Data model
-Room database: `Sleep8Database` (version 10)
+Room database: `Sleep8Database` (version 12)
 
 - `settings`
-  - night window, auto-arm window, confirmation minutes
+  - night window, confirmation minutes
   - alarm duration, overlay enabled, armed default
 - `arm_sessions`
-  - arm/disarm lifecycle and source (`APP_BUTTON`, `QUICK_TILE`, `SCHEDULED`)
+  - arm/disarm lifecycle and source (`APP_BUTTON`, `QUICK_TILE`)
 - `screen_events`
   - `SCREEN_OFF` / `SCREEN_ON` audit trail per session
 - `alarm_records`
@@ -84,6 +85,11 @@ Room database: `Sleep8Database` (version 10)
     - `status` (`SCHEDULED` / `FIRED` / `DISMISSED` / `CANCELED`)
     - `canceled_reason`
     - `overlay_used`, `activity_presented`
+- `monitoring_start_events`
+  - expected/scheduled/observed night window boundary timestamps
+  - armed/window gate snapshot at trigger time
+  - whether monitoring became active
+  - human-readable reason bucket when start failed
 
 ## Permissions and reliability checklist
 Manifest permissions include:
@@ -101,6 +107,12 @@ Settings includes a reliability section to verify/request:
 - full-screen alarm UI capability
 - battery optimization exclusion
 - overlay permission (optional)
+- Pixel guidance: set Sleep8 battery usage to Unrestricted and avoid Extreme Battery Saver restrictions for Sleep8.
+
+## Monitoring reliability contract (summary)
+- Guarantee under normal OS conditions: if `armed && inNightWindow` at night window start, monitoring auto-starts.
+- Reliability strategy: boundary exact alarm + +2/+10 minute boundary backstops + periodic 15-minute in-window health checks + boot/time/app-launch reconcile.
+- Known limitations: force-stop and severe OS background restrictions can block any app-level guarantee.
 
 ## Tech stack
 - Kotlin, Jetpack Compose, Material 3

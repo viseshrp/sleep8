@@ -3,7 +3,8 @@ package com.sleep8.service.receiver
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import com.sleep8.domain.manager.ArmManager
+import com.sleep8.domain.manager.MonitoringReliabilityManager
+import com.sleep8.domain.model.MonitoringTriggerSource
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -13,9 +14,9 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class WindowEndReceiver : BroadcastReceiver() {
+class NightWindowBackstopReceiver : BroadcastReceiver() {
 
-    @Inject lateinit var armManager: ArmManager
+    @Inject lateinit var monitoringReliabilityManager: MonitoringReliabilityManager
 
     @androidx.annotation.VisibleForTesting
     internal var dispatcher: CoroutineDispatcher = Dispatchers.Default
@@ -24,14 +25,8 @@ class WindowEndReceiver : BroadcastReceiver() {
         val pending = goAsync()
         val scope = CoroutineScope(SupervisorJob() + dispatcher)
         scope.launch {
-            handleWindowEnd()
+            monitoringReliabilityManager.onTrigger(context, MonitoringTriggerSource.NIGHT_WINDOW_BACKSTOP)
             pending?.finish()
         }
-    }
-
-    @androidx.annotation.VisibleForTesting
-    internal suspend fun handleWindowEnd() {
-        // Ring-style: Auto-Arm boundaries are authoritative while enabled.
-        armManager.disarm()
     }
 }

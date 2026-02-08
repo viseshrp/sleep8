@@ -1,12 +1,12 @@
 {
   "formatVersion": 1,
   "database": {
-    "version": 10,
-    "identityHash": "96a76744a9095eeeee0cc4274b17830a",
+    "version": 12,
+    "identityHash": "8ad053c14371a83ba51a67a6b0a610fa",
     "entities": [
       {
         "tableName": "settings",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `night_start` TEXT NOT NULL, `night_end` TEXT NOT NULL, `confirm_off_minutes` INTEGER NOT NULL, `alarm_duration_minutes` INTEGER NOT NULL, `overlay_enabled` INTEGER NOT NULL, `armed_default` INTEGER NOT NULL, `auto_arm_enabled` INTEGER NOT NULL, `auto_arm_start` TEXT NOT NULL, `auto_arm_end` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `night_start` TEXT NOT NULL, `night_end` TEXT NOT NULL, `confirm_off_minutes` INTEGER NOT NULL, `alarm_duration_minutes` INTEGER NOT NULL, `overlay_enabled` INTEGER NOT NULL, `armed_default` INTEGER NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -48,24 +48,6 @@
             "fieldPath": "armedDefault",
             "columnName": "armed_default",
             "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "autoArmEnabled",
-            "columnName": "auto_arm_enabled",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "autoArmStart",
-            "columnName": "auto_arm_start",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "autoArmEnd",
-            "columnName": "auto_arm_end",
-            "affinity": "TEXT",
             "notNull": true
           }
         ],
@@ -319,12 +301,104 @@
             ]
           }
         ]
+      },
+      {
+        "tableName": "monitoring_start_events",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `expected_boundary_ts` INTEGER NOT NULL, `scheduled_at_ts` INTEGER NOT NULL, `boundary_observed_at_ts` INTEGER, `armed_at_boundary` INTEGER NOT NULL, `in_night_window_at_boundary` INTEGER NOT NULL, `gate_open` INTEGER NOT NULL, `boundary_trigger_executed` INTEGER NOT NULL, `monitoring_active` INTEGER NOT NULL, `monitoring_activated_at_ts` INTEGER, `reason_bucket` TEXT NOT NULL, `trigger_source` TEXT NOT NULL, `created_at_ts` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "expectedBoundaryTs",
+            "columnName": "expected_boundary_ts",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "scheduledAtTs",
+            "columnName": "scheduled_at_ts",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "boundaryObservedAtTs",
+            "columnName": "boundary_observed_at_ts",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "armedAtBoundary",
+            "columnName": "armed_at_boundary",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "inNightWindowAtBoundary",
+            "columnName": "in_night_window_at_boundary",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "gateOpen",
+            "columnName": "gate_open",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "boundaryTriggerExecuted",
+            "columnName": "boundary_trigger_executed",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "monitoringActive",
+            "columnName": "monitoring_active",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "monitoringActivatedAtTs",
+            "columnName": "monitoring_activated_at_ts",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "reasonBucket",
+            "columnName": "reason_bucket",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "triggerSource",
+            "columnName": "trigger_source",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAtTs",
+            "columnName": "created_at_ts",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
       }
     ],
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '96a76744a9095eeeee0cc4274b17830a')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '8ad053c14371a83ba51a67a6b0a610fa')"
     ]
   }
 }

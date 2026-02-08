@@ -26,7 +26,6 @@
 - Focus on P0/P1 cases first, especially screen on/off flows, reboot recovery, and lockscreen/full-screen alarm behavior.
 
 ## New Features (2026)
-- Auto-arm schedule: Enable in settings to automatically arm/disarm at auto-arm schedule boundaries (separate from night window).
-- WindowScheduler: Replaces WindowEndScheduler, handles both start and end triggers.
-- Manual arming/disarming acts as an override until the next scheduled event.
-- ArmManager now supports multiple ArmSource types (SCHEDULED, APP_BUTTON, QUICK_TILE).
+- Armed state is manual-only (`APP_BUTTON`, `QUICK_TILE`); no scheduled arming/disarming exists.
+- Night window boundaries and backstops gate monitoring service activation.
+- Boot/time/timezone/package-replaced flows reconcile monitoring reliability without changing armed state.

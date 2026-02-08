@@ -3,7 +3,8 @@ package com.sleep8.service.receiver
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import com.sleep8.domain.manager.ArmManager
+import com.sleep8.domain.manager.MonitoringReliabilityManager
+import com.sleep8.domain.model.MonitoringTriggerSource
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -13,8 +14,9 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class WindowStartReceiver : BroadcastReceiver() {
-    @Inject lateinit var armManager: ArmManager
+class MonitoringHealthCheckReceiver : BroadcastReceiver() {
+
+    @Inject lateinit var monitoringReliabilityManager: MonitoringReliabilityManager
 
     @androidx.annotation.VisibleForTesting
     internal var dispatcher: CoroutineDispatcher = Dispatchers.Default
@@ -23,14 +25,8 @@ class WindowStartReceiver : BroadcastReceiver() {
         val pending = goAsync()
         val scope = CoroutineScope(SupervisorJob() + dispatcher)
         scope.launch {
-            handleWindowStart()
+            monitoringReliabilityManager.onTrigger(context, MonitoringTriggerSource.PERIODIC_HEALTH_CHECK)
             pending?.finish()
         }
-    }
-
-    @androidx.annotation.VisibleForTesting
-    internal fun handleWindowStart() {
-        // Ring-style: Auto-Arm boundaries are authoritative while enabled.
-        armManager.onScheduledEvent("start")
     }
 }

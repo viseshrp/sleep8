@@ -5,10 +5,11 @@ import android.content.Context
 import android.content.Intent
 import android.os.PowerManager
 import com.sleep8.data.repository.SettingsRepository
+import com.sleep8.domain.manager.MonitoringReliabilityManager
 import com.sleep8.domain.manager.StateMachineManager
 import com.sleep8.domain.model.AppState
+import com.sleep8.domain.model.MonitoringTriggerSource
 import com.sleep8.domain.state.StateHolder
-import com.sleep8.service.ServiceController
 import com.sleep8.util.TimeUtils
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineDispatcher
@@ -24,7 +25,7 @@ class NightWindowStartReceiver : BroadcastReceiver() {
 
     @Inject lateinit var stateHolder: StateHolder
     @Inject lateinit var settingsRepository: SettingsRepository
-    @Inject lateinit var serviceController: ServiceController
+    @Inject lateinit var monitoringReliabilityManager: MonitoringReliabilityManager
     @Inject lateinit var stateMachineManager: StateMachineManager
 
     @androidx.annotation.VisibleForTesting
@@ -50,8 +51,7 @@ class NightWindowStartReceiver : BroadcastReceiver() {
         val now = LocalDateTime.now()
         val inWindow = TimeUtils.isInWindow(now.toLocalTime(), start, end)
         if (inWindow) {
-            // Ring-style: Night Window only gates monitoring, never changes armed state.
-            serviceController.startNightMonitorService()
+            monitoringReliabilityManager.onTrigger(context, MonitoringTriggerSource.NIGHT_WINDOW_BOUNDARY_ALARM)
             val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
             val screenStillOff = !powerManager.isInteractive
             stateMachineManager.resumePendingConfirmationIfEligible(screenStillOff)

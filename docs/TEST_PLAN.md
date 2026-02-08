@@ -27,8 +27,12 @@ Physical device testing is required; emulators are not authoritative for exact a
 - AlarmRingingActivity fullScreenIntent is used for ringing UI.
 - Boot restore behavior with pending confirmations and overdue scheduled alarms.
 - AlarmReceiver behavior for notification-permitted vs denied flows.
-- Window schedulers (auto-arm and night window start/end).
-- Window receivers invoke scheduled arm/disarm.
+- Night-window schedulers (start/end + backstops).
+- Monitoring reliability manager:
+  - gate-open boundary start
+  - gate-closed no-start
+  - late-start classification (`app restricted / force-stopped suspected`)
+- Night-window receivers gate monitoring without changing armed state.
 - AppPreferences migration and instance id generation.
 
 ---

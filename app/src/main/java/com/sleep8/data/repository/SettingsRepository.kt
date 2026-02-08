@@ -45,10 +45,7 @@ private fun SettingsEntity.toDomain(): Settings {
         confirmOffMinutes = confirmOffMinutes,
         alarmDurationMinutes = alarmDurationMinutes,
         overlayEnabled = overlayEnabled,
-        armedDefault = armedDefault,
-        autoArmEnabled = autoArmEnabled,
-        autoArmStart = autoArmStart,
-        autoArmEnd = autoArmEnd
+        armedDefault = armedDefault
     )
 }
 
@@ -60,9 +57,6 @@ private fun Settings.toEntity(): SettingsEntity {
         confirmOffMinutes = confirmOffMinutes,
         alarmDurationMinutes = alarmDurationMinutes,
         overlayEnabled = overlayEnabled,
-        armedDefault = armedDefault,
-        autoArmEnabled = autoArmEnabled,
-        autoArmStart = autoArmStart,
-        autoArmEnd = autoArmEnd
+        armedDefault = armedDefault
     )
 }

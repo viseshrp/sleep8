@@ -6,8 +6,5 @@ data class Settings(
     val confirmOffMinutes: Int,
     val alarmDurationMinutes: Int,
     val overlayEnabled: Boolean,
-    val armedDefault: Boolean,
-    val autoArmEnabled: Boolean = false,
-    val autoArmStart: String = nightStart,
-    val autoArmEnd: String = nightEnd
+    val armedDefault: Boolean
 )

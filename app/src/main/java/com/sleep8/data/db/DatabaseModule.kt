@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.sleep8.data.db.dao.AlarmRecordDao
 import com.sleep8.data.db.dao.ArmSessionDao
+import com.sleep8.data.db.dao.MonitoringStartEventDao
 import com.sleep8.data.db.dao.ScreenEventDao
 import com.sleep8.data.db.dao.SettingsDao
 import dagger.Module
@@ -36,4 +37,7 @@ object DatabaseModule {
 
     @Provides
     fun provideAlarmRecordDao(db: Sleep8Database): AlarmRecordDao = db.alarmRecordDao()
+
+    @Provides
+    fun provideMonitoringStartEventDao(db: Sleep8Database): MonitoringStartEventDao = db.monitoringStartEventDao()
 }

@@ -46,8 +46,6 @@ class RepositoryTest {
         val settings = kotlinx.coroutines.runBlocking { settingsRepository.getSettings() }
         assertEquals("22:30", settings.nightStart)
         assertEquals("04:00", settings.nightEnd)
-        assertEquals("22:00", settings.autoArmStart)
-        assertEquals("05:00", settings.autoArmEnd)
         assertEquals(20, settings.confirmOffMinutes)
         assertEquals(com.sleep8.util.Constants.ALARM_DEFAULT_DURATION_MINUTES, settings.alarmDurationMinutes)
     }
@@ -61,19 +59,13 @@ class RepositoryTest {
             confirmOffMinutes = 15,
             alarmDurationMinutes = 300,
             overlayEnabled = true,
-            armedDefault = true,
-            autoArmEnabled = true,
-            autoArmStart = "22:00",
-            autoArmEnd = "06:00"
-        )
+            armedDefault = true)
         kotlinx.coroutines.runBlocking { db.settingsDao().upsert(custom) }
 
         val settings = kotlinx.coroutines.runBlocking { settingsRepository.getSettings() }
 
         assertEquals("23:30", settings.nightStart)
         assertEquals("05:30", settings.nightEnd)
-        assertEquals("22:00", settings.autoArmStart)
-        assertEquals("06:00", settings.autoArmEnd)
         assertEquals(300, settings.alarmDurationMinutes)
     }
 
@@ -92,11 +84,7 @@ class RepositoryTest {
             confirmOffMinutes = 10,
             alarmDurationMinutes = 0,
             overlayEnabled = false,
-            armedDefault = false,
-            autoArmEnabled = false,
-            autoArmStart = "22:00",
-            autoArmEnd = "08:00"
-        )
+            armedDefault = false)
         kotlinx.coroutines.runBlocking { settingsRepository.updateSettings(updated) }
         val settings = kotlinx.coroutines.runBlocking { settingsRepository.getSettings() }
         assertEquals(0, settings.alarmDurationMinutes)

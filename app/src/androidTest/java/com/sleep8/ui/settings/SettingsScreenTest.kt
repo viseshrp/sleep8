@@ -1,12 +1,14 @@
 package com.sleep8.ui.settings
 
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import com.sleep8.data.preferences.AppPreferences
 import com.sleep8.data.repository.SettingsRepository
-import com.sleep8.domain.manager.ArmManager
 import com.sleep8.domain.model.Settings
 import com.sleep8.testutil.InMemorySharedPreferences
 import io.mockk.coEvery
@@ -25,17 +27,15 @@ class SettingsScreenTest {
     @Test
     fun settingsScreenShowsReliabilityChecklist() {
         val settingsRepository = mockk<SettingsRepository>()
-        val armManager = mockk<ArmManager>(relaxed = true)
         coEvery { settingsRepository.getSettings() } returns Settings(
             nightStart = "21:00",
             nightEnd = "04:00",
             confirmOffMinutes = 10,
             alarmDurationMinutes = 480,
             overlayEnabled = false,
-            armedDefault = false,
-            autoArmEnabled = false
+            armedDefault = false
         )
-        val viewModel = SettingsViewModel(settingsRepository, AppPreferences(InMemorySharedPreferences()), armManager)
+        val viewModel = SettingsViewModel(settingsRepository, AppPreferences(InMemorySharedPreferences()))
 
         composeRule.setContent {
             MaterialTheme {
@@ -46,13 +46,22 @@ class SettingsScreenTest {
         composeRule.onNodeWithText("Night Window").assertExists()
         composeRule.onNodeWithText("Appearance").assertExists()
         composeRule.onNodeWithText("Dark mode").assertExists()
-        composeRule.onNodeWithText("Auto-arm Schedule").assertExists()
-        composeRule.onNodeWithText("Alarm Behavior").performScrollTo().assertExists()
-        composeRule.onNodeWithText("System Reliability").performScrollTo().assertExists()
+        composeRule.onNodeWithTag("settings-list").performScrollToNode(hasText("Alarm Behavior"))
+        composeRule.onNodeWithText("Alarm Behavior", useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithTag("settings-list").performScrollToNode(hasText("System Reliability"))
+        composeRule.waitUntil(timeoutMillis = 10_000) {
+            composeRule.onAllNodesWithText("Exact alarms", useUnmergedTree = true)
+                .fetchSemanticsNodes().isNotEmpty()
+        }
 
-        composeRule.onNodeWithText("Exact alarms").performScrollTo().assertExists()
-        composeRule.onNodeWithText("Notifications").performScrollTo().assertExists()
-        composeRule.onNodeWithText("Battery optimization").performScrollTo().assertExists()
-        composeRule.onNodeWithText("Draw over other apps (optional)").performScrollTo().assertExists()
+        composeRule.onNodeWithText("System Reliability", useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithTag("settings-list").performScrollToNode(hasText("Exact alarms"))
+        composeRule.onNodeWithText("Exact alarms", useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithTag("settings-list").performScrollToNode(hasText("Notifications"))
+        composeRule.onNodeWithText("Notifications", useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithTag("settings-list").performScrollToNode(hasText("Battery optimization"))
+        composeRule.onNodeWithText("Battery optimization", useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithTag("settings-list").performScrollToNode(hasText("Draw over other apps (optional)"))
+        composeRule.onNodeWithText("Draw over other apps (optional)", useUnmergedTree = true).assertExists()
     }
 }

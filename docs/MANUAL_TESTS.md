@@ -61,6 +61,28 @@ Automated unit, integration, and Compose UI tests cover most logic and UI flows;
 - Confirm lockscreen indicator updates on real hardware.
 - Validate OEM-specific battery optimization flows.
 
+## Pixel Reliability Contract Checklist
+- Pixel app battery mode:
+  - `Optimized`: arm, leave app closed, verify monitoring starts at window start.
+  - `Restricted`: arm, leave app closed overnight, verify whether backstop/health self-heals; check `monitoring_start_events` reason bucket.
+  - `Unrestricted`: arm, leave app closed overnight, verify start at boundary and healthy status.
+- Battery Saver:
+  - ON at boundary: verify whether boundary or backstop starts monitoring.
+  - OFF after charging while still in-window: verify self-healing starts monitoring within 15 minutes.
+- Extreme Battery Saver (Pixel):
+  - Enable and add/remove Sleep8 from unrestricted list; verify expected degradation and in-app guidance text.
+- App unopened for 24+ hours:
+  - Keep armed, do not open app for at least 24 hours; verify start-monitoring event occurs from boundary/backstop without manual launch.
+- Reboot:
+  - Reboot before boundary and during window; verify boundaries are rescheduled and monitoring reconciles.
+- Timezone and manual time change:
+  - Change timezone and clock; verify rescheduling receiver runs and monitoring still starts at correct local boundary.
+- Force-stop (known limitation):
+  - Force-stop app before boundary; verify no background start occurs.
+  - Launch app manually; verify monitoring starts/reconciles and reason bucket indicates force-stop/restriction suspicion.
+- Postmortem proof:
+  - Confirm a `monitoring_start_events` record exists with scheduled boundary time, observed trigger time, gate state, and final monitoring status/reason.
+
 ## Alarm List (AOSP-style)
 - Alarm page shows time, subtitle, and toggle switch per alarm.
 - Toggling ON enables the alarm; toggling OFF disables it.

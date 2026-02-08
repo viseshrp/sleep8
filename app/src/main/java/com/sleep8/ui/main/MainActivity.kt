@@ -244,24 +244,31 @@ internal fun MainContent(
             ) {
                 item {
                     Card(
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        ),
                         shape = MaterialTheme.shapes.large
                     ) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 20.dp, vertical = 24.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
-                            Text(text = "Tonight", style = MaterialTheme.typography.titleLarge)
+                            Text(
+                                text = "Tonight",
+                                style = MaterialTheme.typography.headlineSmall
+                            )
                             Text(
                                 text = "Sleep8 monitors screen-off activity and schedules your wake alarm automatically.",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
                         }
                     }
                 }
+
 
                 item {
                     StatusCard(
@@ -271,6 +278,7 @@ internal fun MainContent(
                         latestAlarmText = uiState.latestAlarmText,
                         latestAlarmSubtitle = uiState.latestAlarmSubtitle,
                         notificationWarningText = uiState.notificationWarningText,
+                        reliabilityWarningText = uiState.reliabilityWarningText,
                         pendingCountdown = if (uiState.showPending) uiState.pendingCountdownText else null
                     )
                 }
@@ -285,10 +293,11 @@ internal fun MainContent(
 
                 items(actions) { action ->
                     Card(
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
                         shape = MaterialTheme.shapes.medium,
                         onClick = action.onClick
                     ) {
+
                         ListItem(
                             headlineContent = { Text(action.title) },
                             supportingContent = { Text(action.subtitle) },
