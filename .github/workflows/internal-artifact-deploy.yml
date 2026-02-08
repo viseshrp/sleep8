@@ -39,7 +39,11 @@ jobs:
         run: |
           chmod +x ./gradlew
           SHORT_SHA="${GITHUB_SHA::7}"
-          BASE_VERSION=$(./gradlew -q :app:properties | sed -n "s/^versionName: //p" | head -n 1)
+          BASE_VERSION=$(sed -nE 's/^[[:space:]]*versionName[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' app/build.gradle.kts | head -n 1)
+          if [ -z "${BASE_VERSION}" ]; then
+            echo "Could not determine base version from app/build.gradle.kts"
+            exit 1
+          fi
           FINAL_VERSION="${BASE_VERSION}-${SHORT_SHA}"
 
           ./gradlew assembleDebug -Pandroid.injected.version.name="${FINAL_VERSION}"
