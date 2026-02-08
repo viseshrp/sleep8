@@ -25,8 +25,13 @@ class NightWindowBackstopReceiver : BroadcastReceiver() {
         val pending = goAsync()
         val scope = CoroutineScope(SupervisorJob() + dispatcher)
         scope.launch {
-            monitoringReliabilityManager.onTrigger(context, MonitoringTriggerSource.NIGHT_WINDOW_BACKSTOP)
+            handleBackstop(context)
             pending?.finish()
         }
+    }
+
+    @androidx.annotation.VisibleForTesting
+    internal suspend fun handleBackstop(context: Context) {
+        monitoringReliabilityManager.onTrigger(context, MonitoringTriggerSource.NIGHT_WINDOW_BACKSTOP)
     }
 }

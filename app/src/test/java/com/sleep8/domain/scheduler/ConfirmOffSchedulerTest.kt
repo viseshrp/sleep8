@@ -22,12 +22,14 @@ class ConfirmOffSchedulerTest {
     private lateinit var context: Context
     private lateinit var alarmManager: AlarmManager
     private lateinit var scheduler: ConfirmOffScheduler
+    private lateinit var prefs: AppPreferences
 
     @Before
     fun setup() {
         context = ApplicationProvider.getApplicationContext()
         alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        scheduler = ConfirmOffScheduler(context, alarmManager, AppPreferences(InMemorySharedPreferences()))
+        prefs = AppPreferences(InMemorySharedPreferences())
+        scheduler = ConfirmOffScheduler(context, alarmManager, prefs)
     }
 
     @Test
@@ -62,6 +64,8 @@ class ConfirmOffSchedulerTest {
 
         val shadowAlarmManager = shadowOf(alarmManager)
         assertTrue(shadowAlarmManager.scheduledAlarms.isEmpty())
+        assertEquals(-1L, prefs.pendingCandidateScreenOffTs)
+        assertEquals(-1L, prefs.pendingConfirmDeadlineTs)
     }
 
     @Test
@@ -73,5 +77,29 @@ class ConfirmOffSchedulerTest {
         val scheduled = shadowAlarmManager.nextScheduledAlarm
         assertNotNull(scheduled)
         assertEquals(screenOffTime + 300_000L, scheduled!!.triggerAtTime)
+    }
+
+    @Test
+    fun `schedule confirmation at stores pending timestamps`() {
+        val screenOff = Instant.now().toEpochMilli()
+        val deadline = screenOff + 90_000L
+
+        scheduler.scheduleConfirmationAt(screenOff, deadline)
+
+        assertEquals(screenOff, prefs.pendingCandidateScreenOffTs)
+        assertEquals(deadline, prefs.pendingConfirmDeadlineTs)
+    }
+
+    @Test
+    fun `cancel timer only keeps pending timestamps`() {
+        val screenOff = Instant.now().toEpochMilli()
+        val deadline = screenOff + 90_000L
+        scheduler.scheduleConfirmationAt(screenOff, deadline)
+
+        scheduler.cancelConfirmationTimerOnly()
+
+        assertEquals(screenOff, prefs.pendingCandidateScreenOffTs)
+        assertEquals(deadline, prefs.pendingConfirmDeadlineTs)
+        assertTrue(shadowOf(alarmManager).scheduledAlarms.isEmpty())
     }
 }

@@ -25,8 +25,13 @@ class MonitoringHealthCheckReceiver : BroadcastReceiver() {
         val pending = goAsync()
         val scope = CoroutineScope(SupervisorJob() + dispatcher)
         scope.launch {
-            monitoringReliabilityManager.onTrigger(context, MonitoringTriggerSource.PERIODIC_HEALTH_CHECK)
+            handleHealthCheck(context)
             pending?.finish()
         }
+    }
+
+    @androidx.annotation.VisibleForTesting
+    internal suspend fun handleHealthCheck(context: Context) {
+        monitoringReliabilityManager.onTrigger(context, MonitoringTriggerSource.PERIODIC_HEALTH_CHECK)
     }
 }

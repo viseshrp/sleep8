@@ -5,6 +5,7 @@ import android.os.Build
 import android.provider.Settings
 import androidx.test.core.app.ApplicationProvider
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -62,6 +63,11 @@ class PermissionUtilsTest {
         val intent = PermissionUtils.fullScreenIntentSettingsIntent(context)
         org.junit.Assert.assertEquals(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT, intent.action)
         assertNotNull(intent.data)
+    }
+
+    @Test
+    fun `notifications permission constant matches manifest permission`() {
+        assertEquals(android.Manifest.permission.POST_NOTIFICATIONS, PermissionUtils.notificationsPermission())
     }
 
     @Test
