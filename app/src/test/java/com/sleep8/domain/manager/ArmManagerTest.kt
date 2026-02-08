@@ -5,18 +5,28 @@ import com.sleep8.data.repository.SettingsRepository
 import com.sleep8.data.repository.SessionRepository
 import com.sleep8.domain.model.ArmSession
 import com.sleep8.domain.model.ArmSource
+import com.sleep8.domain.model.NightWindow
 import com.sleep8.domain.model.Settings
 import com.sleep8.domain.scheduler.ConfirmOffScheduler
 import com.sleep8.domain.scheduler.NightWindowScheduler
 import com.sleep8.domain.state.StateHolder
 import com.sleep8.service.ServiceController
 import com.sleep8.testutil.InMemorySharedPreferences
-import io.mockk.coEvery
+import com.sleep8.util.TimeUtils
 import io.mockk.coVerify
+import io.mockk.every
+import io.mockk.coEvery
 import io.mockk.mockk
+import io.mockk.mockkObject
+import io.mockk.unmockkObject
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import java.time.LocalDateTime
+import java.time.LocalTime
 
 class ArmManagerTest {
 
@@ -48,6 +58,11 @@ class ArmManagerTest {
         overlayEnabled = false,
         armedDefault = false
     )
+
+    @AfterEach
+    fun tearDown() {
+        unmockkObject(TimeUtils)
+    }
 
     @Test
     fun `arm creates session with manual source`() = runTest {
@@ -87,6 +102,19 @@ class ArmManagerTest {
     }
 
     @Test
+    fun `arm when already armed without active session returns fallback session`() = runTest {
+        stateHolder.setArmed(true)
+        stateHolder.setActiveSession(null)
+        coEvery { settingsRepository.getSettings() } returns settings
+
+        val result = armManager.arm(ArmSource.APP_BUTTON)
+
+        assertTrue(result.isSuccess)
+        assertEquals(0L, result.getOrNull()?.id)
+        coVerify(exactly = 0) { sessionRepository.createSession(any(), any(), any(), any()) }
+    }
+
+    @Test
     fun `refresh night window while disarmed stops monitor and cancels night schedulers`() = runTest {
         stateHolder.setArmed(false)
 
@@ -110,5 +138,36 @@ class ArmManagerTest {
         coVerify { sessionRepository.createSession(any(), any(), any(), ArmSource.APP_BUTTON) }
         coVerify { nightWindowScheduler.scheduleWindowStart(any()) }
         coVerify { nightWindowScheduler.scheduleWindowEnd(any()) }
+    }
+
+    @Test
+    fun `refresh while armed and outside window schedules next boundaries and records expected start`() = runTest {
+        stateHolder.setArmed(true)
+        val windowSettings = settings.copy(nightStart = "22:00", nightEnd = "08:00")
+        coEvery { settingsRepository.getSettings() } returns windowSettings
+        mockkObject(TimeUtils)
+        every { TimeUtils.parseLocalTime("22:00") } returns LocalTime.of(22, 0)
+        every { TimeUtils.parseLocalTime("08:00") } returns LocalTime.of(8, 0)
+        every { TimeUtils.isInWindow(any(), any(), any()) } returns false
+        every { TimeUtils.calculateNextWindow(any<LocalDateTime>(), any(), any()) } returns
+            NightWindow(startTs = 10_000L, endTs = 20_000L)
+
+        armManager.refreshNightWindowBoundariesIfArmed()
+
+        coVerify { serviceController.stopNightMonitorService() }
+        coVerify { nightWindowScheduler.scheduleWindowStart(10_000L) }
+        coVerify { nightWindowScheduler.scheduleWindowEnd(20_000L) }
+        coVerify { nightWindowScheduler.scheduleWindowStartBackstops(10_000L) }
+        coVerify(timeout = 1_000) { monitoringReliabilityManager.recordNightWindowStartSchedule(10_000L) }
+    }
+
+    @Test
+    fun `observe armed state emits false then true`() = runTest {
+        val initial = armManager.observeArmedState().first()
+        stateHolder.setArmed(true)
+        val updated = armManager.observeArmedState().first()
+
+        assertEquals(false, initial)
+        assertEquals(true, updated)
     }
 }

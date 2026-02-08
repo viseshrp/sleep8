@@ -22,6 +22,13 @@ class AlarmDurationValidatorTest {
     }
 
     @Test
+    fun `normalize rejects negative inputs`() {
+        val result = AlarmDurationValidator.normalizeInputs("-1", "5")
+        assertNotNull(result.error)
+        assertEquals("Enter a value between 0 and 720 minutes.", result.error)
+    }
+
+    @Test
     fun `normalizes minutes into hours`() {
         val result = AlarmDurationValidator.normalizeInputs("1", "75")
         assertNull(result.error)
