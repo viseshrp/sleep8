@@ -36,7 +36,6 @@ import org.junit.Before
 import org.junit.Test
 import java.time.LocalDateTime
 import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
 
 class MainViewModelTest {
 
@@ -68,23 +67,23 @@ class MainViewModelTest {
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun `init publishes state with latest alarm and pending countdown`() = runTest {
-        val now = LocalDateTime.now()
-        val nightStart = now.minusHours(1).format(DateTimeFormatter.ofPattern("HH:mm"))
-        val nightEnd = now.plusHours(1).format(DateTimeFormatter.ofPattern("HH:mm"))
+        val fixedBaseTs = LocalDateTime.of(2100, 1, 1, 0, 0)
+            .toInstant(ZoneOffset.UTC)
+            .toEpochMilli()
         coEvery { settingsRepository.getSettings() } returns Settings(
-            nightStart = nightStart,
-            nightEnd = nightEnd,
+            nightStart = "00:00",
+            nightEnd = "23:59",
             confirmOffMinutes = 10,
             alarmDurationMinutes = 480,
             overlayEnabled = false,
             armedDefault = false
         )
-        coEvery { alarmRepository.getLatestScheduledRecord() } returns sampleAlarm(triggerAt = System.currentTimeMillis() + 10_000)
+        coEvery { alarmRepository.getLatestScheduledRecord() } returns sampleAlarm(triggerAt = fixedBaseTs + 10_000)
         coEvery { reliabilityManager.latestReasonLabel() } returns "process not started"
 
         stateHolder.setState(AppState.ARMED_PENDING_CONFIRM)
-        stateHolder.setLastScreenOffTs(System.currentTimeMillis())
-        stateHolder.setPendingCandidate(System.currentTimeMillis() - 5_000, System.currentTimeMillis() + 40_000)
+        stateHolder.setLastScreenOffTs(fixedBaseTs)
+        stateHolder.setPendingCandidate(fixedBaseTs - 5_000, fixedBaseTs + 40_000)
 
         val viewModel = MainViewModel(
             armManager = armManager,
