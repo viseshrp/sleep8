@@ -15,6 +15,7 @@ import com.sleep8.util.Constants
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
@@ -53,7 +54,7 @@ class AlarmReceiverTest {
         runBlocking { receiver.handleAlarm(context, intent) }
         org.junit.Assert.assertNull(shadowApp.nextStartedService)
         org.junit.Assert.assertNull(shadowApp.nextStartedActivity)
-        coVerify(exactly = 0) { stateHolder.clearLastScreenOffTs() }
+        verify(exactly = 0) { stateHolder.clearLastScreenOffTs() }
     }
 
     @Test
@@ -90,7 +91,7 @@ class AlarmReceiverTest {
         org.junit.Assert.assertEquals(AlarmRingingActivity::class.java.name, startedActivity?.component?.className)
         coVerify(timeout = 1000) { repo.markFired(record.id, any()) }
         coVerify(timeout = 1000) { repo.markActivityPresented(record.id) }
-        coVerify(timeout = 1000) { stateHolder.clearLastScreenOffTs() }
+        verify(timeout = 1000) { stateHolder.clearLastScreenOffTs() }
     }
 
     @Test
@@ -122,7 +123,7 @@ class AlarmReceiverTest {
         val startedActivity = shadowApp.nextStartedActivity
         org.junit.Assert.assertEquals(AlarmRingingActivity::class.java.name, startedActivity?.component?.className)
         org.junit.Assert.assertTrue(startedActivity?.getBooleanExtra(Constants.EXTRA_RING_IN_ACTIVITY, false) == true)
-        coVerify(timeout = 1000) { stateHolder.clearLastScreenOffTs() }
+        verify(timeout = 1000) { stateHolder.clearLastScreenOffTs() }
     }
 
     private fun baseRecord(status: AlarmStatus): AlarmRecord {

@@ -35,7 +35,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.time.LocalDateTime
-import java.time.ZoneId
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
 class MainViewModelTest {
@@ -187,14 +187,13 @@ class MainViewModelTest {
         coEvery { settingsRepository.getSettings() } returns defaultSettings()
         coEvery { alarmRepository.getLatestScheduledRecord() } returns null
         coEvery { reliabilityManager.latestReasonLabel() } returns ""
-        val yesterdayTs = LocalDateTime.now()
+        val yesterdayTs = LocalDateTime.of(2026, 1, 2, 12, 30)
             .minusDays(1)
             .withHour(22)
             .withMinute(0)
             .withSecond(0)
             .withNano(0)
-            .atZone(ZoneId.systemDefault())
-            .toInstant()
+            .toInstant(ZoneOffset.UTC)
             .toEpochMilli()
 
         stateHolder.setState(AppState.ARMED_IDLE)
