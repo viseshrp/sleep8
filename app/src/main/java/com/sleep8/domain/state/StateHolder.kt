@@ -11,6 +11,10 @@ import kotlinx.coroutines.flow.asStateFlow
  * In-memory state holder backed by shared preferences for resilience.
  */
 class StateHolder(private val prefs: AppPreferences) {
+    companion object {
+        const val NO_LAST_SCREEN_OFF_TS = -1L
+    }
+
 
     private val _state = MutableStateFlow(if (prefs.armed) AppState.ARMED_IDLE else AppState.DISARMED)
     val state: StateFlow<AppState> = _state.asStateFlow()
@@ -60,7 +64,6 @@ class StateHolder(private val prefs: AppPreferences) {
     }
 
     fun clearLastScreenOffTs() {
-        _lastScreenOffTs.value = -1L
-        prefs.lastScreenOffTs = -1L
+        setLastScreenOffTs(NO_LAST_SCREEN_OFF_TS)
     }
 }

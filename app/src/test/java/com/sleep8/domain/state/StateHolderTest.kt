@@ -49,7 +49,7 @@ class StateHolderTest {
 
         holder.clearLastScreenOffTs()
 
-        assertEquals(-1L, holder.lastScreenOffTs.value)
-        assertEquals(-1L, prefs.lastScreenOffTs)
+        assertEquals(StateHolder.NO_LAST_SCREEN_OFF_TS, holder.lastScreenOffTs.value)
+        assertEquals(StateHolder.NO_LAST_SCREEN_OFF_TS, prefs.lastScreenOffTs)
     }
 }
