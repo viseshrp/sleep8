@@ -17,7 +17,7 @@ Default duration is 8h 0m, and valid duration range is 0-720 minutes.
 - Schedules alarms with `AlarmManager.setAlarmClock` (app-owned alarms, no OS clock delegation).
 - Enforces a single active scheduled alarm at a time.
 - Provides:
-  - Alarm list (toggle enabled/disabled for existing records).
+  - Home alarm list section (toggle enabled/disabled for existing records).
   - Alarm history (full local audit trail, with clear-all action).
   - Full-screen ringing UI and optional overlay ringing UI.
 - Restores state and reconciles alarms after reboot.
@@ -48,7 +48,7 @@ Notes:
 Code is split into `ui`, `domain`, `service`, `data`, and `util`.
 
 - UI layer:
-  - `MainActivity`, `SettingsActivity`, `AlarmListActivity`, `AlarmHistoryActivity`, `AlarmRingingActivity`
+  - `MainActivity`, `SettingsActivity`, `AlarmHistoryActivity`, `AlarmRingingActivity`
   - Compose screens and Quick Settings tile (`Sleep8TileService`)
 - Domain layer:
   - `ArmManager` (manual arming lifecycle and night-window boundary scheduling)

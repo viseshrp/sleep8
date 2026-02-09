@@ -154,6 +154,31 @@ class MainViewModelTest {
         clearViewModel(viewModel)
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun `refreshOnResume reconciles foreground and refreshes latest alarm`() = runTest {
+        coEvery { settingsRepository.getSettings() } returns defaultSettings()
+        coEvery { alarmRepository.getLatestScheduledRecord() } returns null
+        coEvery { reliabilityManager.latestReasonLabel() } returns ""
+
+        val viewModel = MainViewModel(
+            armManager = armManager,
+            monitoringReliabilityManager = reliabilityManager,
+            stateHolder = stateHolder,
+            alarmRepository = alarmRepository,
+            settingsRepository = settingsRepository,
+            context = context
+        )
+        runCurrent()
+
+        viewModel.refreshOnResume()
+        runCurrent()
+
+        coVerify(exactly = 2) { reliabilityManager.reconcileOnForeground(context) }
+        coVerify(atLeast = 2) { alarmRepository.getLatestScheduledRecord() }
+        clearViewModel(viewModel)
+    }
+
     private fun defaultSettings() = Settings(
         nightStart = "22:00",
         nightEnd = "08:00",

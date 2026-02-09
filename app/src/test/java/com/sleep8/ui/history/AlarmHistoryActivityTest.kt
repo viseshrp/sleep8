@@ -17,4 +17,13 @@ class AlarmHistoryActivityTest {
         val intent = Intent(AlarmClock.ACTION_SHOW_ALARMS)
         Robolectric.buildActivity(AlarmHistoryActivity::class.java, intent).setup().get()
     }
+
+    @Test
+    fun `activity refreshes cleanly on resume lifecycle`() {
+        val intent = Intent(AlarmClock.ACTION_SHOW_ALARMS)
+        val controller = Robolectric.buildActivity(AlarmHistoryActivity::class.java, intent).setup()
+
+        controller.pause().resume()
+        controller.get()
+    }
 }

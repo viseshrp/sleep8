@@ -72,9 +72,8 @@ Armed state shows:
 - Material card/list styling with consistent top app bars and spacing.
 
 Navigation:
-- Hamburger menu includes **Alarm** entry:
-  - If ringing → opens active Alarm UI.
-  - If not ringing → opens AOSP-style Alarm list (toggle-only).
+- Hamburger menu includes **Alarm History** and **Settings**.
+- Alarm management stays on Home via an **Alarm list** section (toggle-only).
 
 
 ### 5.3 During the night window
@@ -118,8 +117,8 @@ When the screen has remained OFF for 20 minutes since the latest OFF event:
 - Alarm History screen shows the full alarm log (newest → oldest).
 - Alarm History includes a **Clear** action with a confirmation dialog to delete all history records.
 
-### 5.9 Alarm List (AOSP-style)
-- A separate **Alarm** page shows a list of **current alarms** (not history).
+### 5.9 Alarm List (Home section)
+- Home includes an **Alarm list** section showing **current alarms** (not history).
 - Each row shows time, a subtitle, and a toggle.
 - Users can **enable/disable** alarms; **no edits** to time/label.
 - Past alarms appear **disabled** and cannot be toggled on.

@@ -152,6 +152,13 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    fun refreshOnResume() {
+        viewModelScope.launch {
+            monitoringReliabilityManager.reconcileOnForeground(context)
+            updateState(forceRefreshLatestAlarm = true)
+        }
+    }
+
     private companion object {
         const val LATEST_ALARM_REFRESH_MS = 30_000L
     }

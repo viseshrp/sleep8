@@ -69,6 +69,12 @@ class AlarmHistoryActivity : AppCompatActivity() {
         handleIntent(intent)
     }
 
+    override fun onResume() {
+        super.onResume()
+        viewModel.refresh()
+        handleIntent(intent)
+    }
+
     private fun handleIntent(intent: Intent) {
         when (intent.action) {
             AlarmClock.ACTION_SHOW_ALARMS,

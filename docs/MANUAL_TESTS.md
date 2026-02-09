@@ -16,11 +16,11 @@ Automated unit, integration, and Compose UI tests cover most logic and UI flows;
 - Ensure taps do not accidentally open the notification shade.
 
 ## Visual Regression Checklist
-- Home, Alarm list, History, and Settings use consistent Material top app bars and spacing rhythm (8/12/16/24dp feel).
-- Home uses card-based grouping and clear hierarchy; Alarm list/History use list-row/card patterns.
+- Home (including the alarm list section), History, and Settings use consistent Material top app bars and spacing rhythm (8/12/16/24dp feel).
+- Home uses card-based grouping and clear hierarchy; alarm list rows and History use list-row/card patterns.
 - Interactive controls meet touch-target expectations and are easy to tap.
 - Contrast remains readable in dark and light themes.
-- Toggle dark mode in Settings and verify every screen updates immediately.
+- Toggle dark mode in Settings and verify Home, Home alarm list section, History, and Settings update immediately.
 - Ringing UI presents AOSP-like layout (large centered time, subtle label, dismiss-only).
 - Ringing UI shows alarm info text and a sticky red dismiss button at bottom.
 - Ringing dismiss action stops audio/vibration and closes UI instantly.
@@ -83,8 +83,8 @@ Automated unit, integration, and Compose UI tests cover most logic and UI flows;
 - Postmortem proof:
   - Confirm a `monitoring_start_events` record exists with scheduled boundary time, observed trigger time, gate state, and final monitoring status/reason.
 
-## Alarm List (AOSP-style)
-- Alarm page shows time, subtitle, and toggle switch per alarm.
+## Alarm List (Home section)
+- Home alarm list section shows time, subtitle, and toggle switch per alarm.
 - Toggling ON enables the alarm; toggling OFF disables it.
 - Past alarms show disabled toggles.
 

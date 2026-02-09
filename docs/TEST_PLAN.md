@@ -12,7 +12,7 @@ Physical device testing is required; emulators are not authoritative for exact a
 - Notification permission logic (Android 13+).
 - Overlay policy logic (enabled vs permission granted).
 - Alarm ringing notification includes Dismiss-only action.
-- Alarm menu routing chooses ringing UI vs preview/history.
+- Home alarm list toggles route schedule/cancel operations correctly.
 - Single active alarm: scheduling a new confirmed alarm cancels prior scheduled alarms.
 - Reboot cleanup: multiple scheduled alarms → keep newest, cancel extras.
 - Disarm cancels the active scheduled alarm.
@@ -48,18 +48,18 @@ Physical device testing is required; emulators are not authoritative for exact a
 ## UI Tests (Compose)
 - Settings screen sections and reliability checklist.
 - Theme toggle switches dark/light mode state from Settings.
-- Alarm list content (empty state, toggles).
+- Home alarm list section content (empty state, toggles).
 - Alarm history page, clear confirmation dialog, and back navigation.
 - Ringing UI (alarm info visible, sticky Dismiss, no top app bar/back/menu).
 - Main navigation drawer flows (hamburger/menu selections).
-- Navigation remains functional across Home → Alarm/History/Settings.
+- Navigation remains functional across Home → Alarm History/Settings.
 
 ---
 
 ## Manual Tests (Pixel 8 / Android 14+)
 - Cold start shows splash screen and transitions smoothly to Home (no blank frame/jank).
 - Verify dark mode is default on fresh install.
-- Toggle dark mode On/Off in Settings and verify every screen updates (Home, Alarm list, History, Settings, ringing UI).
+- Toggle dark mode On/Off in Settings and verify every screen updates (Home, Home alarm list section, History, Settings, ringing UI).
 - Alarm fires and displays full-screen UI on lockscreen.
 - Overlay toggle on: overlay appears while ringing (permission granted).
 - Overlay toggle on, permission denied: alarm still rings; overlay not shown.
@@ -70,7 +70,7 @@ Physical device testing is required; emulators are not authoritative for exact a
   - `sleep8://alarms`
   - `sleep8://alarm/<id>`
 - Lockscreen/system “next alarm” shows app alarm when earlier than other alarms.
-- Alarm page list shows time + switch; toggling off disables the alarm.
+- Home alarm list section shows time + switch; toggling off disables the alarm.
 - Ringing UI shows Dismiss only (no snooze anywhere).
 - Notifications permission denied still rings; UI warns about reduced lockscreen UX.
 - Icon verification checklist:

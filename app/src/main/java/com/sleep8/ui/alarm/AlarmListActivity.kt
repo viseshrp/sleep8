@@ -107,7 +107,7 @@ fun AlarmListContent(
                 contentPadding = PaddingValues(vertical = 8.dp)
             ) {
                 items(items, key = { it.id }) { item ->
-                    AlarmRow(
+                    AlarmListRow(
                         item = item,
                         isUpdating = updatingIds.contains(item.id),
                         onToggle = { enabled -> onToggle(item.id, enabled) }
@@ -120,7 +120,7 @@ fun AlarmListContent(
 }
 
 @Composable
-private fun AlarmRow(
+internal fun AlarmListRow(
     item: AlarmListItem,
     isUpdating: Boolean,
     onToggle: (Boolean) -> Unit
