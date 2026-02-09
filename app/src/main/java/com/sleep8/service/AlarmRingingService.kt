@@ -43,15 +43,32 @@ class AlarmRingingService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        alarmId = intent?.getLongExtra(Constants.EXTRA_ALARM_ID, -1L) ?: -1L
+        val incomingAlarmId = intent?.getLongExtra(Constants.EXTRA_ALARM_ID, -1L) ?: -1L
+        if (incomingAlarmId > 0) {
+            alarmId = incomingAlarmId
+        } else if (alarmId <= 0) {
+            alarmId = appPreferences.activeAlarmId
+        }
+
         when (intent?.action) {
             Constants.ACTION_ALARM_DISMISS -> {
                 handleDismiss()
                 return START_NOT_STICKY
             }
-            else -> startRinging()
+            Constants.ACTION_ALARM_RING, null -> {
+                if (alarmId <= 0) {
+                    Log.w("AlarmRingingService", "Cannot start ringing without a valid alarm id.")
+                    stopSelf()
+                    return START_NOT_STICKY
+                }
+                startRinging()
+            }
+            else -> {
+                Log.w("AlarmRingingService", "Ignoring unknown action=${intent.action}")
+                return START_NOT_STICKY
+            }
         }
-        return START_STICKY
+        return START_NOT_STICKY
     }
 
     override fun onDestroy() {
@@ -60,6 +77,10 @@ class AlarmRingingService : Service() {
     }
 
     private fun startRinging() {
+        if (alarmId <= 0) {
+            stopSelf()
+            return
+        }
         appPreferences.activeAlarmId = if (alarmId > 0) alarmId else -1L
         val settings = runBlocking { settingsRepository.getSettings() }
         val overlayAllowed = PermissionUtils.canDrawOverlays(this)
