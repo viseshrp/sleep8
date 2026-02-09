@@ -66,13 +66,13 @@ class AlarmHistoryActivity : AppCompatActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        setIntent(intent)
         handleIntent(intent)
     }
 
     override fun onResume() {
         super.onResume()
         viewModel.refresh()
-        handleIntent(intent)
     }
 
     private fun handleIntent(intent: Intent) {
