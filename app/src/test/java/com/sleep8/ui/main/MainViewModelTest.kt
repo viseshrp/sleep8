@@ -34,6 +34,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.time.LocalDateTime
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 class MainViewModelTest {
@@ -176,6 +177,39 @@ class MainViewModelTest {
 
         coVerify(exactly = 2) { reliabilityManager.reconcileOnForeground(context) }
         coVerify(atLeast = 2) { alarmRepository.getLatestScheduledRecord() }
+        clearViewModel(viewModel)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun `last screen off text is hidden when timestamp is not from today`() = runTest {
+        coEvery { settingsRepository.getSettings() } returns defaultSettings()
+        coEvery { alarmRepository.getLatestScheduledRecord() } returns null
+        coEvery { reliabilityManager.latestReasonLabel() } returns ""
+        val yesterdayTs = LocalDateTime.now()
+            .minusDays(1)
+            .withHour(22)
+            .withMinute(0)
+            .withSecond(0)
+            .withNano(0)
+            .atZone(ZoneId.systemDefault())
+            .toInstant()
+            .toEpochMilli()
+
+        stateHolder.setState(AppState.ARMED_IDLE)
+        stateHolder.setLastScreenOffTs(yesterdayTs)
+
+        val viewModel = MainViewModel(
+            armManager = armManager,
+            monitoringReliabilityManager = reliabilityManager,
+            stateHolder = stateHolder,
+            alarmRepository = alarmRepository,
+            settingsRepository = settingsRepository,
+            context = context
+        )
+        runCurrent()
+
+        assertEquals("", viewModel.uiState.value.lastScreenOffText)
         clearViewModel(viewModel)
     }
 

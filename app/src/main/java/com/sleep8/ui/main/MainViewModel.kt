@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.time.Duration
+import java.time.LocalDate
 import java.time.LocalDateTime
 import javax.inject.Inject
 
@@ -73,8 +74,12 @@ class MainViewModel @Inject constructor(
         }
 
         val lastScreenOffText = if (lastScreenOffTs > 0) {
-            val time = TimeUtils.toLocalTime(lastScreenOffTs)
-            TimeUtils.formatAlarmTime(time)
+            val lastScreenOffDateTime = TimeUtils.toLocalDateTime(lastScreenOffTs)
+            if (lastScreenOffDateTime.toLocalDate() == LocalDate.now()) {
+                TimeUtils.formatAlarmTime(lastScreenOffDateTime.toLocalTime())
+            } else {
+                ""
+            }
         } else {
             ""
         }
