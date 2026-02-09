@@ -34,6 +34,7 @@ class ArmManager(
         if (stateHolder.state.value != com.sleep8.domain.model.AppState.DISARMED) {
             return Result.success(stateHolder.activeSession.value ?: ArmSession(0, 0, null, 0, 0, source))
         }
+        stateHolder.clearLastScreenOffTs()
         val settings = settingsRepository.getSettings()
         val start = TimeUtils.parseLocalTime(settings.nightStart)
         val end = TimeUtils.parseLocalTime(settings.nightEnd)
@@ -58,6 +59,7 @@ class ArmManager(
         stateHolder.setActiveSession(null)
         stateHolder.setArmed(false)
         stateHolder.clearPendingCandidate()
+        stateHolder.clearLastScreenOffTs()
         confirmOffScheduler.cancelConfirmation()
         serviceController.stopNightMonitorService()
         nightWindowScheduler.cancelWindowStart()

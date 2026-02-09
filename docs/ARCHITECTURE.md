@@ -40,6 +40,7 @@ User (Home / QS Tile)
   - Handles manual arm/disarm from app button and tile.
   - Maintains active arm session and schedules window boundaries.
   - Night window only gates monitoring; it does not force disarm.
+  - Clears session-scoped `lastScreenOffTs` on disarm and on new arm session start.
 
 - `StateMachineManager`
   - Owns runtime states: `DISARMED`, `ARMED_IDLE`, `ARMED_PENDING_CONFIRM`, `ARMED_ALARM_SET`.
@@ -64,11 +65,13 @@ User (Home / QS Tile)
   - Validates alarm record status + instance ID before firing.
   - Starts ringing service and ringing activity (or activity-only fallback if notifications denied).
   - Marks record `FIRED` and `activity_presented`.
+  - Clears `lastScreenOffTs` when a fire event is accepted.
 
 - `AlarmRingingService` and `AlarmRingingActivity`
   - Ring with alarm audio + vibration.
   - Expose dismiss-only action.
   - Optional overlay path controlled by settings + overlay permission.
+  - Dismiss path also clears `lastScreenOffTs` for the completed alarm session.
 
 ---
 
@@ -87,11 +90,8 @@ User (Home / QS Tile)
 ## 4. Navigation and Surfaces
 
 - `MainActivity` (home)
-  - Arm/disarm, current status, latest scheduled alarm summary.
-
-- `AlarmListActivity`
-  - Toggle-only list for current/past alarms.
-  - Enabling one alarm disables other scheduled alarms.
+  - Arm/disarm, current status, latest scheduled alarm summary, and toggle-only alarm list.
+  - Last screen-off text is shown while available for the active session (not date-gated).
 
 - `AlarmHistoryActivity`
   - Full local audit trail and deep-link/ACTION_SHOW_ALARMS target.

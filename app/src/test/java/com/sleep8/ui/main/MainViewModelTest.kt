@@ -15,6 +15,7 @@ import com.sleep8.domain.model.Settings
 import com.sleep8.domain.state.StateHolder
 import com.sleep8.testutil.InMemorySharedPreferences
 import com.sleep8.util.PermissionUtils
+import com.sleep8.util.TimeUtils
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -34,7 +35,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
+import java.time.ZoneOffset
 
 class MainViewModelTest {
 
@@ -66,23 +67,23 @@ class MainViewModelTest {
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun `init publishes state with latest alarm and pending countdown`() = runTest {
-        val now = LocalDateTime.now()
-        val nightStart = now.minusHours(1).format(DateTimeFormatter.ofPattern("HH:mm"))
-        val nightEnd = now.plusHours(1).format(DateTimeFormatter.ofPattern("HH:mm"))
+        val fixedBaseTs = LocalDateTime.of(2100, 1, 1, 0, 0)
+            .toInstant(ZoneOffset.UTC)
+            .toEpochMilli()
         coEvery { settingsRepository.getSettings() } returns Settings(
-            nightStart = nightStart,
-            nightEnd = nightEnd,
+            nightStart = "00:00",
+            nightEnd = "23:59",
             confirmOffMinutes = 10,
             alarmDurationMinutes = 480,
             overlayEnabled = false,
             armedDefault = false
         )
-        coEvery { alarmRepository.getLatestScheduledRecord() } returns sampleAlarm(triggerAt = System.currentTimeMillis() + 10_000)
+        coEvery { alarmRepository.getLatestScheduledRecord() } returns sampleAlarm(triggerAt = fixedBaseTs + 10_000)
         coEvery { reliabilityManager.latestReasonLabel() } returns "process not started"
 
         stateHolder.setState(AppState.ARMED_PENDING_CONFIRM)
-        stateHolder.setLastScreenOffTs(System.currentTimeMillis())
-        stateHolder.setPendingCandidate(System.currentTimeMillis() - 5_000, System.currentTimeMillis() + 40_000)
+        stateHolder.setLastScreenOffTs(fixedBaseTs)
+        stateHolder.setPendingCandidate(fixedBaseTs - 5_000, fixedBaseTs + 40_000)
 
         val viewModel = MainViewModel(
             armManager = armManager,
@@ -151,6 +152,64 @@ class MainViewModelTest {
         runCurrent()
 
         coVerify(exactly = 1) { armManager.arm(ArmSource.APP_BUTTON) }
+        clearViewModel(viewModel)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun `refreshOnResume reconciles foreground and refreshes latest alarm`() = runTest {
+        coEvery { settingsRepository.getSettings() } returns defaultSettings()
+        coEvery { alarmRepository.getLatestScheduledRecord() } returns null
+        coEvery { reliabilityManager.latestReasonLabel() } returns ""
+
+        val viewModel = MainViewModel(
+            armManager = armManager,
+            monitoringReliabilityManager = reliabilityManager,
+            stateHolder = stateHolder,
+            alarmRepository = alarmRepository,
+            settingsRepository = settingsRepository,
+            context = context
+        )
+        runCurrent()
+
+        viewModel.refreshOnResume()
+        runCurrent()
+
+        coVerify(exactly = 2) { reliabilityManager.reconcileOnForeground(context) }
+        coVerify(atLeast = 2) { alarmRepository.getLatestScheduledRecord() }
+        clearViewModel(viewModel)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun `last screen off text is shown even when timestamp is previous day`() = runTest {
+        coEvery { settingsRepository.getSettings() } returns defaultSettings()
+        coEvery { alarmRepository.getLatestScheduledRecord() } returns null
+        coEvery { reliabilityManager.latestReasonLabel() } returns ""
+        val yesterdayTs = LocalDateTime.of(2026, 1, 2, 12, 30)
+            .minusDays(1)
+            .withHour(22)
+            .withMinute(0)
+            .withSecond(0)
+            .withNano(0)
+            .toInstant(ZoneOffset.UTC)
+            .toEpochMilli()
+
+        stateHolder.setState(AppState.ARMED_IDLE)
+        stateHolder.setLastScreenOffTs(yesterdayTs)
+
+        val viewModel = MainViewModel(
+            armManager = armManager,
+            monitoringReliabilityManager = reliabilityManager,
+            stateHolder = stateHolder,
+            alarmRepository = alarmRepository,
+            settingsRepository = settingsRepository,
+            context = context
+        )
+        runCurrent()
+
+        val expected = TimeUtils.formatAlarmTime(TimeUtils.toLocalTime(yesterdayTs))
+        assertEquals(expected, viewModel.uiState.value.lastScreenOffText)
         clearViewModel(viewModel)
     }
 

@@ -73,8 +73,7 @@ class MainViewModel @Inject constructor(
         }
 
         val lastScreenOffText = if (lastScreenOffTs > 0) {
-            val time = TimeUtils.toLocalTime(lastScreenOffTs)
-            TimeUtils.formatAlarmTime(time)
+            TimeUtils.formatAlarmTime(TimeUtils.toLocalTime(lastScreenOffTs))
         } else {
             ""
         }
@@ -148,6 +147,13 @@ class MainViewModel @Inject constructor(
             } else {
                 armManager.arm(com.sleep8.domain.model.ArmSource.APP_BUTTON)
             }
+            updateState(forceRefreshLatestAlarm = true)
+        }
+    }
+
+    fun refreshOnResume() {
+        viewModelScope.launch {
+            monitoringReliabilityManager.reconcileOnForeground(context)
             updateState(forceRefreshLatestAlarm = true)
         }
     }

@@ -91,9 +91,34 @@ class AlarmRingingActivityTest {
         assertEquals(77L, savedIntent.getLongExtra(Constants.EXTRA_ALARM_ID, -1L))
     }
 
+    @Test
+    fun `new intent updates alarm id on existing activity instance`() {
+        val app = ApplicationProvider.getApplicationContext<Application>()
+        val initialIntent = Intent(app, AlarmRingingActivity::class.java).apply {
+            putExtra(Constants.EXTRA_ALARM_ID, 10L)
+        }
+        val controller = Robolectric.buildActivity(AlarmRingingActivity::class.java, initialIntent).create()
+        val activity = controller.get()
+        assertEquals(10L, alarmId(activity))
+
+        val nextIntent = Intent(app, AlarmRingingActivity::class.java).apply {
+            putExtra(Constants.EXTRA_ALARM_ID, 25L)
+        }
+        controller.newIntent(nextIntent)
+
+        assertEquals(25L, alarmId(activity))
+        assertFalse(activity.isFinishing)
+    }
+
     private fun closeReceiver(activity: AlarmRingingActivity): BroadcastReceiver {
         val field = AlarmRingingActivity::class.java.getDeclaredField("closeReceiver")
         field.isAccessible = true
         return field.get(activity) as BroadcastReceiver
+    }
+
+    private fun alarmId(activity: AlarmRingingActivity): Long {
+        val field = AlarmRingingActivity::class.java.getDeclaredField("alarmId")
+        field.isAccessible = true
+        return field.getLong(activity)
     }
 }

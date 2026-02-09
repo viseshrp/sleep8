@@ -25,7 +25,7 @@ When the user **arms** the app (button or Quick Settings tile), the app watches 
 - Night window: **fixed** start/end time configured by user.
 - Rescheduling: **latest screen-off wins** (keep updating the scheduled time until confirmed).
 - Confirm rule: only commit when **screen remains OFF for 20 minutes** after an OFF event.
-- Alarm ownership: **app-owned** exact alarm via `AlarmManager.setAlarmClock` → receiver → foreground ringing service → full-screen activity (optional overlay).
+- Alarm ownership: **app-owned** exact alarm via `AlarmManager.setAlarmClock` → receiver → foreground ringing service → lockscreen full-screen activity or in-use overlay.
 - **Single active alarm**: at most one scheduled (not fired) alarm exists at any time.
 - Duration: **configurable**, default **8h 0m** (480 minutes).
 - Duration UI is **always hours + minutes inputs**. Never minutes-only; never hours-only.
@@ -70,11 +70,11 @@ Armed state shows:
 - Last screen-off detected time (if any)
 - Pending confirmation timer (20 min) or confirmed alarm schedule time
 - Material card/list styling with consistent top app bars and spacing.
+- Last screen-off stays visible for the active armed session even if midnight passes.
 
 Navigation:
-- Hamburger menu includes **Alarm** entry:
-  - If ringing → opens active Alarm UI.
-  - If not ringing → opens AOSP-style Alarm list (toggle-only).
+- Hamburger menu includes **Alarm History** and **Settings**.
+- Alarm management stays on Home via an **Alarm list** section (toggle-only).
 
 
 ### 5.3 During the night window
@@ -92,14 +92,16 @@ When the screen has remained OFF for 20 minutes since the latest OFF event:
 
 ### 5.5 Alarm firing
 - `AlarmManager` delivers to `AlarmReceiver`.
-- Receiver starts `AlarmRingingService` (foreground) and launches `AlarmRingingActivity`.
+- Receiver starts `AlarmRingingService` (foreground). Service presents lockscreen full-screen activity when device is locked/screen-off and uses overlay when the device is already in use.
 - Alarm UI shows over lock screen, turns screen on, and rings until dismissed.
 - Ringing UI is AOSP Clock-like: full-screen, large current time, subtle label, alarm info line, one sticky bottom **Dismiss** action, no app bar or nav chrome.
-- Overlay page is shown only when both conditions are true: `overlay_enabled == true` and `SYSTEM_ALERT_WINDOW` permission is granted. Otherwise full-screen activity is used.
+- Overlay page is shown when the device is in use and `SYSTEM_ALERT_WINDOW` permission is granted. Otherwise full-screen activity is used.
+- When an alarm is accepted as fired, `last_screen_off_ts` is cleared immediately.
 
 ### 5.6 Dismiss
 - **Dismiss** stops audio/vibration, stops the foreground service, records `dismissed_at` in DB.
 - Dismiss behavior is identical for overlay and full-screen activity presentations.
+- Dismiss also clears `last_screen_off_ts` (idempotent with fire-path clearing).
 
 ### 5.10 App Icon
 - Launcher icon uses a new adaptive icon set (foreground/background + monochrome).
@@ -111,6 +113,7 @@ When the screen has remained OFF for 20 minutes since the latest OFF event:
 - Disarm stops monitoring service and cancels pending confirmation timer.
 - Manual disarm does not cancel existing alarms; it only prevents new alarms and clears pending confirmation.
 - Disarm does not retroactively alter already-fired alarms.
+- Manual disarm clears `last_screen_off_ts`.
 
 ### 5.8 Alarm Observability (Local Only)
 - The app maintains a **local alarm log** in its DB (`alarm_records`).
@@ -118,8 +121,8 @@ When the screen has remained OFF for 20 minutes since the latest OFF event:
 - Alarm History screen shows the full alarm log (newest → oldest).
 - Alarm History includes a **Clear** action with a confirmation dialog to delete all history records.
 
-### 5.9 Alarm List (AOSP-style)
-- A separate **Alarm** page shows a list of **current alarms** (not history).
+### 5.9 Alarm List (Home section)
+- Home includes an **Alarm list** section showing **current alarms** (not history).
 - Each row shows time, a subtitle, and a toggle.
 - Users can **enable/disable** alarms; **no edits** to time/label.
 - Past alarms appear **disabled** and cannot be toggled on.
@@ -159,6 +162,15 @@ If armed at reboot or there was a pending confirmation:
 - If multiple scheduled alarms exist in DB, keep only the newest and cancel others with reason `REBOOT_CLEANUP`.
 - If a scheduled alarm exists in DB and its `trigger_at` is in the past, schedule it to fire immediately.
 
+### 6.6 Last screen-off lifecycle
+- `last_screen_off_ts` is shown whenever it exists for the active session, including across midnight.
+- `last_screen_off_ts` is cleared on:
+  - accepted alarm fire (`AlarmReceiver`)
+  - ringing dismiss action
+  - manual disarm
+  - start of a new arm session
+- It is **not** cleared just because the local date changed.
+
 ---
 
 ## 7. Alarm Ownership (App)
@@ -171,7 +183,7 @@ Use `AlarmManager.setAlarmClock(AlarmClockInfo(triggerAt, showIntent), operation
 - UI is AOSP-like: large time, subtle label, alarm info, sticky red **Dismiss** action.
 - Alarm uses `AudioManager.STREAM_ALARM` semantics with looping sound and repeating vibration.
 - Foreground service runs **only while ringing**.
-- Optional overlay (only if user-enabled + permission granted) shows the same ringing UI while ringing.
+- In-use overlay (permission granted) shows the same ringing UI while ringing.
 
 ### 7.3 Best-effort OS integration
 - Handle `AlarmClock.ACTION_SHOW_ALARMS` to open the app’s alarm history screen.

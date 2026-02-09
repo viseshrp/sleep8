@@ -12,10 +12,12 @@ Physical device testing is required; emulators are not authoritative for exact a
 - Notification permission logic (Android 13+).
 - Overlay policy logic (enabled vs permission granted).
 - Alarm ringing notification includes Dismiss-only action.
-- Alarm menu routing chooses ringing UI vs preview/history.
+- Home alarm list toggles route schedule/cancel operations correctly.
 - Single active alarm: scheduling a new confirmed alarm cancels prior scheduled alarms.
 - Reboot cleanup: multiple scheduled alarms → keep newest, cancel extras.
-- Disarm cancels the active scheduled alarm.
+- Disarm keeps existing scheduled alarms untouched and clears pending session runtime state.
+- Last screen-off timestamp remains visible across midnight within the same active session.
+- Last screen-off timestamp clears on accepted alarm fire, dismiss, disarm, and new arm session start.
 - Duration boundaries: 0, 1, 480, 720 minutes.
 - Invalid duration inputs: below 0 / above 720 are rejected (not persisted).
 - Duration 0 schedules at confirmation timestamp.
@@ -48,30 +50,31 @@ Physical device testing is required; emulators are not authoritative for exact a
 ## UI Tests (Compose)
 - Settings screen sections and reliability checklist.
 - Theme toggle switches dark/light mode state from Settings.
-- Alarm list content (empty state, toggles).
+- Home alarm list section content (empty state, toggles).
 - Alarm history page, clear confirmation dialog, and back navigation.
 - Ringing UI (alarm info visible, sticky Dismiss, no top app bar/back/menu).
 - Main navigation drawer flows (hamburger/menu selections).
-- Navigation remains functional across Home → Alarm/History/Settings.
+- Navigation remains functional across Home → Alarm History/Settings.
 
 ---
 
 ## Manual Tests (Pixel 8 / Android 14+)
 - Cold start shows splash screen and transitions smoothly to Home (no blank frame/jank).
 - Verify dark mode is default on fresh install.
-- Toggle dark mode On/Off in Settings and verify every screen updates (Home, Alarm list, History, Settings, ringing UI).
+- Toggle dark mode On/Off in Settings and verify every screen updates (Home, Home alarm list section, History, Settings, ringing UI).
 - Alarm fires and displays full-screen UI on lockscreen.
-- Overlay toggle on: overlay appears while ringing (permission granted).
-- Overlay toggle on, permission denied: alarm still rings; overlay not shown.
-- Overlay toggle off: alarm always shows full-screen ringing activity (no overlay).
+- Alarm fires while device is in use and permission granted: overlay appears above other apps.
+- Overlay permission denied: alarm still rings and full-screen ringing activity is used.
 - Notification permission requested on first arm; deny → alarm still rings without FGS notification.
 - ACTION_SHOW_ALARMS opens Alarm History screen.
 - Deep links:
   - `sleep8://alarms`
   - `sleep8://alarm/<id>`
 - Lockscreen/system “next alarm” shows app alarm when earlier than other alarms.
-- Alarm page list shows time + switch; toggling off disables the alarm.
+- Home alarm list section shows time + switch; toggling off disables the alarm.
 - Ringing UI shows Dismiss only (no snooze anywhere).
+- Last screen-off shown at 23:59 remains visible after midnight while still in the same active session.
+- Last screen-off is hidden immediately after alarm fire/dismiss, after disarm, and after starting a fresh arm session.
 - Notifications permission denied still rings; UI warns about reduced lockscreen UX.
 - Icon verification checklist:
   - Launcher icon (home screen/app drawer)

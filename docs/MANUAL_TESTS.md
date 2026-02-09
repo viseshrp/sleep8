@@ -16,11 +16,11 @@ Automated unit, integration, and Compose UI tests cover most logic and UI flows;
 - Ensure taps do not accidentally open the notification shade.
 
 ## Visual Regression Checklist
-- Home, Alarm list, History, and Settings use consistent Material top app bars and spacing rhythm (8/12/16/24dp feel).
-- Home uses card-based grouping and clear hierarchy; Alarm list/History use list-row/card patterns.
+- Home (including the alarm list section), History, and Settings use consistent Material top app bars and spacing rhythm (8/12/16/24dp feel).
+- Home uses card-based grouping and clear hierarchy; alarm list rows and History use list-row/card patterns.
 - Interactive controls meet touch-target expectations and are easy to tap.
 - Contrast remains readable in dark and light themes.
-- Toggle dark mode in Settings and verify every screen updates immediately.
+- Toggle dark mode in Settings and verify Home, Home alarm list section, History, and Settings update immediately.
 - Ringing UI presents AOSP-like layout (large centered time, subtle label, dismiss-only).
 - Ringing UI shows alarm info text and a sticky red dismiss button at bottom.
 - Ringing dismiss action stops audio/vibration and closes UI instantly.
@@ -36,10 +36,10 @@ Automated unit, integration, and Compose UI tests cover most logic and UI flows;
 - Enter -1 or 721 → inline error shown; value is not saved until corrected.
 - Duration inputs are always Hours + Minutes fields.
 
-## Overlay (Optional)
-- Enable overlay toggle + grant permission → overlay appears while alarm is ringing.
-- Enable overlay toggle without permission → permission screen opens; overlay does not show until granted.
-- Disable overlay toggle (even with permission granted) → only AlarmRingingActivity is shown.
+## Overlay (In-use)
+- Grant overlay permission, keep device unlocked/in-use, then trigger alarm → overlay appears above other apps.
+- With overlay permission denied, trigger alarm while in-use → alarm still rings and full-screen activity is used.
+- Trigger alarm while locked/screen-off → full-screen lockscreen activity is shown.
 
 ## Notifications / Permission
 - Deny POST_NOTIFICATIONS → alarm still rings; UI shows warning about limited lockscreen UX.
@@ -83,10 +83,17 @@ Automated unit, integration, and Compose UI tests cover most logic and UI flows;
 - Postmortem proof:
   - Confirm a `monitoring_start_events` record exists with scheduled boundary time, observed trigger time, gate state, and final monitoring status/reason.
 
-## Alarm List (AOSP-style)
-- Alarm page shows time, subtitle, and toggle switch per alarm.
+## Alarm List (Home section)
+- Home alarm list section shows time, subtitle, and toggle switch per alarm.
 - Toggling ON enables the alarm; toggling OFF disables it.
 - Past alarms show disabled toggles.
+
+## Last Screen-off Indicator
+- Arm the app, turn screen off just before midnight, then view Home after midnight: last screen-off still shows for that active session.
+- Let alarm fire: last screen-off is cleared immediately.
+- Dismiss the alarm from ringing UI: last screen-off stays cleared.
+- Disarm from Home or tile: last screen-off is cleared.
+- Start a new arm session: previous session's last screen-off is cleared.
 
 ## Ringing UI (AOSP-style)
 - Alarm fires → ringing UI shows large time + subtle label + **Dismiss** only.

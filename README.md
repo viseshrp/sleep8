@@ -17,9 +17,9 @@ Default duration is 8h 0m, and valid duration range is 0-720 minutes.
 - Schedules alarms with `AlarmManager.setAlarmClock` (app-owned alarms, no OS clock delegation).
 - Enforces a single active scheduled alarm at a time.
 - Provides:
-  - Alarm list (toggle enabled/disabled for existing records).
+  - Home alarm list section (toggle enabled/disabled for existing records).
   - Alarm history (full local audit trail, with clear-all action).
-  - Full-screen ringing UI and optional overlay ringing UI.
+  - Full-screen ringing UI on lockscreen and overlay ringing UI while device is in use (permission required).
 - Restores state and reconciles alarms after reboot.
 - Uses boundary backstops and periodic health checks to self-heal monitoring start.
 - Persists monitoring start telemetry for postmortem diagnosis.
@@ -36,19 +36,20 @@ Default duration is 8h 0m, and valid duration range is 0-720 minutes.
    - new alarm record is created (`SCHEDULED`)
    - previous scheduled alarms are cancelled (`REPLACED_BY_NEW_ALARM`)
    - exact alarm is scheduled with `setAlarmClock`
-6. At trigger time, receiver launches ringing flow (service + full-screen activity).
+6. At trigger time, receiver launches ringing flow (service; lockscreen activity or in-use overlay).
 7. User dismisses alarm; record moves to `DISMISSED`.
 
 Notes:
 - "Latest screen-off wins" before confirmation.
 - Duration `0` means ring immediately at confirmation time.
 - Manual disarm stops monitoring and pending confirmation, but does not cancel already scheduled alarms.
+- Last screen-off indicator is session-scoped: it can remain visible across midnight and is cleared on fire, dismiss, disarm, and new arm session start.
 
 ## Architecture summary
 Code is split into `ui`, `domain`, `service`, `data`, and `util`.
 
 - UI layer:
-  - `MainActivity`, `SettingsActivity`, `AlarmListActivity`, `AlarmHistoryActivity`, `AlarmRingingActivity`
+  - `MainActivity`, `SettingsActivity`, `AlarmHistoryActivity`, `AlarmRingingActivity`
   - Compose screens and Quick Settings tile (`Sleep8TileService`)
 - Domain layer:
   - `ArmManager` (manual arming lifecycle and night-window boundary scheduling)

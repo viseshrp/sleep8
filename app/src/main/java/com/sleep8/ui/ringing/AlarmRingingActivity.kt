@@ -49,9 +49,7 @@ class AlarmRingingActivity : AppCompatActivity() {
             )
         }
 
-        alarmId = intent.getLongExtra(Constants.EXTRA_ALARM_ID, -1L)
-        ringInActivity = intent.getBooleanExtra(Constants.EXTRA_RING_IN_ACTIVITY, false)
-        if (alarmId <= 0) {
+        if (!applyIntent(intent, allowExistingAlarmId = false)) {
             finish()
             return
         }
@@ -73,6 +71,16 @@ class AlarmRingingActivity : AppCompatActivity() {
         }
     }
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        if (!applyIntent(intent, allowExistingAlarmId = true)) {
+            finish()
+            return
+        }
+        maybeStartInActivityRinger()
+    }
+
     override fun onStart() {
         super.onStart()
         val filter = IntentFilter().apply {
@@ -84,9 +92,7 @@ class AlarmRingingActivity : AppCompatActivity() {
             filter,
             ContextCompat.RECEIVER_NOT_EXPORTED
         )
-        if (ringInActivity && ringer == null) {
-            ringer = AlarmRinger(this).also { it.start() }
-        }
+        maybeStartInActivityRinger()
     }
 
     override fun onStop() {
@@ -100,10 +106,31 @@ class AlarmRingingActivity : AppCompatActivity() {
         super.onStop()
     }
 
+    private fun applyIntent(intent: Intent, allowExistingAlarmId: Boolean): Boolean {
+        val incomingAlarmId = intent.getLongExtra(Constants.EXTRA_ALARM_ID, -1L)
+        if (incomingAlarmId > 0) {
+            alarmId = incomingAlarmId
+        } else if (!allowExistingAlarmId || alarmId <= 0) {
+            return false
+        }
+        ringInActivity = intent.getBooleanExtra(Constants.EXTRA_RING_IN_ACTIVITY, ringInActivity)
+        return true
+    }
+
+    private fun maybeStartInActivityRinger() {
+        if (ringInActivity && ringer == null) {
+            ringer = AlarmRinger(this).also { it.start() }
+        }
+    }
+
     companion object {
         fun launch(context: Context, alarmId: Long, ringInActivity: Boolean = false) {
             val intent = Intent(context, AlarmRingingActivity::class.java).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                addFlags(
+                    Intent.FLAG_ACTIVITY_NEW_TASK or
+                        Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                        Intent.FLAG_ACTIVITY_SINGLE_TOP
+                )
                 putExtra(Constants.EXTRA_ALARM_ID, alarmId)
                 putExtra(Constants.EXTRA_RING_IN_ACTIVITY, ringInActivity)
             }
@@ -112,7 +139,11 @@ class AlarmRingingActivity : AppCompatActivity() {
 
         fun pendingIntent(context: Context, alarmId: Long): PendingIntent {
             val intent = Intent(context, AlarmRingingActivity::class.java).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                addFlags(
+                    Intent.FLAG_ACTIVITY_NEW_TASK or
+                        Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                        Intent.FLAG_ACTIVITY_SINGLE_TOP
+                )
                 putExtra(Constants.EXTRA_ALARM_ID, alarmId)
             }
             return PendingIntent.getActivity(

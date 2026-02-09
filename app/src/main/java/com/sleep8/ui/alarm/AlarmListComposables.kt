@@ -1,10 +1,5 @@
 package com.sleep8.ui.alarm
 
-import android.os.Bundle
-import androidx.activity.compose.setContent
-import androidx.activity.viewModels
-import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,49 +16,13 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.sleep8.ui.theme.Sleep8Theme
-import dagger.hilt.android.AndroidEntryPoint
-
-@AndroidEntryPoint
-class AlarmListActivity : AppCompatActivity() {
-
-    private val viewModel: AlarmListViewModel by viewModels()
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            Sleep8Theme {
-                Surface(modifier = Modifier.fillMaxSize()) {
-                    AlarmListScreen(viewModel = viewModel, onBack = { finish() })
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun AlarmListScreen(
-    viewModel: AlarmListViewModel,
-    onBack: () -> Unit
-) {
-    val uiState by viewModel.uiState.collectAsState()
-    AlarmListContent(
-        items = uiState.items,
-        updatingIds = uiState.updatingIds,
-        onToggle = viewModel::onToggle,
-        onBack = onBack
-    )
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -107,7 +66,7 @@ fun AlarmListContent(
                 contentPadding = PaddingValues(vertical = 8.dp)
             ) {
                 items(items, key = { it.id }) { item ->
-                    AlarmRow(
+                    AlarmListRow(
                         item = item,
                         isUpdating = updatingIds.contains(item.id),
                         onToggle = { enabled -> onToggle(item.id, enabled) }
@@ -120,7 +79,7 @@ fun AlarmListContent(
 }
 
 @Composable
-private fun AlarmRow(
+internal fun AlarmListRow(
     item: AlarmListItem,
     isUpdating: Boolean,
     onToggle: (Boolean) -> Unit

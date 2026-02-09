@@ -56,6 +56,51 @@ class AlarmHistoryViewModelTest {
         coVerify(exactly = 1) { alarmRepository.clearAllRecords() }
     }
 
+    @Test
+    fun `refresh re-syncs selected alarm with latest list data`() = runTest {
+        val initial = baseRecord()
+        val selectedFromDetail = initial.copy(status = AlarmStatus.SCHEDULED)
+        val updated = initial.copy(status = AlarmStatus.FIRED, firedAt = 4000L)
+        coEvery { alarmRepository.getAllRecordsNewestFirst() } returnsMany listOf(
+            listOf(initial),
+            listOf(updated)
+        )
+        coEvery { alarmRepository.getRecord(initial.id) } returns selectedFromDetail
+
+        val viewModel = AlarmHistoryViewModel(alarmRepository)
+        advanceUntilIdle()
+        viewModel.loadAlarm(initial.id)
+        advanceUntilIdle()
+        assertEquals(selectedFromDetail, viewModel.uiState.value.selectedAlarm)
+
+        viewModel.refresh()
+        advanceUntilIdle()
+
+        assertEquals(updated, viewModel.uiState.value.selectedAlarm)
+        assertEquals(listOf(updated), viewModel.uiState.value.alarms)
+    }
+
+    @Test
+    fun `refresh clears selected alarm when it no longer exists`() = runTest {
+        val record = baseRecord()
+        coEvery { alarmRepository.getAllRecordsNewestFirst() } returnsMany listOf(
+            listOf(record),
+            emptyList()
+        )
+        coEvery { alarmRepository.getRecord(record.id) } returns record
+
+        val viewModel = AlarmHistoryViewModel(alarmRepository)
+        advanceUntilIdle()
+        viewModel.loadAlarm(record.id)
+        advanceUntilIdle()
+
+        viewModel.refresh()
+        advanceUntilIdle()
+
+        assertEquals(emptyList<AlarmRecord>(), viewModel.uiState.value.alarms)
+        assertNull(viewModel.uiState.value.selectedAlarm)
+    }
+
     private fun baseRecord(): AlarmRecord {
         return AlarmRecord(
             id = 1L,

@@ -19,6 +19,7 @@ import io.mockk.coEvery
 import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.unmockkObject
+import io.mockk.verify
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
@@ -69,11 +70,13 @@ class ArmManagerTest {
         coEvery { settingsRepository.getSettings() } returns settings
         val session = ArmSession(1L, 0L, null, 0L, 0L, ArmSource.APP_BUTTON)
         coEvery { sessionRepository.createSession(any(), any(), any(), any()) } returns session
+        stateHolder.setLastScreenOffTs(999L)
 
         val result = armManager.arm(ArmSource.APP_BUTTON)
 
         coVerify { sessionRepository.createSession(any(), any(), any(), ArmSource.APP_BUTTON) }
         assertTrue(result.isSuccess)
+        assertTrue(stateHolder.lastScreenOffTs.value < 0)
     }
 
     @Test
@@ -82,12 +85,14 @@ class ArmManagerTest {
         stateHolder.setActiveSession(session)
         stateHolder.setArmed(true)
         stateHolder.setPendingCandidate(123L, 456L)
+        stateHolder.setLastScreenOffTs(789L)
 
         armManager.disarm()
 
         assertTrue(stateHolder.pendingCandidateScreenOffTs.value < 0)
         assertTrue(stateHolder.pendingConfirmDeadlineTs.value < 0)
-        coVerify { confirmOffScheduler.cancelConfirmation() }
+        assertTrue(stateHolder.lastScreenOffTs.value < 0)
+        verify { confirmOffScheduler.cancelConfirmation() }
     }
 
     @Test
@@ -120,10 +125,10 @@ class ArmManagerTest {
 
         armManager.refreshNightWindowBoundariesIfArmed()
 
-        coVerify { serviceController.stopNightMonitorService() }
-        coVerify { nightWindowScheduler.cancelWindowStart() }
-        coVerify { nightWindowScheduler.cancelWindowEnd() }
-        coVerify { nightWindowScheduler.cancelWindowStartBackstops() }
+        verify { serviceController.stopNightMonitorService() }
+        verify { nightWindowScheduler.cancelWindowStart() }
+        verify { nightWindowScheduler.cancelWindowEnd() }
+        verify { nightWindowScheduler.cancelWindowStartBackstops() }
     }
 
     @Test
@@ -136,8 +141,8 @@ class ArmManagerTest {
         armManager.arm(ArmSource.APP_BUTTON)
 
         coVerify { sessionRepository.createSession(any(), any(), any(), ArmSource.APP_BUTTON) }
-        coVerify { nightWindowScheduler.scheduleWindowStart(any()) }
-        coVerify { nightWindowScheduler.scheduleWindowEnd(any()) }
+        verify { nightWindowScheduler.scheduleWindowStart(any()) }
+        verify { nightWindowScheduler.scheduleWindowEnd(any()) }
     }
 
     @Test
@@ -154,10 +159,10 @@ class ArmManagerTest {
 
         armManager.refreshNightWindowBoundariesIfArmed()
 
-        coVerify { serviceController.stopNightMonitorService() }
-        coVerify { nightWindowScheduler.scheduleWindowStart(10_000L) }
-        coVerify { nightWindowScheduler.scheduleWindowEnd(20_000L) }
-        coVerify { nightWindowScheduler.scheduleWindowStartBackstops(10_000L) }
+        verify { serviceController.stopNightMonitorService() }
+        verify { nightWindowScheduler.scheduleWindowStart(10_000L) }
+        verify { nightWindowScheduler.scheduleWindowEnd(20_000L) }
+        verify { nightWindowScheduler.scheduleWindowStartBackstops(10_000L) }
         coVerify(timeout = 1_000) { monitoringReliabilityManager.recordNightWindowStartSchedule(10_000L) }
     }
 

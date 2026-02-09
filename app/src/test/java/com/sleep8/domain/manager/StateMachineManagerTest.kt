@@ -15,6 +15,7 @@ import com.sleep8.testutil.InMemorySharedPreferences
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
@@ -114,7 +115,7 @@ class StateMachineManagerTest {
         manager.onScreenOff(secondOffTime)
 
         assertEquals(secondOffTime, manager.pendingCandidateTime)
-        coVerify(exactly = 2) { confirmScheduler.scheduleConfirmation(any(), any()) }
+        verify(exactly = 2) { confirmScheduler.scheduleConfirmation(any(), any()) }
     }
 
     @Test
@@ -139,7 +140,7 @@ class StateMachineManagerTest {
         setupSession()
         manager.onScreenOff(Instant.parse("2024-01-15T23:00:00Z"))
         manager.disarm()
-        coVerify { confirmScheduler.cancelConfirmation() }
+        verify { confirmScheduler.cancelConfirmation() }
     }
 
     @Test
@@ -161,7 +162,7 @@ class StateMachineManagerTest {
         manager.onNightWindowEnd()
 
         assertEquals(AppState.ARMED_IDLE, manager.currentState)
-        coVerify { confirmScheduler.cancelConfirmationTimerOnly() }
+        verify { confirmScheduler.cancelConfirmationTimerOnly() }
     }
 
     @Test
@@ -175,7 +176,7 @@ class StateMachineManagerTest {
         manager.resumePendingConfirmationIfEligible(screenStillOff = true)
 
         assertEquals(AppState.ARMED_PENDING_CONFIRM, manager.currentState)
-        coVerify { confirmScheduler.scheduleConfirmationAt(screenOffTs, deadlineTs) }
+        verify { confirmScheduler.scheduleConfirmationAt(screenOffTs, deadlineTs) }
     }
 
     @Test
@@ -201,6 +202,6 @@ class StateMachineManagerTest {
         manager.resumePendingConfirmationIfEligible(screenStillOff = false)
 
         assertEquals(AppState.ARMED_IDLE, manager.currentState)
-        coVerify(exactly = 0) { confirmScheduler.scheduleConfirmationAt(any(), any()) }
+        verify(exactly = 0) { confirmScheduler.scheduleConfirmationAt(any(), any()) }
     }
 }

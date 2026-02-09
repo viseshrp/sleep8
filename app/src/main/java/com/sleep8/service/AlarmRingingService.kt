@@ -1,16 +1,19 @@
 package com.sleep8.service
 
 import android.app.Service
+import android.app.KeyguardManager
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.IBinder
+import android.os.PowerManager
 import android.util.Log
 import androidx.core.content.ContextCompat
-import com.sleep8.R
 import com.sleep8.data.preferences.AppPreferences
 import com.sleep8.data.repository.AlarmRepository
 import com.sleep8.data.repository.SettingsRepository
 import com.sleep8.domain.overlay.AlarmOverlayPolicy
+import com.sleep8.domain.state.StateHolder
 import com.sleep8.service.notification.AlarmNotificationFactory
 import com.sleep8.service.notification.NotificationHelper
 import com.sleep8.service.overlay.AlarmOverlayController
@@ -32,6 +35,7 @@ class AlarmRingingService : Service() {
     @Inject lateinit var alarmRepository: AlarmRepository
     @Inject lateinit var settingsRepository: SettingsRepository
     @Inject lateinit var appPreferences: AppPreferences
+    @Inject lateinit var stateHolder: StateHolder
 
     private var ringer: AlarmRinger? = null
     private var alarmId: Long = -1L
@@ -41,15 +45,32 @@ class AlarmRingingService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        alarmId = intent?.getLongExtra(Constants.EXTRA_ALARM_ID, -1L) ?: -1L
+        val incomingAlarmId = intent?.getLongExtra(Constants.EXTRA_ALARM_ID, -1L) ?: -1L
+        if (incomingAlarmId > 0) {
+            alarmId = incomingAlarmId
+        } else if (alarmId <= 0) {
+            alarmId = appPreferences.activeAlarmId
+        }
+
         when (intent?.action) {
             Constants.ACTION_ALARM_DISMISS -> {
                 handleDismiss()
                 return START_NOT_STICKY
             }
-            else -> startRinging()
+            Constants.ACTION_ALARM_RING, null -> {
+                if (alarmId <= 0) {
+                    Log.w("AlarmRingingService", "Cannot start ringing without a valid alarm id.")
+                    stopSelf()
+                    return START_NOT_STICKY
+                }
+                startRinging()
+            }
+            else -> {
+                Log.w("AlarmRingingService", "Ignoring unknown action=${intent.action}")
+                return START_NOT_STICKY
+            }
         }
-        return START_STICKY
+        return START_NOT_STICKY
     }
 
     override fun onDestroy() {
@@ -58,13 +79,30 @@ class AlarmRingingService : Service() {
     }
 
     private fun startRinging() {
+        if (alarmId <= 0) {
+            stopSelf()
+            return
+        }
         appPreferences.activeAlarmId = if (alarmId > 0) alarmId else -1L
         val settings = runBlocking { settingsRepository.getSettings() }
+        val deviceInUse = isDeviceInUse()
         val overlayAllowed = PermissionUtils.canDrawOverlays(this)
+        val overlayEnabled = settings.overlayEnabled || deviceInUse
         val shouldShowOverlay = AlarmOverlayPolicy.shouldShowOverlay(
+            enabled = overlayEnabled,
+            permissionGranted = overlayAllowed
+        ) && deviceInUse
+        val shouldLaunchActivity = !shouldShowOverlay
+        if (settings.overlayEnabled && deviceInUse && !overlayAllowed) {
+            Log.w("AlarmRingingService", "Overlay enabled but permission missing; falling back to activity UI.")
+        }
+        val shouldPromptOverlayPermission = AlarmOverlayPolicy.shouldPromptForPermission(
             enabled = settings.overlayEnabled,
             permissionGranted = overlayAllowed
         )
+        if (shouldPromptOverlayPermission && deviceInUse) {
+            Log.w("AlarmRingingService", "Overlay permission not granted while device is in use.")
+        }
         val alarmIntent = AlarmRingingActivity.pendingIntent(this, alarmId)
         val contentIntent = alarmIntent
         val dismissIntent = createActionIntent(Constants.ACTION_ALARM_DISMISS)
@@ -81,7 +119,7 @@ class AlarmRingingService : Service() {
             return
         }
         startForeground(Constants.ALARM_RINGING_NOTIFICATION_ID, notification)
-        if (alarmId > 0) {
+        if (shouldLaunchActivity && alarmId > 0) {
             AlarmRingingActivity.launch(this, alarmId)
         }
         if (ringer == null) {
@@ -91,6 +129,19 @@ class AlarmRingingService : Service() {
         if (shouldShowOverlay) {
             showOverlay()
         }
+    }
+
+    private fun isDeviceInUse(): Boolean {
+        val powerManager = getSystemService(Context.POWER_SERVICE) as? PowerManager
+        val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as? KeyguardManager
+        val interactive = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT_WATCH) {
+            powerManager?.isInteractive ?: true
+        } else {
+            @Suppress("DEPRECATION")
+            powerManager?.isScreenOn ?: true
+        }
+        val keyguardLocked = keyguardManager?.isKeyguardLocked ?: false
+        return interactive && !keyguardLocked
     }
 
     private fun stopRinging() {
@@ -106,6 +157,7 @@ class AlarmRingingService : Service() {
     private fun handleDismiss() {
         stopRinging()
         markDismissed()
+        stateHolder.clearLastScreenOffTs()
         broadcastAlarmAction(Constants.ACTION_ALARM_DISMISS)
         stopSelf()
     }

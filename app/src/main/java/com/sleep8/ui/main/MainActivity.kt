@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
@@ -46,13 +47,14 @@ import androidx.compose.ui.unit.dp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.appcompat.app.AppCompatActivity
 import com.sleep8.data.preferences.AppPreferences
-import com.sleep8.service.AlarmRingingService
+import com.sleep8.ui.alarm.AlarmListItem
+import com.sleep8.ui.alarm.AlarmListRow
+import com.sleep8.ui.alarm.AlarmListViewModel
 import com.sleep8.ui.components.ArmButton
 import com.sleep8.ui.components.StatusCard
 import com.sleep8.ui.history.AlarmHistoryActivity
 import com.sleep8.ui.settings.SettingsActivity
 import com.sleep8.ui.theme.Sleep8Theme
-import com.sleep8.util.AlarmUiRouter
 import com.sleep8.util.PermissionUtils
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -62,6 +64,7 @@ import javax.inject.Inject
 class MainActivity : AppCompatActivity() {
 
     private val viewModel: MainViewModel by viewModels()
+    private val alarmListViewModel: AlarmListViewModel by viewModels()
 
     @Inject
     lateinit var appPreferences: AppPreferences
@@ -82,14 +85,20 @@ class MainActivity : AppCompatActivity() {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     MainScreen(
                         viewModel = viewModel,
+                        alarmListViewModel = alarmListViewModel,
                         onOpenSettings = { startActivity(Intent(this, SettingsActivity::class.java)) },
-                        onOpenAlarm = { openAlarmUi() },
                         onOpenHistory = { startActivity(Intent(this, AlarmHistoryActivity::class.java)) },
                         onToggleArmed = { handleArmToggle() }
                     )
                 }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        viewModel.refreshOnResume()
+        alarmListViewModel.refresh()
     }
 
     private fun handleArmToggle() {
@@ -99,32 +108,25 @@ class MainActivity : AppCompatActivity() {
         }
         viewModel.toggleArmed()
     }
-
-    private fun openAlarmUi() {
-        val isRinging = PermissionUtils.isServiceRunning(this, AlarmRingingService::class.java)
-        val intent = AlarmUiRouter.buildIntent(
-            this,
-            isRinging = isRinging,
-            activeAlarmId = appPreferences.activeAlarmId
-        )
-        startActivity(intent)
-    }
 }
 
 @Composable
 private fun MainScreen(
     viewModel: MainViewModel,
+    alarmListViewModel: AlarmListViewModel,
     onOpenSettings: () -> Unit,
-    onOpenAlarm: () -> Unit,
     onOpenHistory: () -> Unit,
     onToggleArmed: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val alarmListUiState by alarmListViewModel.uiState.collectAsState()
     MainContent(
         uiState = uiState,
+        alarmItems = alarmListUiState.items,
+        updatingAlarmIds = alarmListUiState.updatingIds,
         onOpenSettings = onOpenSettings,
-        onOpenAlarm = onOpenAlarm,
         onOpenHistory = onOpenHistory,
+        onToggleAlarm = alarmListViewModel::onToggle,
         onToggleArmed = onToggleArmed
     )
 }
@@ -139,9 +141,11 @@ private data class HomeAction(
 @Composable
 internal fun MainContent(
     uiState: MainUiState,
+    alarmItems: List<AlarmListItem>,
+    updatingAlarmIds: Set<Long>,
     onOpenSettings: () -> Unit,
-    onOpenAlarm: () -> Unit,
     onOpenHistory: () -> Unit,
+    onToggleAlarm: (Long, Boolean) -> Unit,
     onToggleArmed: () -> Unit
 ) {
     val drawerState = androidx.compose.material3.rememberDrawerState(
@@ -149,11 +153,6 @@ internal fun MainContent(
     )
     val scope = rememberCoroutineScope()
     val actions = listOf(
-        HomeAction(
-            title = "Alarm list",
-            subtitle = "Manage scheduled alarms",
-            onClick = onOpenAlarm
-        ),
         HomeAction(
             title = "Alarm history",
             subtitle = "Review recent alarm events",
@@ -174,15 +173,6 @@ internal fun MainContent(
                     label = { Text("Home") },
                     selected = true,
                     onClick = { scope.launch { drawerState.close() } },
-                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-                )
-                NavigationDrawerItem(
-                    label = { Text("Alarm") },
-                    selected = false,
-                    onClick = {
-                        scope.launch { drawerState.close() }
-                        onOpenAlarm()
-                    },
                     modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                 )
                 NavigationDrawerItem(
@@ -281,6 +271,45 @@ internal fun MainContent(
                         reliabilityWarningText = uiState.reliabilityWarningText,
                         pendingCountdown = if (uiState.showPending) uiState.pendingCountdownText else null
                     )
+                }
+
+                item {
+                    Text(
+                        text = "Alarm list",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(top = 8.dp, start = 4.dp)
+                    )
+                }
+
+                item {
+                    if (alarmItems.isEmpty()) {
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                            shape = MaterialTheme.shapes.medium
+                        ) {
+                            Text(
+                                text = "No alarms yet.",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)
+                            )
+                        }
+                    }
+                }
+
+                if (alarmItems.isNotEmpty()) {
+                    itemsIndexed(alarmItems, key = { _, item -> item.id }) { _, item ->
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                            shape = MaterialTheme.shapes.medium
+                        ) {
+                            AlarmListRow(
+                                item = item,
+                                isUpdating = updatingAlarmIds.contains(item.id),
+                                onToggle = { enabled -> onToggleAlarm(item.id, enabled) }
+                            )
+                        }
+                    }
                 }
 
                 item {

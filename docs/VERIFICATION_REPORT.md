@@ -20,7 +20,7 @@ Scope: Re-audit against updated docs/SPEC.md (authoritative), docs/ARCHITECTURE.
 | Alarm ringing UI title updated | `AlarmRingingActivity` label + UI string | PASS |
 | Snooze removed everywhere | No snooze actions/UI/DB fields | PASS |
 | Duration UI hours+minutes invariant | Settings UI fields + tests | PASS |
-| Alarm page is AOSP-style toggle list | `AlarmListActivity` + `AlarmListViewModel` | PASS |
+| Alarm management is Home-embedded toggle list | `MainActivity` Home alarm section + `AlarmListViewModel` | PASS |
 
 ## Hardware Verification
 
