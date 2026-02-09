@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
@@ -24,7 +25,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -282,30 +282,32 @@ internal fun MainContent(
                 }
 
                 item {
-                    Card(
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-                        shape = MaterialTheme.shapes.medium
-                    ) {
-                        if (alarmItems.isEmpty()) {
+                    if (alarmItems.isEmpty()) {
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                            shape = MaterialTheme.shapes.medium
+                        ) {
                             Text(
                                 text = "No alarms yet.",
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)
                             )
-                        } else {
-                            Column(modifier = Modifier.fillMaxWidth()) {
-                                alarmItems.forEachIndexed { index, item ->
-                                    AlarmListRow(
-                                        item = item,
-                                        isUpdating = updatingAlarmIds.contains(item.id),
-                                        onToggle = { enabled -> onToggleAlarm(item.id, enabled) }
-                                    )
-                                    if (index < alarmItems.lastIndex) {
-                                        HorizontalDivider(modifier = Modifier.padding(start = 72.dp))
-                                    }
-                                }
-                            }
+                        }
+                    }
+                }
+
+                if (alarmItems.isNotEmpty()) {
+                    itemsIndexed(alarmItems, key = { _, item -> item.id }) { _, item ->
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                            shape = MaterialTheme.shapes.medium
+                        ) {
+                            AlarmListRow(
+                                item = item,
+                                isUpdating = updatingAlarmIds.contains(item.id),
+                                onToggle = { enabled -> onToggleAlarm(item.id, enabled) }
+                            )
                         }
                     }
                 }
