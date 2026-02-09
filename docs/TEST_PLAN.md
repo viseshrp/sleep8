@@ -63,9 +63,8 @@ Physical device testing is required; emulators are not authoritative for exact a
 - Verify dark mode is default on fresh install.
 - Toggle dark mode On/Off in Settings and verify every screen updates (Home, Home alarm list section, History, Settings, ringing UI).
 - Alarm fires and displays full-screen UI on lockscreen.
-- Overlay toggle on: overlay appears while ringing (permission granted).
-- Overlay toggle on, permission denied: alarm still rings; overlay not shown.
-- Overlay toggle off: alarm always shows full-screen ringing activity (no overlay).
+- Alarm fires while device is in use and permission granted: overlay appears above other apps.
+- Overlay permission denied: alarm still rings and full-screen ringing activity is used.
 - Notification permission requested on first arm; deny → alarm still rings without FGS notification.
 - ACTION_SHOW_ALARMS opens Alarm History screen.
 - Deep links:

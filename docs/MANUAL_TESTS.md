@@ -36,10 +36,10 @@ Automated unit, integration, and Compose UI tests cover most logic and UI flows;
 - Enter -1 or 721 → inline error shown; value is not saved until corrected.
 - Duration inputs are always Hours + Minutes fields.
 
-## Overlay (Optional)
-- Enable overlay toggle + grant permission → overlay appears while alarm is ringing.
-- Enable overlay toggle without permission → permission screen opens; overlay does not show until granted.
-- Disable overlay toggle (even with permission granted) → only AlarmRingingActivity is shown.
+## Overlay (In-use)
+- Grant overlay permission, keep device unlocked/in-use, then trigger alarm → overlay appears above other apps.
+- With overlay permission denied, trigger alarm while in-use → alarm still rings and full-screen activity is used.
+- Trigger alarm while locked/screen-off → full-screen lockscreen activity is shown.
 
 ## Notifications / Permission
 - Deny POST_NOTIFICATIONS → alarm still rings; UI shows warning about limited lockscreen UX.

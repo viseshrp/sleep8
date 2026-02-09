@@ -19,7 +19,7 @@ Default duration is 8h 0m, and valid duration range is 0-720 minutes.
 - Provides:
   - Home alarm list section (toggle enabled/disabled for existing records).
   - Alarm history (full local audit trail, with clear-all action).
-  - Full-screen ringing UI and optional overlay ringing UI.
+  - Full-screen ringing UI on lockscreen and overlay ringing UI while device is in use (permission required).
 - Restores state and reconciles alarms after reboot.
 - Uses boundary backstops and periodic health checks to self-heal monitoring start.
 - Persists monitoring start telemetry for postmortem diagnosis.
@@ -36,7 +36,7 @@ Default duration is 8h 0m, and valid duration range is 0-720 minutes.
    - new alarm record is created (`SCHEDULED`)
    - previous scheduled alarms are cancelled (`REPLACED_BY_NEW_ALARM`)
    - exact alarm is scheduled with `setAlarmClock`
-6. At trigger time, receiver launches ringing flow (service + full-screen activity).
+6. At trigger time, receiver launches ringing flow (service; lockscreen activity or in-use overlay).
 7. User dismisses alarm; record moves to `DISMISSED`.
 
 Notes:

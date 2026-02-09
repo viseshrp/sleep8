@@ -59,7 +59,7 @@ class AlarmReceiverTest {
 
     @Test
     @Config(sdk = [33])
-    fun `scheduled alarm launches service and activity when notifications allowed`() {
+    fun `scheduled alarm launches service when notifications allowed`() {
         val context = ApplicationProvider.getApplicationContext<Application>()
         val shadowApp = shadowOf(context)
         while (shadowApp.nextStartedService != null) {}
@@ -85,10 +85,9 @@ class AlarmReceiverTest {
 
         runBlocking { receiver.handleAlarm(context, intent) }
         val startedService = shadowApp.nextStartedService
-        val startedActivity = shadowApp.nextStartedActivity
 
         org.junit.Assert.assertEquals(AlarmRingingService::class.java.name, startedService?.component?.className)
-        org.junit.Assert.assertEquals(AlarmRingingActivity::class.java.name, startedActivity?.component?.className)
+        org.junit.Assert.assertNull(shadowApp.nextStartedActivity)
         coVerify(timeout = 1000) { repo.markFired(record.id, any()) }
         coVerify(timeout = 1000) { repo.markActivityPresented(record.id) }
         verify(timeout = 1000) { stateHolder.clearLastScreenOffTs() }
