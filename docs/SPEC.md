@@ -70,6 +70,7 @@ Armed state shows:
 - Last screen-off detected time (if any)
 - Pending confirmation timer (20 min) or confirmed alarm schedule time
 - Material card/list styling with consistent top app bars and spacing.
+- Last screen-off stays visible for the active armed session even if midnight passes.
 
 Navigation:
 - Hamburger menu includes **Alarm History** and **Settings**.
@@ -95,10 +96,12 @@ When the screen has remained OFF for 20 minutes since the latest OFF event:
 - Alarm UI shows over lock screen, turns screen on, and rings until dismissed.
 - Ringing UI is AOSP Clock-like: full-screen, large current time, subtle label, alarm info line, one sticky bottom **Dismiss** action, no app bar or nav chrome.
 - Overlay page is shown only when both conditions are true: `overlay_enabled == true` and `SYSTEM_ALERT_WINDOW` permission is granted. Otherwise full-screen activity is used.
+- When an alarm is accepted as fired, `last_screen_off_ts` is cleared immediately.
 
 ### 5.6 Dismiss
 - **Dismiss** stops audio/vibration, stops the foreground service, records `dismissed_at` in DB.
 - Dismiss behavior is identical for overlay and full-screen activity presentations.
+- Dismiss also clears `last_screen_off_ts` (idempotent with fire-path clearing).
 
 ### 5.10 App Icon
 - Launcher icon uses a new adaptive icon set (foreground/background + monochrome).
@@ -110,6 +113,7 @@ When the screen has remained OFF for 20 minutes since the latest OFF event:
 - Disarm stops monitoring service and cancels pending confirmation timer.
 - Manual disarm does not cancel existing alarms; it only prevents new alarms and clears pending confirmation.
 - Disarm does not retroactively alter already-fired alarms.
+- Manual disarm clears `last_screen_off_ts`.
 
 ### 5.8 Alarm Observability (Local Only)
 - The app maintains a **local alarm log** in its DB (`alarm_records`).
@@ -157,6 +161,15 @@ If armed at reboot or there was a pending confirmation:
   - Else resume timer for the remaining duration.
 - If multiple scheduled alarms exist in DB, keep only the newest and cancel others with reason `REBOOT_CLEANUP`.
 - If a scheduled alarm exists in DB and its `trigger_at` is in the past, schedule it to fire immediately.
+
+### 6.6 Last screen-off lifecycle
+- `last_screen_off_ts` is shown whenever it exists for the active session, including across midnight.
+- `last_screen_off_ts` is cleared on:
+  - accepted alarm fire (`AlarmReceiver`)
+  - ringing dismiss action
+  - manual disarm
+  - start of a new arm session
+- It is **not** cleared just because the local date changed.
 
 ---
 

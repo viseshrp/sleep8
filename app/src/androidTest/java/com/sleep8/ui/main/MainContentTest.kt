@@ -1,11 +1,15 @@
 package com.sleep8.ui.main
 
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.lifecycle.Lifecycle
 import com.sleep8.ui.alarm.AlarmListItem
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertEquals
@@ -17,14 +21,22 @@ import org.junit.runner.RunWith
 class MainContentTest {
 
     @get:Rule
-    val composeRule = createComposeRule()
+    val composeRule = createAndroidComposeRule<ComponentActivity>()
+
+    private fun setTestContent(content: @Composable () -> Unit) {
+        composeRule.activityRule.scenario.moveToState(Lifecycle.State.RESUMED)
+        composeRule.runOnUiThread {
+            composeRule.activity.setContent(content = content)
+        }
+        composeRule.waitForIdle()
+    }
 
     @Test
     fun navigationDrawerItemsTriggerCallbacks() {
         var historyOpened = false
         var settingsOpened = false
 
-        composeRule.setContent {
+        setTestContent {
             MaterialTheme {
                 MainContent(
                     uiState = MainUiState(statusText = "Armed"),
@@ -54,7 +66,7 @@ class MainContentTest {
     fun homeAlarmListShowsTimeAndToggle() {
         var toggleCall: Pair<Long, Boolean>? = null
 
-        composeRule.setContent {
+        setTestContent {
             MaterialTheme {
                 MainContent(
                     uiState = MainUiState(statusText = "Armed"),

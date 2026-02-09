@@ -88,6 +88,13 @@ Automated unit, integration, and Compose UI tests cover most logic and UI flows;
 - Toggling ON enables the alarm; toggling OFF disables it.
 - Past alarms show disabled toggles.
 
+## Last Screen-off Indicator
+- Arm the app, turn screen off just before midnight, then view Home after midnight: last screen-off still shows for that active session.
+- Let alarm fire: last screen-off is cleared immediately.
+- Dismiss the alarm from ringing UI: last screen-off stays cleared.
+- Disarm from Home or tile: last screen-off is cleared.
+- Start a new arm session: previous session's last screen-off is cleared.
+
 ## Ringing UI (AOSP-style)
 - Alarm fires → ringing UI shows large time + subtle label + **Dismiss** only.
 - Dismiss stops sound/vibration immediately and closes the ringing UI.

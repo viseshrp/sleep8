@@ -15,7 +15,9 @@ Physical device testing is required; emulators are not authoritative for exact a
 - Home alarm list toggles route schedule/cancel operations correctly.
 - Single active alarm: scheduling a new confirmed alarm cancels prior scheduled alarms.
 - Reboot cleanup: multiple scheduled alarms → keep newest, cancel extras.
-- Disarm cancels the active scheduled alarm.
+- Disarm keeps existing scheduled alarms untouched and clears pending session runtime state.
+- Last screen-off timestamp remains visible across midnight within the same active session.
+- Last screen-off timestamp clears on accepted alarm fire, dismiss, disarm, and new arm session start.
 - Duration boundaries: 0, 1, 480, 720 minutes.
 - Invalid duration inputs: below 0 / above 720 are rejected (not persisted).
 - Duration 0 schedules at confirmation timestamp.
@@ -72,6 +74,8 @@ Physical device testing is required; emulators are not authoritative for exact a
 - Lockscreen/system “next alarm” shows app alarm when earlier than other alarms.
 - Home alarm list section shows time + switch; toggling off disables the alarm.
 - Ringing UI shows Dismiss only (no snooze anywhere).
+- Last screen-off shown at 23:59 remains visible after midnight while still in the same active session.
+- Last screen-off is hidden immediately after alarm fire/dismiss, after disarm, and after starting a fresh arm session.
 - Notifications permission denied still rings; UI warns about reduced lockscreen UX.
 - Icon verification checklist:
   - Launcher icon (home screen/app drawer)

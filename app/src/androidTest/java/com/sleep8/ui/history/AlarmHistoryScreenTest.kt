@@ -1,10 +1,14 @@
 package com.sleep8.ui.history
 
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.lifecycle.Lifecycle
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.sleep8.data.repository.AlarmRepository
 import com.sleep8.domain.model.AlarmRecord
@@ -20,7 +24,15 @@ import org.junit.runner.RunWith
 class AlarmHistoryScreenTest {
 
     @get:Rule
-    val composeRule = createComposeRule()
+    val composeRule = createAndroidComposeRule<ComponentActivity>()
+
+    private fun setTestContent(content: @Composable () -> Unit) {
+        composeRule.activityRule.scenario.moveToState(Lifecycle.State.RESUMED)
+        composeRule.runOnUiThread {
+            composeRule.activity.setContent(content = content)
+        }
+        composeRule.waitForIdle()
+    }
 
     @Test
     fun historyScreenShowsAlarmDetailsAndBack() {
@@ -49,7 +61,7 @@ class AlarmHistoryScreenTest {
         val viewModel = AlarmHistoryViewModel(alarmRepository)
         var backPressed = false
 
-        composeRule.setContent {
+        setTestContent {
             MaterialTheme {
                 AlarmHistoryScreen(viewModel = viewModel, onBack = { backPressed = true })
             }

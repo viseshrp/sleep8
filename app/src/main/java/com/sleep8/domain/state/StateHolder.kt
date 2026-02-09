@@ -58,4 +58,9 @@ class StateHolder(private val prefs: AppPreferences) {
         _lastScreenOffTs.value = ts
         prefs.lastScreenOffTs = ts
     }
+
+    fun clearLastScreenOffTs() {
+        _lastScreenOffTs.value = -1L
+        prefs.lastScreenOffTs = -1L
+    }
 }

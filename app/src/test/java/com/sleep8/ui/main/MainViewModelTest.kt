@@ -15,6 +15,7 @@ import com.sleep8.domain.model.Settings
 import com.sleep8.domain.state.StateHolder
 import com.sleep8.testutil.InMemorySharedPreferences
 import com.sleep8.util.PermissionUtils
+import com.sleep8.util.TimeUtils
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -182,7 +183,7 @@ class MainViewModelTest {
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun `last screen off text is hidden when timestamp is not from today`() = runTest {
+    fun `last screen off text is shown even when timestamp is previous day`() = runTest {
         coEvery { settingsRepository.getSettings() } returns defaultSettings()
         coEvery { alarmRepository.getLatestScheduledRecord() } returns null
         coEvery { reliabilityManager.latestReasonLabel() } returns ""
@@ -209,7 +210,8 @@ class MainViewModelTest {
         )
         runCurrent()
 
-        assertEquals("", viewModel.uiState.value.lastScreenOffText)
+        val expected = TimeUtils.formatAlarmTime(TimeUtils.toLocalTime(yesterdayTs))
+        assertEquals(expected, viewModel.uiState.value.lastScreenOffText)
         clearViewModel(viewModel)
     }
 

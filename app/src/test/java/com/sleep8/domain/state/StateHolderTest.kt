@@ -40,4 +40,16 @@ class StateHolderTest {
         assertEquals(5678L, holder.lastScreenOffTs.value)
         assertEquals(5678L, prefs.lastScreenOffTs)
     }
+
+    @Test
+    fun `clear last screen off timestamp resets flow and prefs`() {
+        val prefs = AppPreferences(InMemorySharedPreferences())
+        val holder = StateHolder(prefs)
+        holder.setLastScreenOffTs(5678L)
+
+        holder.clearLastScreenOffTs()
+
+        assertEquals(-1L, holder.lastScreenOffTs.value)
+        assertEquals(-1L, prefs.lastScreenOffTs)
+    }
 }

@@ -11,6 +11,7 @@ import com.sleep8.data.preferences.AppPreferences
 import com.sleep8.data.repository.AlarmRepository
 import com.sleep8.data.repository.SettingsRepository
 import com.sleep8.domain.overlay.AlarmOverlayPolicy
+import com.sleep8.domain.state.StateHolder
 import com.sleep8.service.notification.AlarmNotificationFactory
 import com.sleep8.service.notification.NotificationHelper
 import com.sleep8.service.overlay.AlarmOverlayController
@@ -32,6 +33,7 @@ class AlarmRingingService : Service() {
     @Inject lateinit var alarmRepository: AlarmRepository
     @Inject lateinit var settingsRepository: SettingsRepository
     @Inject lateinit var appPreferences: AppPreferences
+    @Inject lateinit var stateHolder: StateHolder
 
     private var ringer: AlarmRinger? = null
     private var alarmId: Long = -1L
@@ -106,6 +108,7 @@ class AlarmRingingService : Service() {
     private fun handleDismiss() {
         stopRinging()
         markDismissed()
+        stateHolder.clearLastScreenOffTs()
         broadcastAlarmAction(Constants.ACTION_ALARM_DISMISS)
         stopSelf()
     }

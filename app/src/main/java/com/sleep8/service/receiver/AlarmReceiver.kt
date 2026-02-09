@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import com.sleep8.data.repository.AlarmRepository
 import com.sleep8.domain.model.AlarmStatus
+import com.sleep8.domain.state.StateHolder
 import com.sleep8.service.AlarmRingingService
 import com.sleep8.ui.ringing.AlarmRingingActivity
 import com.sleep8.util.Constants
@@ -21,6 +22,7 @@ import javax.inject.Inject
 class AlarmReceiver : BroadcastReceiver() {
 
     @Inject lateinit var alarmRepository: AlarmRepository
+    @Inject lateinit var stateHolder: StateHolder
 
     @androidx.annotation.VisibleForTesting
     internal var dispatcher: CoroutineDispatcher = Dispatchers.Default
@@ -61,6 +63,7 @@ class AlarmReceiver : BroadcastReceiver() {
         if (alarmId > 0) {
             alarmRepository.markFired(alarmId, System.currentTimeMillis())
             alarmRepository.markActivityPresented(alarmId)
+            stateHolder.clearLastScreenOffTs()
         }
     }
 }

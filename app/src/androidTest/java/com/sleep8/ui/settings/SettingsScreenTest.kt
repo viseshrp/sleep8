@@ -1,12 +1,16 @@
 package com.sleep8.ui.settings
 
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollToNode
+import androidx.lifecycle.Lifecycle
 import com.sleep8.data.preferences.AppPreferences
 import com.sleep8.data.repository.SettingsRepository
 import com.sleep8.domain.model.Settings
@@ -22,7 +26,15 @@ import org.junit.runner.RunWith
 class SettingsScreenTest {
 
     @get:Rule
-    val composeRule = createComposeRule()
+    val composeRule = createAndroidComposeRule<ComponentActivity>()
+
+    private fun setTestContent(content: @Composable () -> Unit) {
+        composeRule.activityRule.scenario.moveToState(Lifecycle.State.RESUMED)
+        composeRule.runOnUiThread {
+            composeRule.activity.setContent(content = content)
+        }
+        composeRule.waitForIdle()
+    }
 
     @Test
     fun settingsScreenShowsReliabilityChecklist() {
@@ -37,7 +49,7 @@ class SettingsScreenTest {
         )
         val viewModel = SettingsViewModel(settingsRepository, AppPreferences(InMemorySharedPreferences()))
 
-        composeRule.setContent {
+        setTestContent {
             MaterialTheme {
                 SettingsScreen(viewModel = viewModel, onBack = { })
             }

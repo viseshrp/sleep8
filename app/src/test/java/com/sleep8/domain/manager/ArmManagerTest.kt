@@ -69,11 +69,13 @@ class ArmManagerTest {
         coEvery { settingsRepository.getSettings() } returns settings
         val session = ArmSession(1L, 0L, null, 0L, 0L, ArmSource.APP_BUTTON)
         coEvery { sessionRepository.createSession(any(), any(), any(), any()) } returns session
+        stateHolder.setLastScreenOffTs(999L)
 
         val result = armManager.arm(ArmSource.APP_BUTTON)
 
         coVerify { sessionRepository.createSession(any(), any(), any(), ArmSource.APP_BUTTON) }
         assertTrue(result.isSuccess)
+        assertTrue(stateHolder.lastScreenOffTs.value < 0)
     }
 
     @Test
@@ -82,11 +84,13 @@ class ArmManagerTest {
         stateHolder.setActiveSession(session)
         stateHolder.setArmed(true)
         stateHolder.setPendingCandidate(123L, 456L)
+        stateHolder.setLastScreenOffTs(789L)
 
         armManager.disarm()
 
         assertTrue(stateHolder.pendingCandidateScreenOffTs.value < 0)
         assertTrue(stateHolder.pendingConfirmDeadlineTs.value < 0)
+        assertTrue(stateHolder.lastScreenOffTs.value < 0)
         coVerify { confirmOffScheduler.cancelConfirmation() }
     }
 

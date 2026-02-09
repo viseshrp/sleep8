@@ -8,6 +8,7 @@ import com.sleep8.data.repository.AlarmRepository
 import com.sleep8.domain.model.AlarmRecord
 import com.sleep8.domain.model.AlarmSource
 import com.sleep8.domain.model.AlarmStatus
+import com.sleep8.domain.state.StateHolder
 import com.sleep8.service.AlarmRingingService
 import com.sleep8.ui.ringing.AlarmRingingActivity
 import com.sleep8.util.Constants
@@ -33,11 +34,13 @@ class AlarmReceiverTest {
         while (shadowApp.nextStartedService != null) {}
         while (shadowApp.nextStartedActivity != null) {}
         val repo = mockk<AlarmRepository>()
+        val stateHolder = mockk<StateHolder>(relaxed = true)
         val record = baseRecord(status = AlarmStatus.CANCELED)
         coEvery { repo.getRecord(any()) } returns record
 
         val receiver = AlarmReceiver().apply {
             this.alarmRepository = repo
+            this.stateHolder = stateHolder
             this.dispatcher = Dispatchers.Default
         }
 
@@ -50,6 +53,7 @@ class AlarmReceiverTest {
         runBlocking { receiver.handleAlarm(context, intent) }
         org.junit.Assert.assertNull(shadowApp.nextStartedService)
         org.junit.Assert.assertNull(shadowApp.nextStartedActivity)
+        coVerify(exactly = 0) { stateHolder.clearLastScreenOffTs() }
     }
 
     @Test
@@ -62,11 +66,13 @@ class AlarmReceiverTest {
         shadowOf(context).grantPermissions(Manifest.permission.POST_NOTIFICATIONS)
 
         val repo = mockk<AlarmRepository>(relaxed = true)
+        val stateHolder = mockk<StateHolder>(relaxed = true)
         val record = baseRecord(status = AlarmStatus.SCHEDULED)
         coEvery { repo.getRecord(any()) } returns record
 
         val receiver = AlarmReceiver().apply {
             this.alarmRepository = repo
+            this.stateHolder = stateHolder
             this.dispatcher = Dispatchers.Default
         }
 
@@ -84,6 +90,7 @@ class AlarmReceiverTest {
         org.junit.Assert.assertEquals(AlarmRingingActivity::class.java.name, startedActivity?.component?.className)
         coVerify(timeout = 1000) { repo.markFired(record.id, any()) }
         coVerify(timeout = 1000) { repo.markActivityPresented(record.id) }
+        coVerify(timeout = 1000) { stateHolder.clearLastScreenOffTs() }
     }
 
     @Test
@@ -94,11 +101,13 @@ class AlarmReceiverTest {
         while (shadowApp.nextStartedService != null) {}
         while (shadowApp.nextStartedActivity != null) {}
         val repo = mockk<AlarmRepository>(relaxed = true)
+        val stateHolder = mockk<StateHolder>(relaxed = true)
         val record = baseRecord(status = AlarmStatus.SCHEDULED)
         coEvery { repo.getRecord(any()) } returns record
 
         val receiver = AlarmReceiver().apply {
             this.alarmRepository = repo
+            this.stateHolder = stateHolder
             this.dispatcher = Dispatchers.Default
         }
 
@@ -113,6 +122,7 @@ class AlarmReceiverTest {
         val startedActivity = shadowApp.nextStartedActivity
         org.junit.Assert.assertEquals(AlarmRingingActivity::class.java.name, startedActivity?.component?.className)
         org.junit.Assert.assertTrue(startedActivity?.getBooleanExtra(Constants.EXTRA_RING_IN_ACTIVITY, false) == true)
+        coVerify(timeout = 1000) { stateHolder.clearLastScreenOffTs() }
     }
 
     private fun baseRecord(status: AlarmStatus): AlarmRecord {

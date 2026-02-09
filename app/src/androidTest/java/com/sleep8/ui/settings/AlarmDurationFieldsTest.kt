@@ -1,8 +1,12 @@
 package com.sleep8.ui.settings
 
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.lifecycle.Lifecycle
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Rule
 import org.junit.Test
@@ -12,11 +16,19 @@ import org.junit.runner.RunWith
 class AlarmDurationFieldsTest {
 
     @get:Rule
-    val composeRule = createComposeRule()
+    val composeRule = createAndroidComposeRule<ComponentActivity>()
+
+    private fun setTestContent(content: @Composable () -> Unit) {
+        composeRule.activityRule.scenario.moveToState(Lifecycle.State.RESUMED)
+        composeRule.runOnUiThread {
+            composeRule.activity.setContent(content = content)
+        }
+        composeRule.waitForIdle()
+    }
 
     @Test
     fun durationInputsExposeHoursAndMinutes() {
-        composeRule.setContent {
+        setTestContent {
             MaterialTheme {
                 AlarmDurationFields(
                     hours = "8",
