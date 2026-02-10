@@ -38,8 +38,8 @@ concurrency:
 
 env:
   JAVA_VERSION: "17"
-  ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
-  ANDROID_HOME: /usr/local/lib/android/sdk
+  ANDROID_SDK_ROOT: ${{ github.workspace }}/.android-sdk
+  ANDROID_HOME: ${{ github.workspace }}/.android-sdk
   GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dkotlin.incremental=false"
   ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
   ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -67,19 +67,21 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Cache Android SDK
+      - name: Prepare Android SDK directory
+        run: mkdir -p "${ANDROID_SDK_ROOT}"
+
+      - name: Cache Android SDK (core)
         uses: actions/cache@v4
         with:
-          path: |
-            /usr/local/lib/android/sdk
-          key: ${{ runner.os }}-android-sdk-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          path: ${{ env.ANDROID_SDK_ROOT }}
+          key: ${{ runner.os }}-android-sdk-core-v1-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
-            ${{ runner.os }}-android-sdk-
+            ${{ runner.os }}-android-sdk-core-v1-
 
       - name: Install SDK packages
         run: |
-          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
-          yes | sdkmanager --licenses
+          sdkmanager --sdk_root="${ANDROID_SDK_ROOT}" "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+          yes | sdkmanager --sdk_root="${ANDROID_SDK_ROOT}" --licenses
 
       - name: Lint
         run: make lint
@@ -112,19 +114,21 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Cache Android SDK
+      - name: Prepare Android SDK directory
+        run: mkdir -p "${ANDROID_SDK_ROOT}"
+
+      - name: Cache Android SDK (core)
         uses: actions/cache@v4
         with:
-          path: |
-            /usr/local/lib/android/sdk
-          key: ${{ runner.os }}-android-sdk-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          path: ${{ env.ANDROID_SDK_ROOT }}
+          key: ${{ runner.os }}-android-sdk-core-v1-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
-            ${{ runner.os }}-android-sdk-
+            ${{ runner.os }}-android-sdk-core-v1-
 
       - name: Install SDK packages
         run: |
-          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
-          yes | sdkmanager --licenses
+          sdkmanager --sdk_root="${ANDROID_SDK_ROOT}" "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+          yes | sdkmanager --sdk_root="${ANDROID_SDK_ROOT}" --licenses
 
       - name: Verify Gradle wrapper
         run: |
@@ -197,19 +201,22 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Cache Android SDK
+      - name: Prepare Android SDK directory
+        run: mkdir -p "${ANDROID_SDK_ROOT}"
+
+      - name: Cache Android SDK (ui)
         uses: actions/cache@v4
         with:
-          path: |
-            /usr/local/lib/android/sdk
-          key: ${{ runner.os }}-android-sdk-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          path: ${{ env.ANDROID_SDK_ROOT }}
+          key: ${{ runner.os }}-android-sdk-ui-v1-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
-            ${{ runner.os }}-android-sdk-
+            ${{ runner.os }}-android-sdk-ui-v1-
+            ${{ runner.os }}-android-sdk-core-v1-
 
       - name: Install SDK packages
         run: |
-          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0" "emulator" "system-images;android-34;google_apis;x86_64"
-          yes | sdkmanager --licenses
+          sdkmanager --sdk_root="${ANDROID_SDK_ROOT}" "platform-tools" "platforms;android-34" "build-tools;34.0.0" "emulator" "system-images;android-34;google_apis;x86_64"
+          yes | sdkmanager --sdk_root="${ANDROID_SDK_ROOT}" --licenses
 
       - name: Verify Gradle wrapper
         run: |
@@ -238,7 +245,6 @@ jobs:
           profile: pixel_4
           disable-animations: true
           disable-linux-hw-accel: auto
-          cache: false
           force-avd-creation: true
           emulator-boot-timeout: 900
           emulator-options: -no-window -gpu swiftshader_indirect -no-audio -no-boot-anim -no-snapshot-load -no-snapshot-save -wipe-data -camera-back none -camera-front none
@@ -284,19 +290,21 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Cache Android SDK
+      - name: Prepare Android SDK directory
+        run: mkdir -p "${ANDROID_SDK_ROOT}"
+
+      - name: Cache Android SDK (core)
         uses: actions/cache@v4
         with:
-          path: |
-            /usr/local/lib/android/sdk
-          key: ${{ runner.os }}-android-sdk-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          path: ${{ env.ANDROID_SDK_ROOT }}
+          key: ${{ runner.os }}-android-sdk-core-v1-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
-            ${{ runner.os }}-android-sdk-
+            ${{ runner.os }}-android-sdk-core-v1-
 
       - name: Install SDK packages
         run: |
-          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
-          yes | sdkmanager --licenses
+          sdkmanager --sdk_root="${ANDROID_SDK_ROOT}" "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+          yes | sdkmanager --sdk_root="${ANDROID_SDK_ROOT}" --licenses
 
       - name: Verify Gradle wrapper
         run: |
