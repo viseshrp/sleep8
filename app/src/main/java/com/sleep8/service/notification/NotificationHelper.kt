@@ -104,6 +104,15 @@ class NotificationHelper(private val context: Context) {
         manager.notify(Constants.ALARM_SCHEDULED_NOTIFICATION_ID, notification)
     }
 
+    fun clearAllPendingNotifications() {
+        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        manager.cancel(Constants.NOTIFICATION_ID)
+        manager.cancel(Constants.NOTIFICATION_ID + 1)
+        manager.cancel(Constants.NOTIFICATION_ID + 2)
+        manager.cancel(Constants.ALARM_SCHEDULED_NOTIFICATION_ID)
+        manager.cancel(Constants.ALARM_RINGING_NOTIFICATION_ID)
+    }
+
     private fun homePendingIntent(): PendingIntent {
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP

@@ -129,7 +129,8 @@ object AppModule {
         settingsRepository: SettingsRepository,
         nightWindowScheduler: NightWindowScheduler,
         confirmOffScheduler: ConfirmOffScheduler,
-        monitoringReliabilityManager: MonitoringReliabilityManager
+        monitoringReliabilityManager: MonitoringReliabilityManager,
+        notificationHelper: NotificationHelper
     ): ArmManager {
         return ArmManager(
             sessionRepository,
@@ -138,7 +139,8 @@ object AppModule {
             settingsRepository,
             nightWindowScheduler,
             confirmOffScheduler,
-            monitoringReliabilityManager
+            monitoringReliabilityManager,
+            notificationHelper
         )
     }
 

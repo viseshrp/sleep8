@@ -8,6 +8,7 @@ import com.sleep8.domain.scheduler.ConfirmOffScheduler
 import com.sleep8.domain.scheduler.NightWindowScheduler
 import com.sleep8.domain.state.StateHolder
 import com.sleep8.service.ServiceController
+import com.sleep8.service.notification.NotificationHelper
 import com.sleep8.util.TimeUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -26,7 +27,8 @@ class ArmManager(
     private val settingsRepository: SettingsRepository,
     private val nightWindowScheduler: NightWindowScheduler,
     private val confirmOffScheduler: ConfirmOffScheduler,
-    private val monitoringReliabilityManager: MonitoringReliabilityManager
+    private val monitoringReliabilityManager: MonitoringReliabilityManager,
+    private val notificationHelper: NotificationHelper
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -66,6 +68,7 @@ class ArmManager(
         nightWindowScheduler.cancelWindowEnd()
         nightWindowScheduler.cancelWindowStartBackstops()
         monitoringReliabilityManager.onNightWindowEnded()
+        notificationHelper.clearAllPendingNotifications()
         return Result.success(Unit)
     }
 

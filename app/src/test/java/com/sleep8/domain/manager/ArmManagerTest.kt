@@ -11,6 +11,7 @@ import com.sleep8.domain.scheduler.ConfirmOffScheduler
 import com.sleep8.domain.scheduler.NightWindowScheduler
 import com.sleep8.domain.state.StateHolder
 import com.sleep8.service.ServiceController
+import com.sleep8.service.notification.NotificationHelper
 import com.sleep8.testutil.InMemorySharedPreferences
 import com.sleep8.util.TimeUtils
 import io.mockk.coVerify
@@ -36,6 +37,7 @@ class ArmManagerTest {
     private val nightWindowScheduler = mockk<NightWindowScheduler>(relaxed = true)
     private val confirmOffScheduler = mockk<ConfirmOffScheduler>(relaxed = true)
     private val monitoringReliabilityManager = mockk<MonitoringReliabilityManager>(relaxed = true)
+    private val notificationHelper = mockk<NotificationHelper>(relaxed = true)
     private val settingsRepository = mockk<SettingsRepository>()
 
     private val prefs = AppPreferences(InMemorySharedPreferences())
@@ -48,7 +50,8 @@ class ArmManagerTest {
         settingsRepository = settingsRepository,
         nightWindowScheduler = nightWindowScheduler,
         confirmOffScheduler = confirmOffScheduler,
-        monitoringReliabilityManager = monitoringReliabilityManager
+        monitoringReliabilityManager = monitoringReliabilityManager,
+        notificationHelper = notificationHelper
     )
 
     private val settings = Settings(
@@ -93,6 +96,7 @@ class ArmManagerTest {
         assertTrue(stateHolder.pendingConfirmDeadlineTs.value < 0)
         assertTrue(stateHolder.lastScreenOffTs.value < 0)
         verify { confirmOffScheduler.cancelConfirmation() }
+        verify { notificationHelper.clearAllPendingNotifications() }
     }
 
     @Test
