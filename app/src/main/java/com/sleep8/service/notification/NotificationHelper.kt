@@ -5,10 +5,8 @@ import android.app.NotificationManager
 import android.content.Context
 import android.app.Notification
 import android.app.PendingIntent
-import android.content.Intent
 import androidx.core.app.NotificationCompat
 import com.sleep8.R
-import com.sleep8.ui.main.MainActivity
 import com.sleep8.util.Constants
 import com.sleep8.util.PermissionUtils
 
@@ -51,7 +49,6 @@ class NotificationHelper(private val context: Context) {
             .setContentTitle(context.getString(R.string.notification_title))
             .setContentText(contentText)
             .setSmallIcon(R.drawable.ic_tile)
-            .setContentIntent(homePendingIntent())
             .setOngoing(true)
             .build()
     }
@@ -63,8 +60,6 @@ class NotificationHelper(private val context: Context) {
             .setContentTitle(context.getString(R.string.app_name))
             .setContentText(message)
             .setSmallIcon(R.drawable.ic_tile)
-            .setContentIntent(homePendingIntent())
-            .setAutoCancel(true)
             .setOngoing(false)
             .build()
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -85,9 +80,7 @@ class NotificationHelper(private val context: Context) {
             .setContentTitle(context.getString(R.string.exact_alarm_title))
             .setContentText(context.getString(R.string.exact_alarm_body))
             .setSmallIcon(R.drawable.ic_tile)
-            .setContentIntent(pendingIntent)
             .addAction(R.drawable.ic_tile, context.getString(R.string.exact_alarm_action), pendingIntent)
-            .setAutoCancel(true)
             .setOngoing(false)
             .build()
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -106,17 +99,5 @@ class NotificationHelper(private val context: Context) {
             .build()
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         manager.notify(Constants.ALARM_SCHEDULED_NOTIFICATION_ID, notification)
-    }
-
-    private fun homePendingIntent(): PendingIntent {
-        val intent = Intent(context, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-        }
-        return PendingIntent.getActivity(
-            context,
-            Constants.PENDING_INTENT_REQUEST_APP_HOME,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
     }
 }
