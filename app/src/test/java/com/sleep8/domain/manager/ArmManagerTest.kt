@@ -150,6 +150,27 @@ class ArmManagerTest {
     }
 
     @Test
+    fun `arm within active night window triggers monitoring notification immediately`() = runTest {
+        val windowSettings = settings.copy(nightStart = "22:00", nightEnd = "08:00")
+        val session = ArmSession(42L, 0L, null, 0L, 0L, ArmSource.APP_BUTTON)
+        coEvery { settingsRepository.getSettings() } returns windowSettings
+        coEvery { sessionRepository.createSession(any(), any(), any(), any()) } returns session
+        mockkObject(TimeUtils)
+        every { TimeUtils.parseLocalTime("22:00") } returns LocalTime.of(22, 0)
+        every { TimeUtils.parseLocalTime("08:00") } returns LocalTime.of(8, 0)
+        every { TimeUtils.isInWindow(any(), any(), any()) } returns true
+        every {
+            TimeUtils.calculateNextWindow(any<LocalDateTime>(), any(), any())
+        } returns NightWindow(startTs = 10_000L, endTs = 20_000L) andThen
+            NightWindow(startTs = 30_000L, endTs = 40_000L)
+
+        armManager.arm(ArmSource.APP_BUTTON)
+
+        verify(exactly = 1) { serviceController.startNightMonitorService() }
+        verify(exactly = 1) { notificationHelper.showMonitoringIdleNow() }
+    }
+
+    @Test
     fun `refresh while armed and outside window schedules next boundaries and records expected start`() = runTest {
         stateHolder.setArmed(true)
         val windowSettings = settings.copy(nightStart = "22:00", nightEnd = "08:00")
@@ -164,6 +185,7 @@ class ArmManagerTest {
         armManager.refreshNightWindowBoundariesIfArmed()
 
         verify { serviceController.stopNightMonitorService() }
+        verify(exactly = 0) { notificationHelper.showMonitoringIdleNow() }
         verify { nightWindowScheduler.scheduleWindowStart(10_000L) }
         verify { nightWindowScheduler.scheduleWindowEnd(20_000L) }
         verify { nightWindowScheduler.scheduleWindowStartBackstops(10_000L) }

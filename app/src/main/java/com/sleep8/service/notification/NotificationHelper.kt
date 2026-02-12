@@ -57,6 +57,12 @@ class NotificationHelper(private val context: Context) {
             .build()
     }
 
+    fun showMonitoringIdleNow() {
+        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notification = buildNotification(context.getString(R.string.notification_text_idle))
+        manager.notify(Constants.NOTIFICATION_ID, notification)
+    }
+
     fun showWarning(message: String) {
         if (!PermissionUtils.canPostNotifications(context)) return
         ensureChannel()

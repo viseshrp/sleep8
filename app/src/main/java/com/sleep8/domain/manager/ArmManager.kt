@@ -93,6 +93,7 @@ class ArmManager(
         val currentOrNext = TimeUtils.calculateNextWindow(now, start, end)
         if (inWindow) {
             serviceController.startNightMonitorService()
+            notificationHelper.showMonitoringIdleNow()
             nightWindowScheduler.scheduleWindowEnd(currentOrNext.endTs)
             val nextStart = TimeUtils.calculateNextWindow(
                 LocalDateTime.ofInstant(

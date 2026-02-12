@@ -62,6 +62,19 @@ class NotificationHelperTest {
     }
 
     @Test
+    fun `show monitoring idle now posts monitoring notification immediately`() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val helper = NotificationHelper(context)
+
+        helper.showMonitoringIdleNow()
+
+        val nm = shadowOf(context.getSystemService(NotificationManager::class.java))
+        val monitoring = requireNotNull(nm.getNotification(Constants.NOTIFICATION_ID))
+        assertEquals("Sleep8 armed", monitoring.extras.getString("android.title"))
+        assertEquals("Monitoring screen-off during night window", monitoring.extras.getString("android.text"))
+    }
+
+    @Test
     fun `show warning posts notification`() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val helper = NotificationHelper(context)
