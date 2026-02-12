@@ -3,10 +3,12 @@ package com.sleep8.ui.history
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sleep8.data.repository.AlarmRepository
+import com.sleep8.domain.model.AlarmRecord
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -17,20 +19,30 @@ class AlarmHistoryViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(AlarmHistoryUiState())
     val uiState: StateFlow<AlarmHistoryUiState> = _uiState.asStateFlow()
+    private var nextOffset = 0
 
     init {
         refresh()
     }
 
     fun refresh() {
+        val selectedId = _uiState.value.selectedAlarm?.id
+        nextOffset = 0
+        _uiState.update { it.copy(isLoadingMore = false) }
         viewModelScope.launch {
-            val alarms = alarmRepository.getAllRecordsNewestFirst()
-            val selectedId = _uiState.value.selectedAlarm?.id
-            val selected = selectedId?.let { id -> alarms.firstOrNull { it.id == id } }
-            _uiState.value = _uiState.value.copy(
-                alarms = alarms,
-                selectedAlarm = selected
-            )
+            val (firstPage, hasMore) = loadPage(offset = 0)
+            nextOffset = firstPage.size
+            val selected = selectedId?.let { id ->
+                firstPage.firstOrNull { alarm -> alarm.id == id } ?: alarmRepository.getRecord(id)
+            }
+            _uiState.update {
+                it.copy(
+                    alarms = firstPage,
+                    hasMore = hasMore,
+                    isLoadingMore = false,
+                    selectedAlarm = selected
+                )
+            }
         }
     }
 
@@ -45,10 +57,42 @@ class AlarmHistoryViewModel @Inject constructor(
         }
     }
 
+    fun loadNextPage() {
+        val current = _uiState.value
+        if (current.isLoadingMore || !current.hasMore) return
+        _uiState.value = current.copy(isLoadingMore = true)
+        viewModelScope.launch {
+            val (nextPage, hasMore) = loadPage(offset = nextOffset)
+            nextOffset += nextPage.size
+            _uiState.update {
+                it.copy(
+                    alarms = it.alarms + nextPage,
+                    hasMore = hasMore,
+                    isLoadingMore = false
+                )
+            }
+        }
+    }
+
     fun clearHistory() {
         viewModelScope.launch {
             alarmRepository.clearAllRecords()
+            nextOffset = 0
             _uiState.value = AlarmHistoryUiState()
         }
+    }
+
+    private suspend fun loadPage(offset: Int): Pair<List<AlarmRecord>, Boolean> {
+        val records = alarmRepository.getRecordsNewestFirstPaged(
+            limit = PAGE_SIZE + 1,
+            offset = offset
+        )
+        val hasMore = records.size > PAGE_SIZE
+        val page = if (hasMore) records.take(PAGE_SIZE) else records
+        return page to hasMore
+    }
+
+    private companion object {
+        const val PAGE_SIZE = 10
     }
 }

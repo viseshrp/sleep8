@@ -221,6 +221,50 @@ class RepositoryTest {
     }
 
     @Test
+    fun `alarm history paging returns expected slices`() {
+        val session = kotlinx.coroutines.runBlocking { sessionRepository.createSession(ArmSource.APP_BUTTON) }
+        repeat(25) { index ->
+            val scheduledAt = 10_000L + index
+            val record = AlarmRecord(
+                id = 0,
+                sessionId = session.id,
+                screenOffTs = 1_000L + index,
+                confirmedAt = 2_000L + index,
+                scheduledAt = scheduledAt,
+                triggerAt = scheduledAt + 500L,
+                durationUsedMinutes = 480,
+                alarmInstanceId = 800L + index,
+                requestCode = 800 + index,
+                source = AlarmSource.SLEEP_AUTOMATION,
+                status = AlarmStatus.SCHEDULED,
+                canceledReason = null,
+                firedAt = null,
+                dismissedAt = null,
+                overlayUsed = false,
+                activityPresented = false
+            )
+            kotlinx.coroutines.runBlocking { alarmRepository.insertRecord(record) }
+        }
+
+        val firstPage = kotlinx.coroutines.runBlocking {
+            alarmRepository.getRecordsNewestFirstPaged(limit = 10, offset = 0)
+        }
+        val secondPage = kotlinx.coroutines.runBlocking {
+            alarmRepository.getRecordsNewestFirstPaged(limit = 10, offset = 10)
+        }
+        val thirdPage = kotlinx.coroutines.runBlocking {
+            alarmRepository.getRecordsNewestFirstPaged(limit = 10, offset = 20)
+        }
+
+        assertEquals(10, firstPage.size)
+        assertEquals(10, secondPage.size)
+        assertEquals(5, thirdPage.size)
+        assertEquals(10_024L, firstPage.first().scheduledAt)
+        assertEquals(10_014L, secondPage.first().scheduledAt)
+        assertEquals(10_004L, thirdPage.first().scheduledAt)
+    }
+
+    @Test
     fun `alarm record lifecycle updates status fields`() {
         val session = kotlinx.coroutines.runBlocking { sessionRepository.createSession(ArmSource.APP_BUTTON) }
         val base = AlarmRecord(
