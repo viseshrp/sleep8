@@ -58,16 +58,6 @@ object PermissionUtils {
         }
     }
 
-    fun canDrawOverlays(context: Context): Boolean {
-        return Settings.canDrawOverlays(context)
-    }
-
-    fun overlayIntent(context: Context): Intent {
-        return Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION).apply {
-            data = Uri.parse("package:${context.packageName}")
-        }
-    }
-
     fun canUseFullScreenIntent(context: Context): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager

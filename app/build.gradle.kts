@@ -151,7 +151,6 @@ val criticalCoverageIncludes = listOf(
     "com/sleep8/domain/manager/ArmManager*",
     "com/sleep8/domain/manager/StateMachineManager*",
     "com/sleep8/domain/state/StateHolder*",
-    "com/sleep8/domain/overlay/AlarmOverlayPolicy*",
     "com/sleep8/domain/validator/NightWindowValidator*",
     "com/sleep8/util/AlarmDurationValidator*",
     "com/sleep8/util/TimeUtils*"

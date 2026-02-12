@@ -51,7 +51,6 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import com.sleep8.domain.overlay.AlarmOverlayPolicy
 import com.sleep8.ui.theme.Sleep8Theme
 import com.sleep8.util.PermissionUtils
 import com.sleep8.util.TimeUtils
@@ -158,18 +157,6 @@ internal fun SettingsScreen(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 supportingText = { Text("Time allowed to confirm you're awake") }
             )
-
-            RowWithSwitch(
-                label = "Use overlay for alarm UI (more reliable)",
-                checked = uiState.overlayEnabled,
-                onCheckedChange = { enabled ->
-                    viewModel.updateOverlayEnabled(enabled)
-                    val overlayAllowed = PermissionUtils.canDrawOverlays(context)
-                    if (AlarmOverlayPolicy.shouldPromptForPermission(enabled, overlayAllowed)) {
-                        context.startActivity(PermissionUtils.overlayIntent(context))
-                    }
-                }
-            )
         },
         SettingsSectionModel(title = "System Reliability") {
             ChecklistRow(
@@ -213,16 +200,6 @@ internal fun SettingsScreen(
                 onAction = {
                     context.startActivity(PermissionUtils.batteryOptimizationIntent(context))
                     viewModel.setBatteryOptAck(true)
-                }
-            )
-
-            ChecklistRow(
-                label = "Draw over other apps (optional)",
-                ok = uiState.overlayAllowed,
-                actionText = "Allow",
-                description = "Optional overlay support when alarm is ringing.",
-                onAction = {
-                    context.startActivity(PermissionUtils.overlayIntent(context))
                 }
             )
 

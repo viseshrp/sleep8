@@ -11,12 +11,9 @@ import android.util.Log
 import androidx.core.content.ContextCompat
 import com.sleep8.data.preferences.AppPreferences
 import com.sleep8.data.repository.AlarmRepository
-import com.sleep8.data.repository.SettingsRepository
-import com.sleep8.domain.overlay.AlarmOverlayPolicy
 import com.sleep8.domain.state.StateHolder
 import com.sleep8.service.notification.AlarmNotificationFactory
 import com.sleep8.service.notification.NotificationHelper
-import com.sleep8.service.overlay.AlarmOverlayController
 import com.sleep8.ui.ringing.AlarmRingingActivity
 import com.sleep8.util.Constants
 import com.sleep8.util.PermissionUtils
@@ -25,7 +22,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -33,14 +29,12 @@ class AlarmRingingService : Service() {
 
     @Inject lateinit var notificationHelper: NotificationHelper
     @Inject lateinit var alarmRepository: AlarmRepository
-    @Inject lateinit var settingsRepository: SettingsRepository
     @Inject lateinit var appPreferences: AppPreferences
     @Inject lateinit var stateHolder: StateHolder
 
     private var ringer: AlarmRinger? = null
     private var alarmId: Long = -1L
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-    private var overlayController: AlarmOverlayController? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -97,25 +91,8 @@ class AlarmRingingService : Service() {
             return
         }
         appPreferences.activeAlarmId = if (alarmId > 0) alarmId else -1L
-        val settings = runBlocking { settingsRepository.getSettings() }
         val deviceInUse = isDeviceInUse()
-        val overlayAllowed = PermissionUtils.canDrawOverlays(this)
-        val overlayEnabled = settings.overlayEnabled || deviceInUse
-        val shouldShowOverlay = AlarmOverlayPolicy.shouldShowOverlay(
-            enabled = overlayEnabled,
-            permissionGranted = overlayAllowed
-        ) && deviceInUse
-        val shouldLaunchActivity = !shouldShowOverlay
-        if (settings.overlayEnabled && deviceInUse && !overlayAllowed) {
-            Log.w("AlarmRingingService", "Overlay enabled but permission missing; falling back to activity UI.")
-        }
-        val shouldPromptOverlayPermission = AlarmOverlayPolicy.shouldPromptForPermission(
-            enabled = settings.overlayEnabled,
-            permissionGranted = overlayAllowed
-        )
-        if (shouldPromptOverlayPermission && deviceInUse) {
-            Log.w("AlarmRingingService", "Overlay permission not granted while device is in use.")
-        }
+        val shouldLaunchActivity = !deviceInUse
         val alarmIntent = AlarmRingingActivity.pendingIntent(this, alarmId)
         val contentIntent = alarmIntent
         val dismissIntent = createActionIntent(Constants.ACTION_ALARM_DISMISS)
@@ -139,9 +116,6 @@ class AlarmRingingService : Service() {
             ringer = AlarmRinger(this)
         }
         ringer?.start()
-        if (shouldShowOverlay) {
-            showOverlay()
-        }
     }
 
     private fun isDeviceInUse(): Boolean {
@@ -158,8 +132,6 @@ class AlarmRingingService : Service() {
     }
 
     private fun stopRinging() {
-        overlayController?.dismiss()
-        overlayController = null
         appPreferences.activeAlarmId = -1L
         appPreferences.activeAlarmRequestCode = -1
         appPreferences.activeAlarmInstanceId = -1L
@@ -188,18 +160,6 @@ class AlarmRingingService : Service() {
             putExtra(Constants.EXTRA_ALARM_ID, alarmId)
         }
         sendBroadcast(intent)
-    }
-
-    private fun showOverlay() {
-        if (alarmId <= 0) return
-        overlayController = AlarmOverlayController(this).also { controller ->
-            controller.show(
-                onDismiss = { handleDismiss() }
-            )
-        }
-        serviceScope.launch {
-            alarmRepository.markOverlayUsed(alarmId)
-        }
     }
 
     private fun createActionIntent(action: String): android.app.PendingIntent {

@@ -39,8 +39,7 @@ class SettingsViewModel @Inject constructor(
                 alarmDurationError = null,
                 confirmOffMinutes = settings.confirmOffMinutes.toString(),
                 armedDefault = settings.armedDefault,
-                darkModeEnabled = appPreferences.themeMode == AppThemeMode.DARK,
-                overlayEnabled = settings.overlayEnabled
+                darkModeEnabled = appPreferences.themeMode == AppThemeMode.DARK
             )
             appPreferences.alarmDurationMinutes = settings.alarmDurationMinutes
         }
@@ -52,15 +51,13 @@ class SettingsViewModel @Inject constructor(
         val isServiceRunning = PermissionUtils.isServiceRunning(context, NightMonitorService::class.java)
         val notificationsAllowed = PermissionUtils.canPostNotifications(context)
         val fullScreenIntentAllowed = PermissionUtils.canUseFullScreenIntent(context)
-        val overlayAllowed = PermissionUtils.canDrawOverlays(context)
 
         _uiState.value = _uiState.value.copy(
             exactAlarmAllowed = exactAllowed,
             batteryOptimizationsIgnored = batteryIgnored,
             foregroundServiceActive = isServiceRunning,
             notificationsAllowed = notificationsAllowed,
-            fullScreenIntentAllowed = fullScreenIntentAllowed,
-            overlayAllowed = overlayAllowed
+            fullScreenIntentAllowed = fullScreenIntentAllowed
         )
     }
 
@@ -92,11 +89,6 @@ class SettingsViewModel @Inject constructor(
         persist()
     }
 
-    fun updateOverlayEnabled(enabled: Boolean) {
-        _uiState.value = _uiState.value.copy(overlayEnabled = enabled)
-        persist()
-    }
-
     fun updateDarkModeEnabled(enabled: Boolean) {
         _uiState.value = _uiState.value.copy(darkModeEnabled = enabled)
         appPreferences.themeMode = if (enabled) AppThemeMode.DARK else AppThemeMode.LIGHT
@@ -125,7 +117,7 @@ class SettingsViewModel @Inject constructor(
             nightEnd = state.nightEnd,
             confirmOffMinutes = confirmOff,
             alarmDurationMinutes = durationMinutes,
-            overlayEnabled = state.overlayEnabled,
+            overlayEnabled = false,
             armedDefault = state.armedDefault
         )
         settingsRepository.updateSettings(settings)

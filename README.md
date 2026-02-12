@@ -19,7 +19,7 @@ Default duration is 8h 0m, and valid duration range is 0-720 minutes.
 - Provides:
   - Home alarm list section (toggle enabled/disabled for existing records).
   - Alarm history (full local audit trail, with clear-all action).
-  - Full-screen ringing UI on lockscreen and overlay ringing UI while device is in use (permission required).
+  - Full-screen ringing UI for lockscreen context and high-priority ringing notifications when device is in use.
 - Restores state and reconciles alarms after reboot.
 - Uses boundary backstops and periodic health checks to self-heal monitoring start.
 - Persists monitoring start telemetry for postmortem diagnosis.
@@ -36,7 +36,7 @@ Default duration is 8h 0m, and valid duration range is 0-720 minutes.
    - new alarm record is created (`SCHEDULED`)
    - previous scheduled alarms are cancelled (`REPLACED_BY_NEW_ALARM`)
    - exact alarm is scheduled with `setAlarmClock`
-6. At trigger time, receiver launches ringing flow (service; lockscreen activity or in-use overlay).
+6. At trigger time, receiver launches ringing flow (service + high-priority alarm notification; lockscreen activity when needed).
 7. User dismisses alarm; record moves to `DISMISSED`.
 
 Notes:
@@ -73,7 +73,7 @@ Room database: `Sleep8Database` (version 12)
 
 - `settings`
   - night window, confirmation minutes
-  - alarm duration, overlay enabled, armed default
+  - alarm duration, armed default
 - `arm_sessions`
   - arm/disarm lifecycle and source (`APP_BUTTON`, `QUICK_TILE`)
 - `screen_events`
@@ -98,7 +98,6 @@ Manifest permissions include:
 - `POST_NOTIFICATIONS`
 - `USE_FULL_SCREEN_INTENT`
 - `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`
-- `SYSTEM_ALERT_WINDOW` (optional overlay)
 - `RECEIVE_BOOT_COMPLETED`
 - Foreground service permissions
 
@@ -107,7 +106,6 @@ Settings includes a reliability section to verify/request:
 - notifications
 - full-screen alarm UI capability
 - battery optimization exclusion
-- overlay permission (optional)
 - Pixel guidance: set Sleep8 battery usage to Unrestricted and avoid Extreme Battery Saver restrictions for Sleep8.
 
 ## Monitoring reliability contract (summary)
@@ -167,7 +165,7 @@ Coverage artifacts:
 - `app/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml`
 
 Coverage verification enforces >=90% on production-critical automation packages
-(`domain.manager`, `domain.state`, `domain.overlay`, `domain.validator`, and core time/duration utils).
+(`domain.manager`, `domain.state`, `domain.validator`, and core time/duration utils).
 
 ## CI/CD
 Workflow: `.github/workflows/android-ci-cd.yml`

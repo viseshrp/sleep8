@@ -48,15 +48,6 @@ class PermissionUtilsTest {
     }
 
     @Test
-    @Config(sdk = [33])
-    fun `overlay intent targets app package`() {
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        val intent = PermissionUtils.overlayIntent(context)
-        org.junit.Assert.assertEquals(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, intent.action)
-        assertTrue(intent.dataString?.contains(context.packageName) == true)
-    }
-
-    @Test
     @Config(sdk = [34])
     fun `fullscreen intent settings action used on android 14 plus`() {
         val context = ApplicationProvider.getApplicationContext<Context>()

@@ -1,7 +1,7 @@
-# Sleep8 — Testing Plan (Owned Exact Alarm + Optional Overlay)
+# Sleep8 — Testing Plan (Owned Exact Alarm + Full-Screen Intent)
 
 ## Overview
-Physical device testing is required; emulators are not authoritative for exact alarm scheduling, lockscreen behavior, or overlay reliability.
+Physical device testing is required; emulators are not authoritative for exact alarm scheduling or lockscreen/full-screen behavior.
 
 ---
 
@@ -10,7 +10,6 @@ Physical device testing is required; emulators are not authoritative for exact a
 - `AlarmManager.setAlarmClock` uses expected trigger time.
 - PendingIntent uniqueness via `alarm_instance_id`/`request_code`.
 - Notification permission logic (Android 13+).
-- Overlay policy logic (enabled vs permission granted).
 - Alarm ringing notification includes Dismiss-only action.
 - Home alarm list toggles route schedule/cancel operations correctly.
 - Single active alarm: scheduling a new confirmed alarm cancels prior scheduled alarms.
@@ -63,8 +62,8 @@ Physical device testing is required; emulators are not authoritative for exact a
 - Verify dark mode is default on fresh install.
 - Toggle dark mode On/Off in Settings and verify every screen updates (Home, Home alarm list section, History, Settings, ringing UI).
 - Alarm fires and displays full-screen UI on lockscreen.
-- Alarm fires while device is in use and permission granted: overlay appears above other apps.
-- Overlay permission denied: alarm still rings and full-screen ringing activity is used.
+- Alarm fires while device is in use: ringing heads-up notification appears and opens ringing activity on tap.
+- Full-screen intent disabled/blocked by OS policy: alarm still rings and remains accessible via notification.
 - Notification permission requested on first arm; deny → alarm still rings without FGS notification.
 - ACTION_SHOW_ALARMS opens Alarm History screen.
 - Deep links:

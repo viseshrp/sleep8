@@ -25,11 +25,10 @@ User (Home / QS Tile)
                                      └── AlarmScheduler (setAlarmClock)
                                                │
                                                ▼
-                                          AlarmReceiver
+                                           AlarmReceiver
                                                │
                                                ├── AlarmRingingService (FGS)
-                                               ├── AlarmRingingActivity (full-screen)
-                                               └── AlarmOverlayController (optional)
+                                               └── AlarmRingingActivity (full-screen)
 ```
 
 ---
@@ -70,7 +69,7 @@ User (Home / QS Tile)
 - `AlarmRingingService` and `AlarmRingingActivity`
   - Ring with alarm audio + vibration.
   - Expose dismiss-only action.
-  - Optional overlay path controlled by settings + overlay permission.
+  - Notification-first ringing surface with full-screen intent for lockscreen context.
   - Dismiss path also clears `lastScreenOffTs` for the completed alarm session.
 
 ---
@@ -97,7 +96,7 @@ User (Home / QS Tile)
   - Full local audit trail and deep-link/ACTION_SHOW_ALARMS target.
 
 - `SettingsActivity`
-  - Night window, duration, confirm window, overlay toggle, reliability checklist, theme.
+  - Night window, duration, confirm window, reliability checklist, theme.
 
 ---
 

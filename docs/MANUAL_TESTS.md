@@ -1,7 +1,7 @@
-# Sleep8 — Manual Test Cases (Owned Exact Alarms + Optional Overlay)
+# Sleep8 — Manual Test Cases (Owned Exact Alarms + Full-Screen Intent)
 
 These tests require **physical devices** (Pixel 8 / Android 14+ recommended).
-Automated unit, integration, and Compose UI tests cover most logic and UI flows; manual tests focus on platform-specific behaviors (exact alarms, lockscreen/full-screen behavior, overlay reliability).
+Automated unit, integration, and Compose UI tests cover most logic and UI flows; manual tests focus on platform-specific behaviors (exact alarms, lockscreen/full-screen behavior, heads-up notification behavior).
 
 ## Core Alarm Flow
 - Screen off → confirmation → alarm fires at `screen_off + duration`.
@@ -36,9 +36,9 @@ Automated unit, integration, and Compose UI tests cover most logic and UI flows;
 - Enter -1 or 721 → inline error shown; value is not saved until corrected.
 - Duration inputs are always Hours + Minutes fields.
 
-## Overlay (In-use)
-- Grant overlay permission, keep device unlocked/in-use, then trigger alarm → overlay appears above other apps.
-- With overlay permission denied, trigger alarm while in-use → alarm still rings and full-screen activity is used.
+## In-use Ringing Surface
+- Keep device unlocked/in-use, then trigger alarm → ringing heads-up notification appears.
+- Tap the ringing notification while in-use → `AlarmRingingActivity` opens.
 - Trigger alarm while locked/screen-off → full-screen lockscreen activity is shown.
 
 ## Notifications / Permission

@@ -1,4 +1,4 @@
-# Sleep8 — Implementation Plan (Owned Exact Alarm + Optional Overlay)
+# Sleep8 — Implementation Plan (Owned Exact Alarm + Full-Screen Intent)
 
 ## Phase 1 — Exact Alarm Scheduling
 - Add `AlarmScheduler` with `AlarmManager.setAlarmClock(AlarmClockInfo(triggerAt, showIntent), operation)` so system “next alarm” reflects Sleep8.
@@ -6,14 +6,14 @@
 
 ## Phase 2 — Alarm Trigger Flow
 - `AlarmReceiver` → `AlarmRingingService` (FGS) → `AlarmRingingActivity`.
-- Optional overlay (WindowManager) shown while ringing when user-enabled + permission granted.
+- High-priority ringing notification is the canonical in-use surface; full-screen intent/activity is used for lockscreen context.
 - Deduplicate by `alarm_instance_id` and record status.
 
 ## Phase 3 — Notifications & Permissions
 - High-importance channel for ringing (`alarm_ringing`).
 - Low-importance channel for scheduled alarm (`alarm_scheduled`).
 - POST_NOTIFICATIONS runtime request (Android 13+) with one-time prompt.
-- Reliability screen shows Exact Alarms / Notifications / Overlay / Battery.
+- Reliability screen shows Exact Alarms / Notifications / Full-screen intent / Battery.
 
 ## Phase 4 — Best-effort OS Integration
 - Handle `AlarmClock.ACTION_SHOW_ALARMS`.
@@ -24,5 +24,5 @@
 - Reschedule latest `SCHEDULED` record; if overdue, fire immediately.
 
 ## Phase 6 — Tests & Docs
-- Unit: duration config, setAlarmClock scheduling, overlay policy, notification actions.
-- Manual: lockscreen alarm UI + next alarm indicator, overlay behavior, notification permission denial.
+- Unit: duration config, setAlarmClock scheduling, notification actions, receiver/service ringing flow.
+- Manual: lockscreen alarm UI + next alarm indicator, in-use heads-up notification behavior, notification permission denial.

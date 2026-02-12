@@ -11,11 +11,9 @@ data class SettingsUiState(
     val confirmOffMinutes: String = Constants.DEFAULT_CONFIRM_MINUTES.toString(),
     val armedDefault: Boolean = false,
     val darkModeEnabled: Boolean = true,
-    val overlayEnabled: Boolean = false,
     val exactAlarmAllowed: Boolean = false,
     val batteryOptimizationsIgnored: Boolean = false,
     val foregroundServiceActive: Boolean = false,
     val notificationsAllowed: Boolean = false,
-    val fullScreenIntentAllowed: Boolean = false,
-    val overlayAllowed: Boolean = false
+    val fullScreenIntentAllowed: Boolean = false
 )
