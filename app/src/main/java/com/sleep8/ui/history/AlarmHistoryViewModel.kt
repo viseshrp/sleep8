@@ -8,6 +8,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -58,16 +59,14 @@ class AlarmHistoryViewModel @Inject constructor(
     }
 
     fun loadNextPage() {
-        var shouldLoad = false
-        _uiState.update { current ->
+        val previous = _uiState.getAndUpdate { current ->
             if (current.isLoadingMore || !current.hasMore) {
                 current
             } else {
-                shouldLoad = true
                 current.copy(isLoadingMore = true)
             }
         }
-        if (!shouldLoad) return
+        if (previous.isLoadingMore || !previous.hasMore) return
         viewModelScope.launch {
             val (nextPage, hasMore) = loadPage(offset = nextOffset)
             nextOffset += nextPage.size

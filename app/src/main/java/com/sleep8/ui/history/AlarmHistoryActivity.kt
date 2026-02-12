@@ -50,6 +50,7 @@ import com.sleep8.util.AlarmIntents
 import com.sleep8.util.TimeUtils
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 
 @AndroidEntryPoint
 class AlarmHistoryActivity : AppCompatActivity() {
@@ -118,12 +119,8 @@ internal fun AlarmHistoryScreen(
 
     LaunchedEffect(listState) {
         snapshotFlow { listState.isScrollInProgress }
-            .distinctUntilChanged()
-            .collect { isScrolling ->
-                if (isScrolling) {
-                    hasUserScrolled = true
-                }
-            }
+            .first { it }
+        hasUserScrolled = true
     }
 
     LaunchedEffect(Unit) {
