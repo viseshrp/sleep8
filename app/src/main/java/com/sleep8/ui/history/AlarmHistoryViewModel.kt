@@ -58,9 +58,16 @@ class AlarmHistoryViewModel @Inject constructor(
     }
 
     fun loadNextPage() {
-        val current = _uiState.value
-        if (current.isLoadingMore || !current.hasMore) return
-        _uiState.value = current.copy(isLoadingMore = true)
+        var shouldLoad = false
+        _uiState.update { current ->
+            if (current.isLoadingMore || !current.hasMore) {
+                current
+            } else {
+                shouldLoad = true
+                current.copy(isLoadingMore = true)
+            }
+        }
+        if (!shouldLoad) return
         viewModelScope.launch {
             val (nextPage, hasMore) = loadPage(offset = nextOffset)
             nextOffset += nextPage.size
