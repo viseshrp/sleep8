@@ -20,6 +20,9 @@ interface AlarmRecordDao {
     @Query("SELECT * FROM alarm_records ORDER BY scheduled_at DESC")
     suspend fun getAllRecordsNewestFirst(): List<AlarmRecordEntity>
 
+    @Query("SELECT * FROM alarm_records ORDER BY scheduled_at DESC LIMIT :limit OFFSET :offset")
+    suspend fun getRecordsNewestFirstPaged(limit: Int, offset: Int): List<AlarmRecordEntity>
+
     @Query("SELECT * FROM alarm_records ORDER BY scheduled_at DESC LIMIT 1")
     suspend fun getLatestRecord(): AlarmRecordEntity?
 

@@ -45,7 +45,7 @@ class AlarmHistoryScreenTest {
             overlayUsed = false,
             activityPresented = false
         )
-        coEvery { alarmRepository.getAllRecordsNewestFirst() } returns listOf(record)
+        coEvery { alarmRepository.getRecordsNewestFirstPaged(11, 0) } returns listOf(record)
         coEvery { alarmRepository.getRecord(record.id) } returns record
 
         val viewModel = AlarmHistoryViewModel(alarmRepository)

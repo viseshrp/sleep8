@@ -39,7 +39,7 @@ class AlarmHistoryViewModelTest {
     @Test
     fun `clear history removes alarms from ui state`() = runTest {
         val record = baseRecord()
-        coEvery { alarmRepository.getAllRecordsNewestFirst() } returns listOf(record)
+        coEvery { alarmRepository.getRecordsNewestFirstPaged(11, 0) } returns listOf(record)
         coEvery { alarmRepository.getRecord(record.id) } returns record
         coEvery { alarmRepository.clearAllRecords() } returns Unit
 
@@ -61,7 +61,7 @@ class AlarmHistoryViewModelTest {
         val initial = baseRecord()
         val selectedFromDetail = initial.copy(status = AlarmStatus.SCHEDULED)
         val updated = initial.copy(status = AlarmStatus.FIRED, firedAt = 4000L)
-        coEvery { alarmRepository.getAllRecordsNewestFirst() } returnsMany listOf(
+        coEvery { alarmRepository.getRecordsNewestFirstPaged(11, 0) } returnsMany listOf(
             listOf(initial),
             listOf(updated)
         )
@@ -83,11 +83,11 @@ class AlarmHistoryViewModelTest {
     @Test
     fun `refresh clears selected alarm when it no longer exists`() = runTest {
         val record = baseRecord()
-        coEvery { alarmRepository.getAllRecordsNewestFirst() } returnsMany listOf(
+        coEvery { alarmRepository.getRecordsNewestFirstPaged(11, 0) } returnsMany listOf(
             listOf(record),
             emptyList()
         )
-        coEvery { alarmRepository.getRecord(record.id) } returns record
+        coEvery { alarmRepository.getRecord(record.id) } returnsMany listOf(record, null)
 
         val viewModel = AlarmHistoryViewModel(alarmRepository)
         advanceUntilIdle()
@@ -101,13 +101,39 @@ class AlarmHistoryViewModelTest {
         assertNull(viewModel.uiState.value.selectedAlarm)
     }
 
-    private fun baseRecord(): AlarmRecord {
+    @Test
+    fun `load next page appends only ten records at a time`() = runTest {
+        val records = (1L..25L).map { id -> baseRecord(id = id, scheduledAt = 3_000L + id) }
+        coEvery { alarmRepository.getRecordsNewestFirstPaged(11, 0) } returns records.take(11)
+        coEvery { alarmRepository.getRecordsNewestFirstPaged(11, 10) } returns records.drop(10).take(11)
+        coEvery { alarmRepository.getRecordsNewestFirstPaged(11, 20) } returns records.drop(20)
+
+        val viewModel = AlarmHistoryViewModel(alarmRepository)
+        advanceUntilIdle()
+        assertEquals(10, viewModel.uiState.value.alarms.size)
+        assertEquals(true, viewModel.uiState.value.hasMore)
+
+        viewModel.loadNextPage()
+        advanceUntilIdle()
+        assertEquals(20, viewModel.uiState.value.alarms.size)
+        assertEquals(true, viewModel.uiState.value.hasMore)
+
+        viewModel.loadNextPage()
+        advanceUntilIdle()
+        assertEquals(25, viewModel.uiState.value.alarms.size)
+        assertEquals(false, viewModel.uiState.value.hasMore)
+    }
+
+    private fun baseRecord(
+        id: Long = 1L,
+        scheduledAt: Long = 3000L
+    ): AlarmRecord {
         return AlarmRecord(
-            id = 1L,
+            id = id,
             sessionId = 1L,
             screenOffTs = 1000L,
             confirmedAt = 2000L,
-            scheduledAt = 3000L,
+            scheduledAt = scheduledAt,
             triggerAt = 3600L,
             durationUsedMinutes = 480,
             alarmInstanceId = 100L,

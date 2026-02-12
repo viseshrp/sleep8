@@ -13,13 +13,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -30,12 +32,16 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import com.sleep8.domain.model.AlarmCancelReason
 import com.sleep8.domain.model.AlarmRecord
@@ -43,6 +49,7 @@ import com.sleep8.ui.theme.Sleep8Theme
 import com.sleep8.util.AlarmIntents
 import com.sleep8.util.TimeUtils
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.distinctUntilChanged
 
 @AndroidEntryPoint
 class AlarmHistoryActivity : AppCompatActivity() {
@@ -95,6 +102,28 @@ internal fun AlarmHistoryScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showClearConfirmDialog by remember { mutableStateOf(false) }
+    val listState = rememberLazyListState()
+    val shouldLoadMore by remember(uiState.hasMore, uiState.isLoadingMore) {
+        derivedStateOf {
+            if (!uiState.hasMore || uiState.isLoadingMore || !listState.isScrollInProgress) {
+                false
+            } else {
+                val layoutInfo = listState.layoutInfo
+                val lastVisible = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1
+                lastVisible >= layoutInfo.totalItemsCount - 1
+            }
+        }
+    }
+
+    LaunchedEffect(shouldLoadMore) {
+        snapshotFlow { shouldLoadMore }
+            .distinctUntilChanged()
+            .collect { shouldLoad ->
+                if (shouldLoad) {
+                    viewModel.loadNextPage()
+                }
+            }
+    }
 
     Scaffold(
         topBar = {
@@ -133,6 +162,7 @@ internal fun AlarmHistoryScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues),
+                state = listState,
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
@@ -141,8 +171,13 @@ internal fun AlarmHistoryScreen(
                         AlarmDetailCard(alarm = selected)
                     }
                 }
-                items(uiState.alarms, key = { it.id }) { alarm ->
+                itemsIndexed(uiState.alarms, key = { _, alarm -> alarm.id }) { _, alarm ->
                     AlarmHistoryRow(alarm = alarm)
+                }
+                if (uiState.isLoadingMore) {
+                    item {
+                        LoadingMoreRow()
+                    }
                 }
             }
         }
@@ -169,6 +204,18 @@ internal fun AlarmHistoryScreen(
                 }
             }
         )
+    }
+}
+
+@Composable
+private fun LoadingMoreRow() {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        CircularProgressIndicator()
     }
 }
 

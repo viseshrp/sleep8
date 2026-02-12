@@ -25,6 +25,10 @@ class AlarmRepository(private val alarmRecordDao: AlarmRecordDao) {
         return alarmRecordDao.getAllRecordsNewestFirst().map { it.toDomain() }
     }
 
+    suspend fun getRecordsNewestFirstPaged(limit: Int, offset: Int): List<AlarmRecord> {
+        return alarmRecordDao.getRecordsNewestFirstPaged(limit = limit, offset = offset).map { it.toDomain() }
+    }
+
     suspend fun getLatestRecord(): AlarmRecord? {
         return alarmRecordDao.getLatestRecord()?.toDomain()
     }

@@ -64,6 +64,9 @@ class AlarmRingingService : Service() {
             }
             Constants.ACTION_ALARM_RING, null -> {
                 if (incomingAlarmId > 0) {
+                    if (alarmId > 0 && alarmId != incomingAlarmId) {
+                        stopRinging()
+                    }
                     alarmId = incomingAlarmId
                 } else if (alarmId <= 0) {
                     alarmId = appPreferences.activeAlarmId
