@@ -52,10 +52,10 @@ class NotificationHelperTest {
         val nm = shadowOf(context.getSystemService(NotificationManager::class.java))
         assertNotNull(nm.notificationChannels.firstOrNull { it.id == Constants.NOTIFICATION_CHANNEL_ID })
         assertEquals("Monitoring active", notification.extras.getString("android.text"))
-        assertNotNull(notification.contentIntent)
+        val contentIntent = requireNotNull(notification.contentIntent)
         assertEquals(
             MainActivity::class.java.name,
-            shadowOf(notification.contentIntent!!).savedIntent.component?.className
+            shadowOf(contentIntent).savedIntent.component?.className
         )
         assertTrue(notification.flags and android.app.Notification.FLAG_ONGOING_EVENT != 0)
     }
@@ -68,12 +68,12 @@ class NotificationHelperTest {
         helper.showWarning("Warning text")
 
         val nm = shadowOf(context.getSystemService(NotificationManager::class.java))
-        val warning = nm.getNotification(Constants.NOTIFICATION_ID + 1)
-        assertNotNull(warning)
-        assertEquals("Warning text", warning?.extras?.getString("android.text"))
+        val warning = requireNotNull(nm.getNotification(Constants.NOTIFICATION_ID + 1))
+        assertEquals("Warning text", warning.extras.getString("android.text"))
+        val contentIntent = requireNotNull(warning.contentIntent)
         assertEquals(
             MainActivity::class.java.name,
-            shadowOf(warning!!.contentIntent).savedIntent.component?.className
+            shadowOf(contentIntent).savedIntent.component?.className
         )
     }
 
@@ -85,17 +85,17 @@ class NotificationHelperTest {
         helper.showExactAlarmWarning()
 
         val nm = shadowOf(context.getSystemService(NotificationManager::class.java))
-        val warning = nm.getNotification(Constants.NOTIFICATION_ID + 2)
-        assertNotNull(warning)
-        assertNotNull(warning?.contentIntent)
+        val warning = requireNotNull(nm.getNotification(Constants.NOTIFICATION_ID + 2))
+        val contentIntent = requireNotNull(warning.contentIntent)
         assertEquals(
             SettingsActivity::class.java.name,
-            shadowOf(warning!!.contentIntent).savedIntent.component?.className
+            shadowOf(contentIntent).savedIntent.component?.className
         )
         assertTrue((warning.actions?.size ?: 0) > 0)
+        val actionIntent = requireNotNull(warning.actions[0].actionIntent)
         assertEquals(
             PermissionUtils.exactAlarmIntent(context).action,
-            shadowOf(warning.actions[0].actionIntent).savedIntent.action
+            shadowOf(actionIntent).savedIntent.action
         )
     }
 
@@ -113,13 +113,12 @@ class NotificationHelperTest {
         helper.showAlarmScheduled("Alarm at 7:00 AM", pendingIntent)
 
         val nm = shadowOf(context.getSystemService(NotificationManager::class.java))
-        val posted = nm.getNotification(Constants.ALARM_SCHEDULED_NOTIFICATION_ID)
-        assertNotNull(posted)
-        assertEquals("Alarm at 7:00 AM", posted?.extras?.getString("android.text"))
-        assertNotNull(posted?.contentIntent)
+        val posted = requireNotNull(nm.getNotification(Constants.ALARM_SCHEDULED_NOTIFICATION_ID))
+        assertEquals("Alarm at 7:00 AM", posted.extras.getString("android.text"))
+        val contentIntent = requireNotNull(posted.contentIntent)
         assertEquals(
             SettingsActivityPlaceholder::class.java.name,
-            shadowOf(posted!!.contentIntent).savedIntent.action
+            shadowOf(contentIntent).savedIntent.action
         )
     }
 
