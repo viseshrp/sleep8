@@ -83,7 +83,8 @@ class FullFlowIntegrationTest {
             settingsRepository,
             nightWindowScheduler,
             confirmScheduler,
-            monitoringReliabilityManager
+            monitoringReliabilityManager,
+            NotificationHelper(context)
         )
         stateMachineManager = StateMachineManager(stateHolder, settingsRepository, sessionRepository, alarmRepository, confirmScheduler, alarmScheduler)
     }

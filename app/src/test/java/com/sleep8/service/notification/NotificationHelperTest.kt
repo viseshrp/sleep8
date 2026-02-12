@@ -11,6 +11,7 @@ import com.sleep8.util.Constants
 import com.sleep8.util.PermissionUtils
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -58,6 +59,19 @@ class NotificationHelperTest {
             shadowOf(contentIntent).savedIntent.component?.className
         )
         assertTrue(notification.flags and android.app.Notification.FLAG_ONGOING_EVENT != 0)
+    }
+
+    @Test
+    fun `show monitoring idle now posts monitoring notification immediately`() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val helper = NotificationHelper(context)
+
+        helper.showMonitoringIdleNow()
+
+        val nm = shadowOf(context.getSystemService(NotificationManager::class.java))
+        val monitoring = requireNotNull(nm.getNotification(Constants.NOTIFICATION_ID))
+        assertEquals("Sleep8 armed", monitoring.extras.getString("android.title"))
+        assertEquals("Monitoring screen-off during night window", monitoring.extras.getString("android.text"))
     }
 
     @Test
@@ -120,6 +134,30 @@ class NotificationHelperTest {
             SettingsActivityPlaceholder::class.java.name,
             shadowOf(contentIntent).savedIntent.action
         )
+    }
+
+    @Test
+    fun `clear all pending notifications clears known app notifications`() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val helper = NotificationHelper(context)
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            9,
+            Intent(SettingsActivityPlaceholder::class.java.name),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        helper.showWarning("Warning text")
+        helper.showExactAlarmWarning()
+        helper.showAlarmScheduled("Alarm at 7:00 AM", pendingIntent)
+
+        helper.clearAllPendingNotifications()
+
+        val nm = shadowOf(context.getSystemService(NotificationManager::class.java))
+        assertNull(nm.getNotification(Constants.NOTIFICATION_ID))
+        assertNull(nm.getNotification(Constants.NOTIFICATION_ID + 1))
+        assertNull(nm.getNotification(Constants.NOTIFICATION_ID + 2))
+        assertNull(nm.getNotification(Constants.ALARM_SCHEDULED_NOTIFICATION_ID))
     }
 
     private object SettingsActivityPlaceholder

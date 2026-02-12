@@ -63,7 +63,5 @@ class SettingsScreenTest {
         composeRule.onNodeWithText("Notifications", useUnmergedTree = true).assertExists()
         composeRule.onNodeWithTag("settings-list").performScrollToNode(hasText("Battery optimization"))
         composeRule.onNodeWithText("Battery optimization", useUnmergedTree = true).assertExists()
-        composeRule.onNodeWithTag("settings-list").performScrollToNode(hasText("Draw over other apps (optional)"))
-        composeRule.onNodeWithText("Draw over other apps (optional)", useUnmergedTree = true).assertExists()
     }
 }

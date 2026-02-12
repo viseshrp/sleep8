@@ -57,6 +57,12 @@ class NotificationHelper(private val context: Context) {
             .build()
     }
 
+    fun showMonitoringIdleNow() {
+        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notification = buildNotification(context.getString(R.string.notification_text_idle))
+        manager.notify(Constants.NOTIFICATION_ID, notification)
+    }
+
     fun showWarning(message: String) {
         if (!PermissionUtils.canPostNotifications(context)) return
         ensureChannel()
@@ -102,6 +108,15 @@ class NotificationHelper(private val context: Context) {
             .build()
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         manager.notify(Constants.ALARM_SCHEDULED_NOTIFICATION_ID, notification)
+    }
+
+    fun clearAllPendingNotifications() {
+        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        manager.cancel(Constants.NOTIFICATION_ID)
+        manager.cancel(Constants.NOTIFICATION_ID + 1)
+        manager.cancel(Constants.NOTIFICATION_ID + 2)
+        manager.cancel(Constants.ALARM_SCHEDULED_NOTIFICATION_ID)
+        manager.cancel(Constants.ALARM_RINGING_NOTIFICATION_ID)
     }
 
     private fun homePendingIntent(): PendingIntent {

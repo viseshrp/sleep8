@@ -25,7 +25,7 @@ When the user **arms** the app (button or Quick Settings tile), the app watches 
 - Night window: **fixed** start/end time configured by user.
 - Rescheduling: **latest screen-off wins** (keep updating the scheduled time until confirmed).
 - Confirm rule: only commit when **screen remains OFF for 20 minutes** after an OFF event.
-- Alarm ownership: **app-owned** exact alarm via `AlarmManager.setAlarmClock` → receiver → foreground ringing service → lockscreen full-screen activity or in-use overlay.
+- Alarm ownership: **app-owned** exact alarm via `AlarmManager.setAlarmClock` → receiver → foreground ringing service + high-priority alarm notification with full-screen intent.
 - **Single active alarm**: at most one scheduled (not fired) alarm exists at any time.
 - Duration: **configurable**, default **8h 0m** (480 minutes).
 - Duration UI is **always hours + minutes inputs**. Never minutes-only; never hours-only.
@@ -58,7 +58,6 @@ When the user **arms** the app (button or Quick Settings tile), the app watches 
   - Exact alarm capability (Android 12+)
   - Notifications permission (Android 13+)
   - Battery optimization exclusion
-  - Optional overlay permission
 
 ### 5.2 Arming
 Two entry points:
@@ -92,15 +91,15 @@ When the screen has remained OFF for 20 minutes since the latest OFF event:
 
 ### 5.5 Alarm firing
 - `AlarmManager` delivers to `AlarmReceiver`.
-- Receiver starts `AlarmRingingService` (foreground). Service presents lockscreen full-screen activity when device is locked/screen-off and uses overlay when the device is already in use.
+- Receiver starts `AlarmRingingService` (foreground). Service posts a high-priority ringing notification with full-screen intent and presents lockscreen activity when needed.
 - Alarm UI shows over lock screen, turns screen on, and rings until dismissed.
 - Ringing UI is AOSP Clock-like: full-screen, large current time, subtle label, alarm info line, one sticky bottom **Dismiss** action, no app bar or nav chrome.
-- Overlay page is shown when the device is in use and `SYSTEM_ALERT_WINDOW` permission is granted. Otherwise full-screen activity is used.
+- While device is in use/unlocked, the canonical entry surface is the ringing notification (heads-up when allowed), which opens the same ringing activity.
 - When an alarm is accepted as fired, `last_screen_off_ts` is cleared immediately.
 
 ### 5.6 Dismiss
 - **Dismiss** stops audio/vibration, stops the foreground service, records `dismissed_at` in DB.
-- Dismiss behavior is identical for overlay and full-screen activity presentations.
+- Dismiss behavior is identical from notification action and ringing activity.
 - Dismiss also clears `last_screen_off_ts` (idempotent with fire-path clearing).
 
 ### 5.10 App Icon
@@ -183,7 +182,7 @@ Use `AlarmManager.setAlarmClock(AlarmClockInfo(triggerAt, showIntent), operation
 - UI is AOSP-like: large time, subtle label, alarm info, sticky red **Dismiss** action.
 - Alarm uses `AudioManager.STREAM_ALARM` semantics with looping sound and repeating vibration.
 - Foreground service runs **only while ringing**.
-- In-use overlay (permission granted) shows the same ringing UI while ringing.
+- In-use behavior is notification-first; tapping the ringing notification opens the same ringing UI.
 
 ### 7.3 Best-effort OS integration
 - Handle `AlarmClock.ACTION_SHOW_ALARMS` to open the app’s alarm history screen.
@@ -205,8 +204,6 @@ Use `AlarmManager.setAlarmClock(AlarmClockInfo(triggerAt, showIntent), operation
   - `SCHEDULE_EXACT_ALARM` (or request capability flow as required)
 - Notifications (Android 13+):
   - `POST_NOTIFICATIONS` (runtime request once)
-- Optional overlay:
-  - `SYSTEM_ALERT_WINDOW` (only if user enables overlay)
 
 ### 8.2 Battery optimization
 - Provide guided UI to request the user to exclude the app from battery optimizations.
@@ -225,7 +222,7 @@ Tables:
 - `night_end` (HH:MM, default 04:00)
 - `confirm_off_minutes` (default 20)
 - `alarm_duration_minutes` (0-720, default 480)
-- `overlay_enabled` (bool, default false)
+- `overlay_enabled` (legacy bool; no longer user-configurable)
 - `armed_default` (bool, default false)
 
 #### `alarm_records`
@@ -243,7 +240,7 @@ Tables:
 - `canceled_reason` (enum: REPLACED_BY_NEW_ALARM | USER_DISARM | USER_TOGGLE_OFF | REBOOT_CLEANUP)
 - `fired_at` (timestamp nullable)
 - `dismissed_at` (timestamp nullable)
-- `overlay_used` (bool)
+- `overlay_used` (legacy bool; remains false in current flow)
 - `activity_presented` (bool)
 
 #### `monitoring_start_events`

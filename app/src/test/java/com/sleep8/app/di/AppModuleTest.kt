@@ -137,7 +137,8 @@ class AppModuleTest {
             settingsRepository,
             nightWindowScheduler,
             confirmOffScheduler,
-            reliabilityManager
+            reliabilityManager,
+            notificationHelper
         )
         val alarmScheduler = AppModule.provideAlarmScheduler(
             appContext,

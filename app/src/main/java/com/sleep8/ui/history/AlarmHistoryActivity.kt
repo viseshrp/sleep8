@@ -50,6 +50,7 @@ import com.sleep8.util.AlarmIntents
 import com.sleep8.util.TimeUtils
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 
 @AndroidEntryPoint
 class AlarmHistoryActivity : AppCompatActivity() {
@@ -102,10 +103,11 @@ internal fun AlarmHistoryScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showClearConfirmDialog by remember { mutableStateOf(false) }
+    var hasUserScrolled by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
-    val shouldLoadMore by remember(uiState.hasMore, uiState.isLoadingMore) {
+    val shouldLoadMore by remember(uiState.hasMore, uiState.isLoadingMore, hasUserScrolled) {
         derivedStateOf {
-            if (!uiState.hasMore || uiState.isLoadingMore || !listState.isScrollInProgress) {
+            if (!hasUserScrolled || !uiState.hasMore || uiState.isLoadingMore) {
                 false
             } else {
                 val layoutInfo = listState.layoutInfo
@@ -115,7 +117,13 @@ internal fun AlarmHistoryScreen(
         }
     }
 
-    LaunchedEffect(shouldLoadMore) {
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.isScrollInProgress }
+            .first { it }
+        hasUserScrolled = true
+    }
+
+    LaunchedEffect(Unit) {
         snapshotFlow { shouldLoadMore }
             .distinctUntilChanged()
             .collect { shouldLoad ->
