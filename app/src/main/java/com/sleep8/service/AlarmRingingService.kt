@@ -47,6 +47,9 @@ class AlarmRingingService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val incomingAlarmId = intent?.getLongExtra(Constants.EXTRA_ALARM_ID, -1L) ?: -1L
         if (incomingAlarmId > 0) {
+            if (alarmId > 0 && alarmId != incomingAlarmId) {
+                stopRinging()
+            }
             alarmId = incomingAlarmId
         } else if (alarmId <= 0) {
             alarmId = appPreferences.activeAlarmId

@@ -5,10 +5,13 @@ import android.content.Intent
 import com.sleep8.data.preferences.AppPreferences
 import com.sleep8.data.repository.AlarmRepository
 import com.sleep8.data.repository.SettingsRepository
+import com.sleep8.domain.model.Settings
 import com.sleep8.domain.state.StateHolder
 import com.sleep8.service.notification.NotificationHelper
+import com.sleep8.service.overlay.AlarmOverlayController
 import com.sleep8.testutil.InMemorySharedPreferences
 import com.sleep8.util.Constants
+import io.mockk.coEvery
 import io.mockk.mockk
 import io.mockk.verify
 import org.junit.Assert.assertEquals
@@ -21,6 +24,44 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33])
 class AlarmRingingServiceTest {
+
+    @Test
+    fun `new alarm id stops currently ringing resources`() {
+        val oldRinger = mockk<AlarmRinger>(relaxed = true)
+        val oldOverlay = mockk<AlarmOverlayController>(relaxed = true)
+        val settingsRepository = mockk<SettingsRepository>()
+        coEvery { settingsRepository.getSettings() } returns Settings(
+            nightStart = "22:30",
+            nightEnd = "04:00",
+            confirmOffMinutes = 10,
+            alarmDurationMinutes = 480,
+            overlayEnabled = false,
+            armedDefault = false
+        )
+
+        val controller = Robolectric.buildService(AlarmRingingService::class.java).create()
+        val service = controller.get()
+        service.stateHolder = mockk<StateHolder>(relaxed = true)
+        service.alarmRepository = mockk<AlarmRepository>(relaxed = true)
+        service.settingsRepository = settingsRepository
+        service.appPreferences = AppPreferences(InMemorySharedPreferences())
+        service.notificationHelper = NotificationHelper(service)
+
+        setPrivateField(service, "alarmId", 100L)
+        setPrivateField(service, "ringer", oldRinger)
+        setPrivateField(service, "overlayController", oldOverlay)
+
+        val ringIntent = Intent(service, AlarmRingingService::class.java).apply {
+            action = Constants.ACTION_ALARM_RING
+            putExtra(Constants.EXTRA_ALARM_ID, 200L)
+        }
+
+        service.onStartCommand(ringIntent, 0, 0)
+
+        verify(exactly = 1) { oldRinger.stop() }
+        verify(exactly = 1) { oldOverlay.dismiss() }
+        assertEquals(200L, privateLongField(service, "alarmId"))
+    }
 
     @Test
     fun `ring action without valid alarm id is ignored`() {
@@ -59,5 +100,17 @@ class AlarmRingingServiceTest {
         service.onStartCommand(dismissIntent, 0, 0)
 
         verify(exactly = 1) { stateHolder.clearLastScreenOffTs() }
+    }
+
+    private fun setPrivateField(target: Any, fieldName: String, value: Any?) {
+        val field = target::class.java.getDeclaredField(fieldName)
+        field.isAccessible = true
+        field.set(target, value)
+    }
+
+    private fun privateLongField(target: Any, fieldName: String): Long {
+        val field = target::class.java.getDeclaredField(fieldName)
+        field.isAccessible = true
+        return field.getLong(target)
     }
 }
