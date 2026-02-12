@@ -102,6 +102,25 @@ class AlarmRingingServiceTest {
         verify(exactly = 1) { stateHolder.clearLastScreenOffTs() }
     }
 
+    @Test
+    fun `dismiss action without alarm id is ignored`() {
+        val stateHolder = mockk<StateHolder>(relaxed = true)
+        val controller = Robolectric.buildService(AlarmRingingService::class.java).create()
+        val service = controller.get()
+        service.stateHolder = stateHolder
+        service.alarmRepository = mockk<AlarmRepository>(relaxed = true)
+        service.settingsRepository = mockk<SettingsRepository>(relaxed = true)
+        service.appPreferences = AppPreferences(InMemorySharedPreferences())
+        service.notificationHelper = NotificationHelper(service)
+
+        val dismissIntent = Intent(service, AlarmRingingService::class.java).apply {
+            action = Constants.ACTION_ALARM_DISMISS
+        }
+        service.onStartCommand(dismissIntent, 0, 0)
+
+        verify(exactly = 0) { stateHolder.clearLastScreenOffTs() }
+    }
+
     private fun setPrivateField(target: Any, fieldName: String, value: Any?) {
         val field = target::class.java.getDeclaredField(fieldName)
         field.isAccessible = true

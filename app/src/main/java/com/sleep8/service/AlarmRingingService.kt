@@ -45,22 +45,32 @@ class AlarmRingingService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        val action = intent?.action
         val incomingAlarmId = intent?.getLongExtra(Constants.EXTRA_ALARM_ID, -1L) ?: -1L
-        if (incomingAlarmId > 0) {
-            if (alarmId > 0 && alarmId != incomingAlarmId) {
-                stopRinging()
-            }
-            alarmId = incomingAlarmId
-        } else if (alarmId <= 0) {
-            alarmId = appPreferences.activeAlarmId
-        }
 
-        when (intent?.action) {
+        when (action) {
             Constants.ACTION_ALARM_DISMISS -> {
+                if (incomingAlarmId <= 0) {
+                    Log.w("AlarmRingingService", "Ignoring dismiss action without a valid alarm id.")
+                    return START_NOT_STICKY
+                }
+                if (alarmId > 0 && incomingAlarmId != alarmId) {
+                    Log.w("AlarmRingingService", "Ignoring dismiss action for stale alarm id=$incomingAlarmId")
+                    return START_NOT_STICKY
+                }
+                alarmId = incomingAlarmId
                 handleDismiss()
                 return START_NOT_STICKY
             }
             Constants.ACTION_ALARM_RING, null -> {
+                if (incomingAlarmId > 0) {
+                    if (alarmId > 0 && alarmId != incomingAlarmId) {
+                        stopRinging()
+                    }
+                    alarmId = incomingAlarmId
+                } else if (alarmId <= 0) {
+                    alarmId = appPreferences.activeAlarmId
+                }
                 if (alarmId <= 0) {
                     Log.w("AlarmRingingService", "Cannot start ringing without a valid alarm id.")
                     stopSelf()
@@ -199,7 +209,7 @@ class AlarmRingingService : Service() {
         }
         return android.app.PendingIntent.getService(
             this,
-            Constants.PENDING_INTENT_REQUEST_ALARM_ACTION,
+            Constants.PENDING_INTENT_REQUEST_ALARM_RINGING_DISMISS,
             intent,
             android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE
         )
@@ -214,12 +224,10 @@ class AlarmRingingService : Service() {
             ContextCompat.startForegroundService(context, intent)
         }
 
-        fun stop(context: Context, alarmId: Long = -1L) {
+        fun stop(context: Context, alarmId: Long) {
             val intent = Intent(context, AlarmRingingService::class.java).apply {
                 action = Constants.ACTION_ALARM_DISMISS
-                if (alarmId > 0) {
-                    putExtra(Constants.EXTRA_ALARM_ID, alarmId)
-                }
+                putExtra(Constants.EXTRA_ALARM_ID, alarmId)
             }
             ContextCompat.startForegroundService(context, intent)
         }

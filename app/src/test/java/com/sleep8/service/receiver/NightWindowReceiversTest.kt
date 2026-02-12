@@ -45,6 +45,7 @@ class NightWindowReceiversTest {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
         shadowOf(powerManager).setIsInteractive(false)
+        val expectedScreenStillOff = !powerManager.isInteractive
 
         val repo = mockk<SettingsRepository>()
         coEvery { repo.getSettings() } returns Settings(
@@ -74,7 +75,7 @@ class NightWindowReceiversTest {
         coVerify(timeout = 1000) {
             reliabilityManager.onTrigger(context, MonitoringTriggerSource.NIGHT_WINDOW_BOUNDARY_ALARM)
         }
-        coVerify(timeout = 1000) { manager.resumePendingConfirmationIfEligible(true) }
+        coVerify(timeout = 1000) { manager.resumePendingConfirmationIfEligible(expectedScreenStillOff) }
     }
 
     @Test

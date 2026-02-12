@@ -148,7 +148,7 @@ class AlarmRingingActivity : AppCompatActivity() {
             }
             return PendingIntent.getActivity(
                 context,
-                Constants.PENDING_INTENT_REQUEST_ALARM_ACTION,
+                Constants.PENDING_INTENT_REQUEST_ALARM_RINGING_ACTIVITY,
                 intent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
