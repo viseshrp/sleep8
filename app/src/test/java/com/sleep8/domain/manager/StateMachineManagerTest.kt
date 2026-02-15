@@ -25,6 +25,9 @@ import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.Instant
@@ -252,6 +255,7 @@ class StateMachineManagerTest {
 
         assertEquals(AppState.ARMED_PENDING_CONFIRM, manager.currentState)
         verify { confirmScheduler.scheduleConfirmationAt(any(), any()) }
+        coVerify(exactly = 0) { alarmRepository.getLatestScheduledRecord() }
     }
 
     @Test
@@ -265,6 +269,8 @@ class StateMachineManagerTest {
 
         assertEquals(AppState.DISARMED, manager.currentState)
         assertEquals(-1L, stateHolder.pendingCandidateScreenOffTs.value)
+        assertNull(stateHolder.activeSession.value)
+        assertFalse(prefs.armed)
     }
 
     @Test
@@ -286,6 +292,8 @@ class StateMachineManagerTest {
 
         coVerify { sessionRepository.endSession(21L, any()) }
         assertEquals(AppState.DISARMED, manager.currentState)
+        assertNull(stateHolder.activeSession.value)
+        assertFalse(prefs.armed)
     }
 
     @Test
@@ -300,6 +308,8 @@ class StateMachineManagerTest {
         manager.reconcileFromPersistentState(mockk(relaxed = true))
 
         assertEquals(AppState.ARMED_ALARM_SET, manager.currentState)
+        assertEquals(33L, stateHolder.activeSession.value?.id)
+        assertTrue(prefs.armed)
     }
 
     @Test
@@ -314,6 +324,8 @@ class StateMachineManagerTest {
         manager.reconcileFromPersistentState(mockk(relaxed = true))
 
         assertEquals(AppState.ARMED_IDLE, manager.currentState)
+        assertEquals(40L, stateHolder.activeSession.value?.id)
+        assertTrue(prefs.armed)
     }
 
     @Test
