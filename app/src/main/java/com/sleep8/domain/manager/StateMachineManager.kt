@@ -1,5 +1,7 @@
 package com.sleep8.domain.manager
 
+import android.content.Context
+import android.os.PowerManager
 import com.sleep8.data.preferences.AppPreferences
 import com.sleep8.data.repository.AlarmRepository
 import com.sleep8.data.repository.SettingsRepository
@@ -28,6 +30,47 @@ class StateMachineManager(
 
     val pendingCandidateTime: Instant?
         get() = stateHolder.pendingCandidateScreenOffTs.value.takeIf { it > 0 }?.let { Instant.ofEpochMilli(it) }
+
+    suspend fun reconcileFromPersistentState(context: Context) {
+        val now = System.currentTimeMillis()
+        val session = stateHolder.activeSession.value ?: sessionRepository.getActiveSession()
+        if (session == null) {
+            stateHolder.setActiveSession(null)
+            stateHolder.setArmed(false)
+            stateHolder.clearPendingCandidate()
+            stateHolder.setState(AppState.DISARMED)
+            return
+        }
+
+        if (now > session.windowEndTs) {
+            sessionRepository.endSession(session.id, now)
+            stateHolder.setActiveSession(null)
+            stateHolder.setArmed(false)
+            stateHolder.clearPendingCandidate()
+            stateHolder.setState(AppState.DISARMED)
+            return
+        }
+
+        stateHolder.setActiveSession(session)
+        if (stateHolder.state.value == AppState.DISARMED) {
+            stateHolder.setArmed(true)
+        }
+
+        val pendingDeadlineTs = stateHolder.pendingConfirmDeadlineTs.value
+        if (stateHolder.pendingCandidateScreenOffTs.value > 0 && pendingDeadlineTs > 0) {
+            val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+            val screenStillOff = !powerManager.isInteractive
+            resumePendingConfirmationIfEligible(screenStillOff)
+            return
+        }
+
+        val latestScheduled = alarmRepository.getLatestScheduledRecord()
+        if (latestScheduled != null && latestScheduled.sessionId == session.id) {
+            stateHolder.setState(AppState.ARMED_ALARM_SET)
+        } else {
+            stateHolder.setState(AppState.ARMED_IDLE)
+        }
+    }
 
     suspend fun onScreenOff(screenOffTime: Instant) {
         if (currentState == AppState.DISARMED) return

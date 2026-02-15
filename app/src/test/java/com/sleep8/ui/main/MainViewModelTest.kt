@@ -6,6 +6,7 @@ import com.sleep8.data.repository.AlarmRepository
 import com.sleep8.data.repository.SettingsRepository
 import com.sleep8.domain.manager.ArmManager
 import com.sleep8.domain.manager.MonitoringReliabilityManager
+import com.sleep8.domain.manager.StateMachineManager
 import com.sleep8.domain.model.AlarmRecord
 import com.sleep8.domain.model.AlarmSource
 import com.sleep8.domain.model.AlarmStatus
@@ -41,6 +42,7 @@ class MainViewModelTest {
 
     private val armManager = mockk<ArmManager>(relaxed = true)
     private val reliabilityManager = mockk<MonitoringReliabilityManager>(relaxed = true)
+    private val stateMachineManager = mockk<StateMachineManager>(relaxed = true)
     private val alarmRepository = mockk<AlarmRepository>(relaxed = true)
     private val settingsRepository = mockk<SettingsRepository>(relaxed = true)
     private val context = mockk<Context>(relaxed = true)
@@ -88,6 +90,7 @@ class MainViewModelTest {
         val viewModel = MainViewModel(
             armManager = armManager,
             monitoringReliabilityManager = reliabilityManager,
+            stateMachineManager = stateMachineManager,
             stateHolder = stateHolder,
             alarmRepository = alarmRepository,
             settingsRepository = settingsRepository,
@@ -116,6 +119,7 @@ class MainViewModelTest {
         val viewModel = MainViewModel(
             armManager = armManager,
             monitoringReliabilityManager = reliabilityManager,
+            stateMachineManager = stateMachineManager,
             stateHolder = stateHolder,
             alarmRepository = alarmRepository,
             settingsRepository = settingsRepository,
@@ -141,6 +145,7 @@ class MainViewModelTest {
         val viewModel = MainViewModel(
             armManager = armManager,
             monitoringReliabilityManager = reliabilityManager,
+            stateMachineManager = stateMachineManager,
             stateHolder = stateHolder,
             alarmRepository = alarmRepository,
             settingsRepository = settingsRepository,
@@ -165,6 +170,7 @@ class MainViewModelTest {
         val viewModel = MainViewModel(
             armManager = armManager,
             monitoringReliabilityManager = reliabilityManager,
+            stateMachineManager = stateMachineManager,
             stateHolder = stateHolder,
             alarmRepository = alarmRepository,
             settingsRepository = settingsRepository,
@@ -201,6 +207,7 @@ class MainViewModelTest {
         val viewModel = MainViewModel(
             armManager = armManager,
             monitoringReliabilityManager = reliabilityManager,
+            stateMachineManager = stateMachineManager,
             stateHolder = stateHolder,
             alarmRepository = alarmRepository,
             settingsRepository = settingsRepository,

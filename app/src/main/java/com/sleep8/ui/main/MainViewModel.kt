@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sleep8.domain.manager.ArmManager
 import com.sleep8.domain.manager.MonitoringReliabilityManager
+import com.sleep8.domain.manager.StateMachineManager
 import com.sleep8.domain.model.AppState
 import com.sleep8.domain.state.StateHolder
 import com.sleep8.util.PermissionUtils
@@ -25,6 +26,7 @@ import javax.inject.Inject
 class MainViewModel @Inject constructor(
     private val armManager: ArmManager,
     private val monitoringReliabilityManager: MonitoringReliabilityManager,
+    private val stateMachineManager: StateMachineManager,
     private val stateHolder: StateHolder,
     private val alarmRepository: com.sleep8.data.repository.AlarmRepository,
     private val settingsRepository: com.sleep8.data.repository.SettingsRepository,
@@ -40,6 +42,7 @@ class MainViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
+            stateMachineManager.reconcileFromPersistentState(context)
             monitoringReliabilityManager.reconcileOnForeground(context)
             updateState(forceRefreshLatestAlarm = true)
             _startupReady.value = true
@@ -120,12 +123,7 @@ class MainViewModel @Inject constructor(
             else -> ""
         }
 
-        val effectiveState = if (state == AppState.ARMED_IDLE && pendingRemaining > 0) {
-            AppState.ARMED_PENDING_CONFIRM
-        } else {
-            state
-        }
-        val statusText = when (effectiveState) {
+        val statusText = when (state) {
             AppState.DISARMED -> "Disarmed"
             AppState.ARMED_IDLE -> "Armed"
             AppState.ARMED_PENDING_CONFIRM -> "Confirming screen off"
@@ -160,6 +158,7 @@ class MainViewModel @Inject constructor(
 
     fun refreshOnResume() {
         viewModelScope.launch {
+            stateMachineManager.reconcileFromPersistentState(context)
             monitoringReliabilityManager.reconcileOnForeground(context)
             updateState(forceRefreshLatestAlarm = true)
         }

@@ -1,5 +1,7 @@
 package com.sleep8.domain.manager
 
+import android.content.Context
+import android.os.PowerManager
 import com.sleep8.data.preferences.AppPreferences
 import com.sleep8.data.repository.AlarmRepository
 import com.sleep8.data.repository.SettingsRepository
@@ -15,6 +17,7 @@ import com.sleep8.domain.state.StateHolder
 import com.sleep8.testutil.InMemorySharedPreferences
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.test.runTest
@@ -225,5 +228,24 @@ class StateMachineManagerTest {
 
         assertEquals(AppState.ARMED_PENDING_CONFIRM, manager.currentState)
         coVerify { sessionRepository.insertScreenEvent(99L, ScreenEventType.SCREEN_OFF, any()) }
+    }
+
+    @Test
+    fun `reconcile from persistent state restores pending confirm when confirmation is still pending`() = runTest {
+        val now = System.currentTimeMillis()
+        val session = ArmSession(7L, 0L, null, now - 60_000L, now + 60 * 60_000L, ArmSource.APP_BUTTON)
+        stateHolder.setActiveSession(null)
+        stateHolder.setState(AppState.ARMED_IDLE)
+        stateHolder.setPendingCandidate(now - 30_000L, now + 120_000L)
+        coEvery { sessionRepository.getActiveSession() } returns session
+        val context = mockk<Context>()
+        val powerManager = mockk<PowerManager>()
+        every { context.getSystemService(Context.POWER_SERVICE) } returns powerManager
+        every { powerManager.isInteractive } returns false
+
+        manager.reconcileFromPersistentState(context)
+
+        assertEquals(AppState.ARMED_PENDING_CONFIRM, manager.currentState)
+        verify { confirmScheduler.scheduleConfirmationAt(any(), any()) }
     }
 }
