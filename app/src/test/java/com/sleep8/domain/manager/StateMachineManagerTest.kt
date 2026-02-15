@@ -7,6 +7,7 @@ import com.sleep8.data.repository.SessionRepository
 import com.sleep8.domain.model.AppState
 import com.sleep8.domain.model.ArmSession
 import com.sleep8.domain.model.ArmSource
+import com.sleep8.domain.model.ScreenEventType
 import com.sleep8.domain.model.Settings
 import com.sleep8.domain.scheduler.ConfirmOffScheduler
 import com.sleep8.domain.scheduler.AlarmScheduler
@@ -45,7 +46,8 @@ class StateMachineManagerTest {
         sessionRepository = sessionRepository,
         alarmRepository = alarmRepository,
         confirmOffScheduler = confirmScheduler,
-        alarmScheduler = alarmScheduler
+        alarmScheduler = alarmScheduler,
+        appPreferences = prefs
     )
 
     private suspend fun setupSession() {
@@ -203,5 +205,25 @@ class StateMachineManagerTest {
 
         assertEquals(AppState.ARMED_IDLE, manager.currentState)
         verify(exactly = 0) { confirmScheduler.scheduleConfirmationAt(any(), any()) }
+    }
+
+    @Test
+    fun `screen off uses persisted active session id when in-memory session is missing`() = runTest {
+        stateHolder.setActiveSession(null)
+        stateHolder.setState(AppState.ARMED_IDLE)
+        prefs.activeSessionId = 99L
+        coEvery { settingsRepository.getSettings() } returns Settings(
+            nightStart = "22:00",
+            nightEnd = "08:00",
+            confirmOffMinutes = 10,
+            alarmDurationMinutes = 480,
+            overlayEnabled = false,
+            armedDefault = false
+        )
+
+        manager.onScreenOff(Instant.parse("2024-01-15T23:00:00Z"))
+
+        assertEquals(AppState.ARMED_PENDING_CONFIRM, manager.currentState)
+        coVerify { sessionRepository.insertScreenEvent(99L, ScreenEventType.SCREEN_OFF, any()) }
     }
 }

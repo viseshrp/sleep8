@@ -57,12 +57,20 @@ class MainViewModel @Inject constructor(
         val pendingDeadline = stateHolder.pendingConfirmDeadlineTs.value
         val now = System.currentTimeMillis()
         val pendingRemaining = if (pendingDeadline > 0) pendingDeadline - now else 0L
+        val settings = settingsRepository.getSettings()
+        val nowLocal = LocalDateTime.now()
+        val nightStart = TimeUtils.parseLocalTime(settings.nightStart)
+        val nightEnd = TimeUtils.parseLocalTime(settings.nightEnd)
+        val inNightWindow = TimeUtils.isInWindow(nowLocal.toLocalTime(), nightStart, nightEnd)
+
         if (forceRefreshLatestAlarm || latestAlarm == null || now - latestAlarmRefreshAt >= LATEST_ALARM_REFRESH_MS) {
             latestAlarm = alarmRepository.getLatestScheduledRecord()
             latestAlarmRefreshAt = now
         }
 
-        val armedUntilText = stateHolder.activeSession.value?.windowEndTs?.takeIf { it > 0 }?.let {
+        val armedUntilTs = stateHolder.activeSession.value?.windowEndTs?.takeIf { it > 0 }
+            ?: if (armed) TimeUtils.calculateNextWindow(nowLocal, nightStart, nightEnd).endTs else null
+        val armedUntilText = armedUntilTs?.let {
             TimeUtils.formatAlarmTime(TimeUtils.toLocalTime(it))
         }.orEmpty()
 
@@ -97,12 +105,6 @@ class MainViewModel @Inject constructor(
         } else {
             ""
         }
-        val settings = settingsRepository.getSettings()
-        val inNightWindow = TimeUtils.isInWindow(
-            LocalDateTime.now().toLocalTime(),
-            TimeUtils.parseLocalTime(settings.nightStart),
-            TimeUtils.parseLocalTime(settings.nightEnd)
-        )
         val monitoringActive = PermissionUtils.isServiceRunning(context, com.sleep8.service.NightMonitorService::class.java)
         val monitoringHealthText = when {
             !armed || !inNightWindow -> "Healthy (not required now)"
@@ -118,7 +120,12 @@ class MainViewModel @Inject constructor(
             else -> ""
         }
 
-        val statusText = when (state) {
+        val effectiveState = if (state == AppState.ARMED_IDLE && pendingRemaining > 0) {
+            AppState.ARMED_PENDING_CONFIRM
+        } else {
+            state
+        }
+        val statusText = when (effectiveState) {
             AppState.DISARMED -> "Disarmed"
             AppState.ARMED_IDLE -> "Armed"
             AppState.ARMED_PENDING_CONFIRM -> "Confirming screen off"

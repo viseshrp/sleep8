@@ -21,6 +21,7 @@ fun StatusCard(
     status: String,
     armedUntil: String,
     lastScreenOff: String,
+    monitoringHealthText: String,
     latestAlarmText: String,
     latestAlarmSubtitle: String,
     notificationWarningText: String,
@@ -46,6 +47,9 @@ fun StatusCard(
             }
             if (lastScreenOff.isNotBlank()) {
                 KeyValueRow(label = "Last screen off", value = lastScreenOff)
+            }
+            if (monitoringHealthText.isNotBlank()) {
+                KeyValueRow(label = "Monitoring", value = monitoringHealthText)
             }
             if (latestAlarmText.isNotBlank()) {
                 KeyValueRow(label = "Latest alarm", value = latestAlarmText)

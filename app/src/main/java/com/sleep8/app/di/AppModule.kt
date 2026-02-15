@@ -152,7 +152,8 @@ object AppModule {
         sessionRepository: SessionRepository,
         alarmRepository: AlarmRepository,
         confirmOffScheduler: ConfirmOffScheduler,
-        alarmScheduler: AlarmScheduler
+        alarmScheduler: AlarmScheduler,
+        appPreferences: AppPreferences
     ): StateMachineManager {
         return StateMachineManager(
             stateHolder,
@@ -160,7 +161,8 @@ object AppModule {
             sessionRepository,
             alarmRepository,
             confirmOffScheduler,
-            alarmScheduler
+            alarmScheduler,
+            appPreferences
         )
     }
 

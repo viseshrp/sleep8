@@ -265,6 +265,7 @@ internal fun MainContent(
                         status = uiState.statusText,
                         armedUntil = uiState.armedUntilText,
                         lastScreenOff = uiState.lastScreenOffText,
+                        monitoringHealthText = uiState.monitoringHealthText,
                         latestAlarmText = uiState.latestAlarmText,
                         latestAlarmSubtitle = uiState.latestAlarmSubtitle,
                         notificationWarningText = uiState.notificationWarningText,

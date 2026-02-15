@@ -100,6 +100,17 @@ class ArmManagerTest {
     }
 
     @Test
+    fun `disarm ends persisted session when in-memory active session is missing`() = runTest {
+        stateHolder.setActiveSession(null)
+        stateHolder.setArmed(true)
+        coEvery { sessionRepository.getActiveSession() } returns ArmSession(44L, 0L, null, 0L, 0L, ArmSource.APP_BUTTON)
+
+        armManager.disarm()
+
+        coVerify { sessionRepository.endSession(44L, any()) }
+    }
+
+    @Test
     fun `arm when already armed is idempotent`() = runTest {
         stateHolder.setArmed(true)
         stateHolder.setActiveSession(ArmSession(1L, 0L, null, 0L, 0L, ArmSource.APP_BUTTON))

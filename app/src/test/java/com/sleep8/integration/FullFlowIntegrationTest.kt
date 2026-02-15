@@ -86,7 +86,15 @@ class FullFlowIntegrationTest {
             monitoringReliabilityManager,
             NotificationHelper(context)
         )
-        stateMachineManager = StateMachineManager(stateHolder, settingsRepository, sessionRepository, alarmRepository, confirmScheduler, alarmScheduler)
+        stateMachineManager = StateMachineManager(
+            stateHolder,
+            settingsRepository,
+            sessionRepository,
+            alarmRepository,
+            confirmScheduler,
+            alarmScheduler,
+            appPreferences
+        )
     }
 
     @After
