@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun StatusCard(
     status: String,
-    armedUntil: String,
+    windowEnds: String,
     lastScreenOff: String,
     monitoringHealthText: String,
     latestAlarmText: String,
@@ -42,8 +42,8 @@ fun StatusCard(
                 style = MaterialTheme.typography.headlineMedium
             )
 
-            if (armedUntil.isNotBlank()) {
-                KeyValueRow(label = "Armed until", value = armedUntil)
+            if (windowEnds.isNotBlank()) {
+                KeyValueRow(label = "Window ends", value = windowEnds)
             }
             if (lastScreenOff.isNotBlank()) {
                 KeyValueRow(label = "Last screen off", value = lastScreenOff)

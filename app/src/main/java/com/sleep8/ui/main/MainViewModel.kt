@@ -71,9 +71,9 @@ class MainViewModel @Inject constructor(
             latestAlarmRefreshAt = now
         }
 
-        val armedUntilTs = stateHolder.activeSession.value?.windowEndTs?.takeIf { it > 0 }
+        val windowEndsTs = stateHolder.activeSession.value?.windowEndTs?.takeIf { it > 0 }
             ?: if (armed) TimeUtils.calculateNextWindow(nowLocal, nightStart, nightEnd).endTs else null
-        val armedUntilText = armedUntilTs?.let {
+        val windowEndsText = windowEndsTs?.let {
             TimeUtils.formatAlarmTime(TimeUtils.toLocalTime(it))
         }.orEmpty()
 
@@ -133,7 +133,7 @@ class MainViewModel @Inject constructor(
         _uiState.value = MainUiState(
             armed = armed,
             statusText = statusText,
-            armedUntilText = armedUntilText,
+            windowEndsText = windowEndsText,
             lastScreenOffText = lastScreenOffText,
             latestAlarmText = latestAlarmText,
             latestAlarmSubtitle = latestAlarmSubtitle,
