@@ -6,6 +6,9 @@ import com.sleep8.data.preferences.AppPreferences
 import com.sleep8.data.repository.AlarmRepository
 import com.sleep8.data.repository.SettingsRepository
 import com.sleep8.data.repository.SessionRepository
+import com.sleep8.domain.model.AlarmRecord
+import com.sleep8.domain.model.AlarmSource
+import com.sleep8.domain.model.AlarmStatus
 import com.sleep8.domain.model.AppState
 import com.sleep8.domain.model.ArmSession
 import com.sleep8.domain.model.ArmSource
@@ -25,6 +28,8 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.Instant
+import java.time.ZoneOffset
+import java.time.LocalDateTime
 import java.util.TimeZone
 
 class StateMachineManagerTest {
@@ -247,5 +252,108 @@ class StateMachineManagerTest {
 
         assertEquals(AppState.ARMED_PENDING_CONFIRM, manager.currentState)
         verify { confirmScheduler.scheduleConfirmationAt(any(), any()) }
+    }
+
+    @Test
+    fun `reconcile from persistent state disarms when no active session exists`() = runTest {
+        stateHolder.setArmed(true)
+        stateHolder.setState(AppState.ARMED_PENDING_CONFIRM)
+        stateHolder.setPendingCandidate(10L, 20L)
+        coEvery { sessionRepository.getActiveSession() } returns null
+
+        manager.reconcileFromPersistentState(mockk(relaxed = true))
+
+        assertEquals(AppState.DISARMED, manager.currentState)
+        assertEquals(-1L, stateHolder.pendingCandidateScreenOffTs.value)
+    }
+
+    @Test
+    fun `reconcile from persistent state ends expired active session and disarms`() = runTest {
+        val now = System.currentTimeMillis()
+        val expired = ArmSession(
+            id = 21L,
+            armedAt = now - 4_000L,
+            disarmedAt = null,
+            windowStartTs = now - 3_000L,
+            windowEndTs = now - 1_000L,
+            source = ArmSource.APP_BUTTON
+        )
+        stateHolder.setActiveSession(null)
+        stateHolder.setArmed(true)
+        coEvery { sessionRepository.getActiveSession() } returns expired
+
+        manager.reconcileFromPersistentState(mockk(relaxed = true))
+
+        coVerify { sessionRepository.endSession(21L, any()) }
+        assertEquals(AppState.DISARMED, manager.currentState)
+    }
+
+    @Test
+    fun `reconcile from persistent state restores armed alarm set when latest scheduled alarm belongs to session`() = runTest {
+        val now = System.currentTimeMillis()
+        val session = ArmSession(33L, now - 1_000L, null, now - 5_000L, now + 60_000L, ArmSource.APP_BUTTON)
+        stateHolder.setActiveSession(null)
+        stateHolder.setState(AppState.DISARMED)
+        coEvery { sessionRepository.getActiveSession() } returns session
+        coEvery { alarmRepository.getLatestScheduledRecord() } returns sampleAlarm(sessionId = 33L)
+
+        manager.reconcileFromPersistentState(mockk(relaxed = true))
+
+        assertEquals(AppState.ARMED_ALARM_SET, manager.currentState)
+    }
+
+    @Test
+    fun `reconcile from persistent state restores armed idle when scheduled alarm belongs to another session`() = runTest {
+        val now = System.currentTimeMillis()
+        val session = ArmSession(40L, now - 1_000L, null, now - 5_000L, now + 60_000L, ArmSource.APP_BUTTON)
+        stateHolder.setActiveSession(null)
+        stateHolder.setState(AppState.DISARMED)
+        coEvery { sessionRepository.getActiveSession() } returns session
+        coEvery { alarmRepository.getLatestScheduledRecord() } returns sampleAlarm(sessionId = 99L)
+
+        manager.reconcileFromPersistentState(mockk(relaxed = true))
+
+        assertEquals(AppState.ARMED_IDLE, manager.currentState)
+    }
+
+    @Test
+    fun `reconcile from persistent state resumes pending flow with screen on by clearing to idle`() = runTest {
+        val now = System.currentTimeMillis()
+        val session = ArmSession(51L, now - 1_000L, null, now - 5_000L, now + 60_000L, ArmSource.APP_BUTTON)
+        stateHolder.setActiveSession(null)
+        stateHolder.setState(AppState.ARMED_PENDING_CONFIRM)
+        stateHolder.setPendingCandidate(now - 10_000L, now + 60_000L)
+        coEvery { sessionRepository.getActiveSession() } returns session
+        val context = mockk<Context>()
+        val powerManager = mockk<PowerManager>()
+        every { context.getSystemService(Context.POWER_SERVICE) } returns powerManager
+        every { powerManager.isInteractive } returns true
+
+        manager.reconcileFromPersistentState(context)
+
+        assertEquals(AppState.ARMED_IDLE, manager.currentState)
+        verify(exactly = 0) { confirmScheduler.scheduleConfirmationAt(any(), any()) }
+    }
+
+    private fun sampleAlarm(sessionId: Long): AlarmRecord {
+        val triggerAt = LocalDateTime.of(2100, 1, 1, 7, 0).toInstant(ZoneOffset.UTC).toEpochMilli()
+        return AlarmRecord(
+            id = 1L,
+            sessionId = sessionId,
+            screenOffTs = triggerAt - 600_000L,
+            confirmedAt = triggerAt - 540_000L,
+            scheduledAt = triggerAt - 530_000L,
+            triggerAt = triggerAt,
+            durationUsedMinutes = 480,
+            alarmInstanceId = 1001L,
+            requestCode = 101,
+            source = AlarmSource.SLEEP_AUTOMATION,
+            status = AlarmStatus.SCHEDULED,
+            canceledReason = null,
+            firedAt = null,
+            dismissedAt = null,
+            overlayUsed = false,
+            activityPresented = false
+        )
     }
 }
