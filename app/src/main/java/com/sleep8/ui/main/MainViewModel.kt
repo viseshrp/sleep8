@@ -110,9 +110,9 @@ class MainViewModel @Inject constructor(
         }
         val monitoringActive = PermissionUtils.isServiceRunning(context, com.sleep8.service.NightMonitorService::class.java)
         val monitoringHealthText = when {
-            !armed || !inNightWindow -> "Healthy (not required now)"
-            monitoringActive -> "Healthy (monitoring active)"
-            else -> "Degraded (monitoring should be active)"
+            !armed || !inNightWindow -> "Healthy (idle)"
+            monitoringActive -> "Healthy (monitoring)"
+            else -> "Degraded"
         }
         val latestReason = monitoringReliabilityManager.latestReasonLabel()
         val reliabilityWarningText = when (latestReason) {
