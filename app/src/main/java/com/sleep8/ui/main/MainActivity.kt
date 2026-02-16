@@ -148,6 +148,7 @@ internal fun MainContent(
     onToggleAlarm: (Long, Boolean) -> Unit,
     onToggleArmed: () -> Unit
 ) {
+    val recentAlarmItems = alarmItems.take(1)
     val drawerState = androidx.compose.material3.rememberDrawerState(
         initialValue = androidx.compose.material3.DrawerValue.Closed
     )
@@ -276,14 +277,14 @@ internal fun MainContent(
 
                 item {
                     Text(
-                        text = "Alarm list",
+                        text = "Recent alarms",
                         style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier.padding(top = 8.dp, start = 4.dp)
                     )
                 }
 
                 item {
-                    if (alarmItems.isEmpty()) {
+                    if (recentAlarmItems.isEmpty()) {
                         Card(
                             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
                             shape = MaterialTheme.shapes.medium
@@ -298,8 +299,8 @@ internal fun MainContent(
                     }
                 }
 
-                if (alarmItems.isNotEmpty()) {
-                    itemsIndexed(alarmItems, key = { _, item -> item.id }) { _, item ->
+                if (recentAlarmItems.isNotEmpty()) {
+                    itemsIndexed(recentAlarmItems, key = { _, item -> item.id }) { _, item ->
                         Card(
                             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
                             shape = MaterialTheme.shapes.medium
