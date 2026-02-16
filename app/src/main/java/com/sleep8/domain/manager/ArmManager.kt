@@ -34,7 +34,10 @@ class ArmManager(
 
     suspend fun arm(source: ArmSource): Result<ArmSession> {
         if (stateHolder.state.value != com.sleep8.domain.model.AppState.DISARMED) {
-            return Result.success(stateHolder.activeSession.value ?: ArmSession(0, 0, null, 0, 0, source))
+            val existing = stateHolder.activeSession.value ?: sessionRepository.getActiveSession()?.also {
+                stateHolder.setActiveSession(it)
+            }
+            return Result.success(existing ?: ArmSession(0, 0, null, 0, 0, source))
         }
         stateHolder.clearLastScreenOffTs()
         val settings = settingsRepository.getSettings()
@@ -54,7 +57,7 @@ class ArmManager(
     }
 
     suspend fun disarm(source: ArmSource = ArmSource.APP_BUTTON): Result<Unit> {
-        val session = stateHolder.activeSession.value
+        val session = stateHolder.activeSession.value ?: sessionRepository.getActiveSession()
         if (session != null) {
             sessionRepository.endSession(session.id, System.currentTimeMillis())
         }

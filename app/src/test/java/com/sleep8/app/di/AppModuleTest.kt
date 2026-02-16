@@ -154,7 +154,8 @@ class AppModuleTest {
             sessionRepository,
             alarmRepository,
             confirmOffScheduler,
-            alarmScheduler
+            alarmScheduler,
+            appPreferences
         )
 
         assertSame(alarmManager, providedAlarmManager)

@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sleep8.domain.manager.ArmManager
 import com.sleep8.domain.manager.MonitoringReliabilityManager
+import com.sleep8.domain.manager.StateMachineManager
 import com.sleep8.domain.model.AppState
 import com.sleep8.domain.state.StateHolder
 import com.sleep8.util.PermissionUtils
@@ -25,6 +26,7 @@ import javax.inject.Inject
 class MainViewModel @Inject constructor(
     private val armManager: ArmManager,
     private val monitoringReliabilityManager: MonitoringReliabilityManager,
+    private val stateMachineManager: StateMachineManager,
     private val stateHolder: StateHolder,
     private val alarmRepository: com.sleep8.data.repository.AlarmRepository,
     private val settingsRepository: com.sleep8.data.repository.SettingsRepository,
@@ -40,6 +42,7 @@ class MainViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
+            stateMachineManager.reconcileFromPersistentState(context)
             monitoringReliabilityManager.reconcileOnForeground(context)
             updateState(forceRefreshLatestAlarm = true)
             _startupReady.value = true
@@ -57,12 +60,20 @@ class MainViewModel @Inject constructor(
         val pendingDeadline = stateHolder.pendingConfirmDeadlineTs.value
         val now = System.currentTimeMillis()
         val pendingRemaining = if (pendingDeadline > 0) pendingDeadline - now else 0L
+        val settings = settingsRepository.getSettings()
+        val nowLocal = LocalDateTime.now()
+        val nightStart = TimeUtils.parseLocalTime(settings.nightStart)
+        val nightEnd = TimeUtils.parseLocalTime(settings.nightEnd)
+        val inNightWindow = TimeUtils.isInWindow(nowLocal.toLocalTime(), nightStart, nightEnd)
+
         if (forceRefreshLatestAlarm || latestAlarm == null || now - latestAlarmRefreshAt >= LATEST_ALARM_REFRESH_MS) {
             latestAlarm = alarmRepository.getLatestScheduledRecord()
             latestAlarmRefreshAt = now
         }
 
-        val armedUntilText = stateHolder.activeSession.value?.windowEndTs?.takeIf { it > 0 }?.let {
+        val windowEndsTs = stateHolder.activeSession.value?.windowEndTs?.takeIf { it > 0 }
+            ?: if (armed) TimeUtils.calculateNextWindow(nowLocal, nightStart, nightEnd).endTs else null
+        val windowEndsText = windowEndsTs?.let {
             TimeUtils.formatAlarmTime(TimeUtils.toLocalTime(it))
         }.orEmpty()
 
@@ -97,17 +108,11 @@ class MainViewModel @Inject constructor(
         } else {
             ""
         }
-        val settings = settingsRepository.getSettings()
-        val inNightWindow = TimeUtils.isInWindow(
-            LocalDateTime.now().toLocalTime(),
-            TimeUtils.parseLocalTime(settings.nightStart),
-            TimeUtils.parseLocalTime(settings.nightEnd)
-        )
         val monitoringActive = PermissionUtils.isServiceRunning(context, com.sleep8.service.NightMonitorService::class.java)
         val monitoringHealthText = when {
-            !armed || !inNightWindow -> "Healthy (not required now)"
-            monitoringActive -> "Healthy (monitoring active)"
-            else -> "Degraded (monitoring should be active)"
+            !armed || !inNightWindow -> "Healthy (idle)"
+            monitoringActive -> "Healthy (monitoring)"
+            else -> "Degraded"
         }
         val latestReason = monitoringReliabilityManager.latestReasonLabel()
         val reliabilityWarningText = when (latestReason) {
@@ -128,7 +133,7 @@ class MainViewModel @Inject constructor(
         _uiState.value = MainUiState(
             armed = armed,
             statusText = statusText,
-            armedUntilText = armedUntilText,
+            windowEndsText = windowEndsText,
             lastScreenOffText = lastScreenOffText,
             latestAlarmText = latestAlarmText,
             latestAlarmSubtitle = latestAlarmSubtitle,
@@ -153,6 +158,7 @@ class MainViewModel @Inject constructor(
 
     fun refreshOnResume() {
         viewModelScope.launch {
+            stateMachineManager.reconcileFromPersistentState(context)
             monitoringReliabilityManager.reconcileOnForeground(context)
             updateState(forceRefreshLatestAlarm = true)
         }

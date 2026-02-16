@@ -263,8 +263,9 @@ internal fun MainContent(
                 item {
                     StatusCard(
                         status = uiState.statusText,
-                        armedUntil = uiState.armedUntilText,
+                        windowEnds = uiState.windowEndsText,
                         lastScreenOff = uiState.lastScreenOffText,
+                        monitoringHealthText = uiState.monitoringHealthText,
                         latestAlarmText = uiState.latestAlarmText,
                         latestAlarmSubtitle = uiState.latestAlarmSubtitle,
                         notificationWarningText = uiState.notificationWarningText,
