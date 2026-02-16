@@ -78,7 +78,7 @@ class MainContentTest {
             }
         }
 
-        composeRule.onNodeWithText("Alarm list").assertExists()
+        composeRule.onNodeWithText("Recent alarms").assertExists()
         composeRule.onNodeWithText("10:15").assertExists()
         composeRule.onNodeWithTag("alarm-toggle-1").performClick()
         composeRule.runOnIdle { assertEquals(1L to false, toggleCall) }

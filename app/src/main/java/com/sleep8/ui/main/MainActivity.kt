@@ -276,7 +276,7 @@ internal fun MainContent(
 
                 item {
                     Text(
-                        text = "Alarm list",
+                        text = "Recent alarms",
                         style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier.padding(top = 8.dp, start = 4.dp)
                     )

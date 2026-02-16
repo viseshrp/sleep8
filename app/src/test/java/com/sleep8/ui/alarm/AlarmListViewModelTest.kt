@@ -18,6 +18,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 
@@ -78,6 +79,23 @@ class AlarmListViewModelTest {
         val item = viewModel.uiState.value.items.first()
         assertFalse(item.toggleEnabled)
         assertTrue(item.enabled)
+    }
+
+    @Test
+    fun `refresh keeps only the most recent alarm`() = runTest {
+        val mostRecent = baseRecord(status = AlarmStatus.SCHEDULED, triggerAt = System.currentTimeMillis() + 60_000L)
+        val older = baseRecord(
+            status = AlarmStatus.CANCELED,
+            cancelReason = AlarmCancelReason.USER_TOGGLE_OFF,
+            triggerAt = System.currentTimeMillis() + 120_000L
+        ).copy(id = 2L)
+        coEvery { alarmRepository.getAllRecordsNewestFirst() } returns listOf(mostRecent, older)
+
+        val viewModel = AlarmListViewModel(alarmRepository, alarmScheduler)
+        advanceUntilIdle()
+
+        assertEquals(1, viewModel.uiState.value.items.size)
+        assertEquals(mostRecent.id, viewModel.uiState.value.items.first().id)
     }
 
     private fun baseRecord(

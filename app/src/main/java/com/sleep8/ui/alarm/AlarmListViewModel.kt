@@ -37,7 +37,7 @@ class AlarmListViewModel @Inject constructor(
                     record.status == AlarmStatus.SCHEDULED ||
                         (record.status == AlarmStatus.CANCELED && record.canceledReason == AlarmCancelReason.USER_TOGGLE_OFF)
                 }
-                .sortedBy { it.triggerAt }
+                .take(1)
                 .map { record ->
                     val isPast = record.triggerAt < now
                     AlarmListItem(
