@@ -71,8 +71,9 @@ class MainViewModel @Inject constructor(
             latestAlarmRefreshAt = now
         }
 
-        val windowEndsTs = stateHolder.activeSession.value?.windowEndTs?.takeIf { it > 0 }
-            ?: if (armed) TimeUtils.calculateNextWindow(nowLocal, nightStart, nightEnd).endTs else null
+        // Window end display should reflect the current schedule window, not historical session data.
+        // This keeps UI accurate even when the same armed session spans multiple nights.
+        val windowEndsTs = if (armed) TimeUtils.calculateNextWindow(nowLocal, nightStart, nightEnd).endTs else null
         val windowEndsText = windowEndsTs?.let {
             TimeUtils.formatAlarmTime(TimeUtils.toLocalTime(it))
         }.orEmpty()

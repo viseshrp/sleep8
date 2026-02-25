@@ -32,7 +32,6 @@ class StateMachineManager(
         get() = stateHolder.pendingCandidateScreenOffTs.value.takeIf { it > 0 }?.let { Instant.ofEpochMilli(it) }
 
     suspend fun reconcileFromPersistentState(context: Context) {
-        val now = System.currentTimeMillis()
         val session = stateHolder.activeSession.value ?: sessionRepository.getActiveSession()
         if (session == null) {
             stateHolder.setActiveSession(null)
@@ -42,16 +41,9 @@ class StateMachineManager(
             return
         }
 
-        if (now > session.windowEndTs) {
-            sessionRepository.endSession(session.id, now)
-            stateHolder.setActiveSession(null)
-            stateHolder.setArmed(false)
-            stateHolder.clearPendingCandidate()
-            stateHolder.setState(AppState.DISARMED)
-            return
-        }
-
         stateHolder.setActiveSession(session)
+        // Arming is manual-only. Crossing a night-window boundary must never auto-disarm the app.
+        // We keep the active session and simply restore runtime state from persisted data.
         if (stateHolder.state.value == AppState.DISARMED) {
             stateHolder.setArmed(true)
         }
