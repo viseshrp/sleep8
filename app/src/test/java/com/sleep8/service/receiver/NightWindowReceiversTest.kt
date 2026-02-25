@@ -6,6 +6,7 @@ import android.os.PowerManager
 import androidx.test.core.app.ApplicationProvider
 import com.sleep8.data.preferences.AppPreferences
 import com.sleep8.data.repository.SettingsRepository
+import com.sleep8.domain.manager.ArmManager
 import com.sleep8.domain.manager.StateMachineManager
 import com.sleep8.domain.model.AppState
 import com.sleep8.domain.model.MonitoringTriggerSource
@@ -87,12 +88,14 @@ class NightWindowReceiversTest {
         val service = mockk<ServiceController>(relaxed = true)
         val manager = mockk<StateMachineManager>(relaxed = true)
         val reliabilityManager = mockk<MonitoringReliabilityManager>(relaxed = true)
+        val armManager = mockk<ArmManager>(relaxed = true)
 
         val receiver = NightWindowEndReceiver().apply {
             this.stateHolder = stateHolder
             this.serviceController = service
             this.stateMachineManager = manager
             this.monitoringReliabilityManager = reliabilityManager
+            this.armManager = armManager
             this.dispatcher = Dispatchers.Default
         }
 
@@ -101,6 +104,7 @@ class NightWindowReceiversTest {
         verify(timeout = 1000) { service.stopNightMonitorService() }
         verify(timeout = 1000) { reliabilityManager.onNightWindowEnded() }
         coVerify(timeout = 1000) { manager.onNightWindowEnd() }
+        coVerify(timeout = 1000) { armManager.refreshNightWindowBoundariesIfArmed() }
     }
 
     @Test

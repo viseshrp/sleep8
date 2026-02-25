@@ -72,7 +72,7 @@ class BootReceiverTest {
     }
 
     @Test
-    fun `expired session on boot is ended and disarmed`() {
+    fun `expired session on boot stays armed and is not auto-disarmed`() {
         val now = System.currentTimeMillis()
         val session = ArmSession(1L, now - 5_000L, null, now - 120_000L, now - 60_000L, ArmSource.APP_BUTTON)
         coEvery { sessionRepository.getActiveSession() } returns session
@@ -89,8 +89,8 @@ class BootReceiverTest {
 
         runBlocking { receiver.handleBoot(context) }
 
-        coVerify(timeout = 1000) { sessionRepository.endSession(session.id, any()) }
-        org.junit.Assert.assertEquals(AppState.DISARMED, stateHolder.state.value)
+        coVerify(exactly = 0) { sessionRepository.endSession(any(), any()) }
+        org.junit.Assert.assertEquals(AppState.ARMED_IDLE, stateHolder.state.value)
     }
 
     @Test

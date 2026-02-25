@@ -38,6 +38,7 @@ User (Home / QS Tile)
 - `ArmManager`
   - Handles manual arm/disarm from app button and tile.
   - Maintains active arm session and schedules window boundaries.
+  - Alarm dismiss path does not modify armed state; only explicit arm/disarm controls do.
   - Night window only gates monitoring; it does not force disarm.
   - Clears session-scoped `lastScreenOffTs` on disarm and on new arm session start.
 

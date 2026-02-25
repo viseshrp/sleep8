@@ -43,6 +43,7 @@ Notes:
 - "Latest screen-off wins" before confirmation.
 - Duration `0` means ring immediately at confirmation time.
 - Manual disarm stops monitoring and pending confirmation, but does not cancel already scheduled alarms.
+- Dismissing a ringing alarm does not disarm Sleep8; armed/disarmed is manual-only.
 - Last screen-off indicator is session-scoped: it can remain visible across midnight and is cleared on fire, dismiss, disarm, and new arm session start.
 
 ## Architecture summary
