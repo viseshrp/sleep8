@@ -72,16 +72,9 @@ class BootReceiver : BroadcastReceiver() {
 
         val settings = settingsRepository.getSettings()
         val nowMs = System.currentTimeMillis()
-        if (nowMs > session.windowEndTs) {
-            sessionRepository.endSession(session.id, nowMs)
-            stateHolder.setActiveSession(null)
-            stateHolder.setArmed(false)
-            stateHolder.setState(AppState.DISARMED)
-            serviceController.stopNightMonitorService()
-            return
-        }
-
         stateHolder.setActiveSession(session)
+        // Keep arm/disarm semantics manual-only after reboot/time changes. The previous
+        // window may have ended, but that must not force disarm.
         stateHolder.setArmed(true)
         stateHolder.setState(AppState.ARMED_IDLE)
 

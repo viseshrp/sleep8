@@ -274,7 +274,7 @@ class StateMachineManagerTest {
     }
 
     @Test
-    fun `reconcile from persistent state ends expired active session and disarms`() = runTest {
+    fun `reconcile from persistent state keeps app armed even when stored window end is in the past`() = runTest {
         val now = System.currentTimeMillis()
         val expired = ArmSession(
             id = 21L,
@@ -290,10 +290,10 @@ class StateMachineManagerTest {
 
         manager.reconcileFromPersistentState(mockk(relaxed = true))
 
-        coVerify { sessionRepository.endSession(21L, any()) }
-        assertEquals(AppState.DISARMED, manager.currentState)
-        assertNull(stateHolder.activeSession.value)
-        assertFalse(prefs.armed)
+        coVerify(exactly = 0) { sessionRepository.endSession(any(), any()) }
+        assertEquals(AppState.ARMED_IDLE, manager.currentState)
+        assertEquals(21L, stateHolder.activeSession.value?.id)
+        assertTrue(prefs.armed)
     }
 
     @Test

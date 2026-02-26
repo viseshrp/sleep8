@@ -3,6 +3,7 @@ package com.sleep8.service.receiver
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import com.sleep8.domain.manager.ArmManager
 import com.sleep8.domain.manager.MonitoringReliabilityManager
 import com.sleep8.domain.manager.StateMachineManager
 import com.sleep8.domain.model.AppState
@@ -23,6 +24,7 @@ class NightWindowEndReceiver : BroadcastReceiver() {
     @Inject lateinit var serviceController: ServiceController
     @Inject lateinit var stateMachineManager: StateMachineManager
     @Inject lateinit var monitoringReliabilityManager: MonitoringReliabilityManager
+    @Inject lateinit var armManager: ArmManager
 
     @androidx.annotation.VisibleForTesting
     internal var dispatcher: CoroutineDispatcher = Dispatchers.Default
@@ -43,6 +45,8 @@ class NightWindowEndReceiver : BroadcastReceiver() {
             serviceController.stopNightMonitorService()
             monitoringReliabilityManager.onNightWindowEnded()
             stateMachineManager.onNightWindowEnd()
+            // Re-schedule future boundaries so an armed app continues working on subsequent nights.
+            armManager.refreshNightWindowBoundariesIfArmed()
         }
     }
 }
