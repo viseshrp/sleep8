@@ -31,23 +31,24 @@ class AlarmListViewModel @Inject constructor(
     fun refresh() {
         viewModelScope.launch {
             val now = System.currentTimeMillis()
-            val records = alarmRepository.getAllRecordsNewestFirst()
-            val items = records
-                .filter { record ->
-                    record.status == AlarmStatus.SCHEDULED ||
-                        (record.status == AlarmStatus.CANCELED && record.canceledReason == AlarmCancelReason.USER_TOGGLE_OFF)
+            val record = alarmRepository.getLatestRecord()
+            val items = record?.let {
+                val isPast = it.triggerAt < now
+                val toggleEnabled = when (it.status) {
+                    AlarmStatus.SCHEDULED -> !isPast
+                    AlarmStatus.CANCELED -> it.canceledReason == AlarmCancelReason.USER_TOGGLE_OFF && !isPast
+                    AlarmStatus.FIRED, AlarmStatus.DISMISSED -> false
                 }
-                .take(1)
-                .map { record ->
-                    val isPast = record.triggerAt < now
+                listOf(
                     AlarmListItem(
-                        id = record.id,
-                        timeText = TimeUtils.formatAlarmTime(TimeUtils.toLocalTime(record.triggerAt)),
-                        subtitle = buildSubtitle(record, isPast),
-                        enabled = record.status == AlarmStatus.SCHEDULED,
-                        toggleEnabled = !isPast
+                        id = it.id,
+                        timeText = TimeUtils.formatAlarmTime(TimeUtils.toLocalTime(it.triggerAt)),
+                        subtitle = buildSubtitle(it, isPast),
+                        enabled = it.status == AlarmStatus.SCHEDULED && !isPast,
+                        toggleEnabled = toggleEnabled
                     )
-                }
+                )
+            } ?: emptyList()
             _uiState.value = _uiState.value.copy(items = items)
         }
     }
@@ -77,7 +78,17 @@ class AlarmListViewModel @Inject constructor(
     }
 
     private fun buildSubtitle(record: AlarmRecord, isPast: Boolean): String {
-        if (isPast) return "Past alarm"
-        return "Scheduled from screen-off"
+        return when (record.status) {
+            AlarmStatus.SCHEDULED -> if (isPast) "Past alarm" else "Scheduled from screen-off"
+            AlarmStatus.FIRED -> "Fired"
+            AlarmStatus.DISMISSED -> "Dismissed"
+            AlarmStatus.CANCELED -> when (record.canceledReason) {
+                AlarmCancelReason.USER_TOGGLE_OFF -> "Disabled"
+                AlarmCancelReason.REPLACED_BY_NEW_ALARM -> "Replaced by newer alarm"
+                AlarmCancelReason.USER_DISARM -> "Disarmed"
+                AlarmCancelReason.REBOOT_CLEANUP -> "Canceled after reboot"
+                null -> "Canceled"
+            }
+        }
     }
 }
