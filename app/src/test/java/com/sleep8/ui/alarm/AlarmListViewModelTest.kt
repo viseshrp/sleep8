@@ -41,7 +41,7 @@ class AlarmListViewModelTest {
     @Test
     fun `toggle off cancels scheduled alarm`() = runTest {
         val record = baseRecord(status = AlarmStatus.SCHEDULED)
-        coEvery { alarmRepository.getAllRecordsNewestFirst() } returns listOf(record)
+        coEvery { alarmRepository.getLatestRecord() } returns record
         coEvery { alarmRepository.getRecord(record.id) } returns record
 
         val viewModel = AlarmListViewModel(alarmRepository, alarmScheduler)
@@ -56,7 +56,7 @@ class AlarmListViewModelTest {
     @Test
     fun `toggle on enables disabled alarm`() = runTest {
         val record = baseRecord(status = AlarmStatus.CANCELED, cancelReason = AlarmCancelReason.USER_TOGGLE_OFF)
-        coEvery { alarmRepository.getAllRecordsNewestFirst() } returns listOf(record)
+        coEvery { alarmRepository.getLatestRecord() } returns record
         coEvery { alarmRepository.getRecord(record.id) } returns record
 
         val viewModel = AlarmListViewModel(alarmRepository, alarmScheduler)
@@ -71,31 +71,44 @@ class AlarmListViewModelTest {
     @Test
     fun `past alarms are not toggleable`() = runTest {
         val pastRecord = baseRecord(status = AlarmStatus.SCHEDULED, triggerAt = System.currentTimeMillis() - 10_000L)
-        coEvery { alarmRepository.getAllRecordsNewestFirst() } returns listOf(pastRecord)
+        coEvery { alarmRepository.getLatestRecord() } returns pastRecord
 
         val viewModel = AlarmListViewModel(alarmRepository, alarmScheduler)
         advanceUntilIdle()
 
         val item = viewModel.uiState.value.items.first()
         assertFalse(item.toggleEnabled)
-        assertTrue(item.enabled)
+        assertFalse(item.enabled)
     }
 
     @Test
-    fun `refresh keeps only the most recent alarm`() = runTest {
+    fun `refresh uses latest record`() = runTest {
         val mostRecent = baseRecord(status = AlarmStatus.SCHEDULED, triggerAt = System.currentTimeMillis() + 60_000L)
-        val older = baseRecord(
-            status = AlarmStatus.CANCELED,
-            cancelReason = AlarmCancelReason.USER_TOGGLE_OFF,
-            triggerAt = System.currentTimeMillis() + 120_000L
-        ).copy(id = 2L)
-        coEvery { alarmRepository.getAllRecordsNewestFirst() } returns listOf(mostRecent, older)
+        coEvery { alarmRepository.getLatestRecord() } returns mostRecent
 
         val viewModel = AlarmListViewModel(alarmRepository, alarmScheduler)
         advanceUntilIdle()
 
         assertEquals(1, viewModel.uiState.value.items.size)
         assertEquals(mostRecent.id, viewModel.uiState.value.items.first().id)
+    }
+
+    @Test
+    fun `dismissed alarm is shown but not toggleable`() = runTest {
+        val record = baseRecord(
+            status = AlarmStatus.DISMISSED,
+            triggerAt = System.currentTimeMillis() - 10_000L
+        ).copy(dismissedAt = System.currentTimeMillis() - 5_000L)
+        coEvery { alarmRepository.getLatestRecord() } returns record
+
+        val viewModel = AlarmListViewModel(alarmRepository, alarmScheduler)
+        advanceUntilIdle()
+
+        val item = viewModel.uiState.value.items.first()
+        assertEquals(record.id, item.id)
+        assertFalse(item.enabled)
+        assertFalse(item.toggleEnabled)
+        assertEquals("Dismissed", item.subtitle)
     }
 
     private fun baseRecord(
